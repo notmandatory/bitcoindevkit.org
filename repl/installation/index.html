@@ -1,9 +1,11 @@
+
+
 <!DOCTYPE html>
 <html lang="en" class="js csstransforms3d">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="generator" content="Hugo 0.69.2" />
+    <meta name="generator" content="Hugo 0.79.0" />
     <meta name="description" content="The Bitcoin Dev Kit project aims to build a collection of tools and libraries that are designed to be a solid foundation for Bitcoin wallets.">
 <meta name="author" content="Alekos Filini - @afilini">
 
@@ -18,32 +20,56 @@
     <title>Installation :: Bitcoin Dev Kit</title>
 
     
-    <link href="/css/nucleus.css?1600244777" rel="stylesheet">
-    <link href="/css/fontawesome-all.min.css?1600244777" rel="stylesheet">
-    <link href="/css/hybrid.css?1600244777" rel="stylesheet">
-    <link href="/css/featherlight.min.css?1600244777" rel="stylesheet">
-    <link href="/css/perfect-scrollbar.min.css?1600244777" rel="stylesheet">
-    <link href="/css/auto-complete.css?1600244777" rel="stylesheet">
-    <link href="/css/atom-one-dark-reasonable.css?1600244777" rel="stylesheet">
-    <link href="/css/theme.css?1600244777" rel="stylesheet">
-    <link href="/css/hugo-theme.css?1600244777" rel="stylesheet">
+    <link href="/css/nucleus.css?1610475399" rel="stylesheet">
+    <link href="/css/fontawesome-all.min.css?1610475399" rel="stylesheet">
+    <link href="/css/hybrid.css?1610475399" rel="stylesheet">
+    <link href="/css/featherlight.min.css?1610475399" rel="stylesheet">
+    <link href="/css/perfect-scrollbar.min.css?1610475399" rel="stylesheet">
+    <link href="/css/auto-complete.css?1610475399" rel="stylesheet">
+    <link href="/css/atom-one-dark-reasonable.css?1610475399" rel="stylesheet">
+    <link href="/css/theme.css?1610475399" rel="stylesheet">
+    <link href="/css/hugo-theme.css?1610475399" rel="stylesheet">
     
-    <link href="/css/theme-blue.css?1600244777" rel="stylesheet">
+    <link href="/css/theme-blue.css?1610475399" rel="stylesheet">
     
-    <link href="/css/style.css?1600244777" rel="stylesheet"><link href="/css/jsonview.css?1600244777" rel="stylesheet">
+    <link href="/css/style.css?1610475399" rel="stylesheet"><link href="/css/jsonview.css?1610475399" rel="stylesheet"><link href="/css/blog.css?1610475399" rel="stylesheet">
 
-    <script src="/js/jquery-3.3.1.min.js?1600244777"></script>
+    <meta property="og:title" content="Installation" />
+<meta property="og:description" content="Requirements The only requirement is a Linux/macOS system with a fairly recent Rust toolchain installed. Since Linux distros tend to lag behind with updates, the quickest way to install the Rust compiler and Cargo is rustup.rs. You can head there and follow their instructions, after which you can test if everything went fine by running cargo version, which should print something like:
+cargo 1.45.0 (744bd1fbb 2020-06-15) At the time of writing, the project requires cargo &gt;= 1." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://bitcoindevkit.org/repl/installation/" />
+<meta property="og:image" content="https://bitcoindevkit.org/images/logo-wide.jpg"/>
+<meta property="article:published_time" content="2020-04-28T17:11:29+02:00" />
+<meta property="article:modified_time" content="2020-04-28T17:11:29+02:00" />
+
+    <meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://bitcoindevkit.org/images/logo-wide.jpg"/>
+
+<meta name="twitter:title" content="Installation"/>
+<meta name="twitter:description" content="Requirements The only requirement is a Linux/macOS system with a fairly recent Rust toolchain installed. Since Linux distros tend to lag behind with updates, the quickest way to install the Rust compiler and Cargo is rustup.rs. You can head there and follow their instructions, after which you can test if everything went fine by running cargo version, which should print something like:
+cargo 1.45.0 (744bd1fbb 2020-06-15) At the time of writing, the project requires cargo &gt;= 1."/>
+
+
+    <script src="/js/jquery-3.3.1.min.js?1610475399"></script>
 
     <style>
       :root #header + #content > #left > #rlblock_left{
           display:none !important;
       }
       
+        :not(pre) > code + span.copy-to-clipboard {
+            display: none;
+        }
+      
     </style>
     
   </head>
   <body class="" data-url="/repl/installation/">
-    <nav id="sidebar" class="">
+    
+
+
+<nav id="sidebar" class="">
 
 
 
@@ -61,17 +87,26 @@
     <span data-search-clear=""><i class="fas fa-times"></i></span>
 </div>
 
-<script type="text/javascript" src="/js/lunr.min.js?1600244777"></script>
-<script type="text/javascript" src="/js/auto-complete.js?1600244777"></script>
+<script type="text/javascript" src="/js/lunr.min.js?1610475399"></script>
+<script type="text/javascript" src="/js/auto-complete.js?1610475399"></script>
 <script type="text/javascript">
     
         var baseurl = "https:\/\/bitcoindevkit.org\/";
     
 </script>
-<script type="text/javascript" src="/js/search.js?1600244777"></script>
+<script type="text/javascript" src="/js/search.js?1610475399"></script>
 
     
   </div>
+  
+    <section id="homelinks">
+      <ul>
+        <li>
+            <a class="padding" href='/'><i class='fas fa-home'></i> Home</a>
+        </li>
+      </ul>
+    </section>
+  
 
     <div class="highlightable">
     <ul class="topics">
@@ -86,7 +121,31 @@
  
   
     
-    <li data-nav-id="/repl/" title="REPL" class="dd-item 
+    <li data-nav-id="/blog/" title="Blog" class="dd-item
+        
+        
+        
+        ">
+      <a href="/blog/">
+          <i class="fas fa-newspaper"></i> Blog
+          
+      </a>
+      
+      
+    </li>
+  
+ 
+
+          
+          
+
+
+
+
+ 
+  
+    
+    <li data-nav-id="/repl/" title="REPL" class="dd-item
         parent
         
         
@@ -101,7 +160,7 @@
           
           
           
-          
+
         
           
             
@@ -232,7 +291,7 @@
           
         
         </ul>
-              
+      
     </li>
   
  
@@ -246,7 +305,7 @@
  
   
     
-    <li data-nav-id="/descriptors/" title="Descriptors" class="dd-item 
+    <li data-nav-id="/descriptors/" title="Descriptors" class="dd-item
         
         
         
@@ -256,7 +315,7 @@
           
       </a>
       
-              
+      
     </li>
   
  
@@ -270,7 +329,7 @@
  
   
     
-    <li data-nav-id="/supporters/" title="Supporters" class="dd-item 
+    <li data-nav-id="/supporters/" title="Supporters" class="dd-item
         
         
         
@@ -280,13 +339,13 @@
           
       </a>
       
-              
+      
     </li>
   
  
 
           
-         
+        
     </ul>
 
     
@@ -295,19 +354,23 @@
         <h3>More</h3>
         <ul>
           
-              <li> 
-                  <a class="padding" href="https://bitcoindevkit.org/docs-rs/bdk/"><i class='fas fa-book-open'></i> Rust Docs</a>
+              <li>
+                  <a class="padding" href="https://docs.rs/bdk"><i class='fas fa-book-open'></i> Stable Docs</a>
               </li>
           
-              <li> 
+              <li>
+                  <a class="padding" href="https://bitcoindevkit.org/docs-rs/bdk/nightly/latest/bdk"><i class='fas fa-tools'></i> Nightly Docs</a>
+              </li>
+          
+              <li>
                   <a class="padding" href="https://bitcoindevkit.org/repl/playground"><i class='fas fa-magic'></i> Playground</a>
               </li>
           
-              <li> 
+              <li>
                   <a class="padding" href="https://twitter.com/intent/follow?screen_name=bitcoindevkit"><i style='font-size: 20px' class='fab fa-twitter-square'></i> Follow on Twitter</a>
               </li>
           
-              <li> 
+              <li>
                   <a class="padding" href="https://discord.gg/dstn4dQ"><i style='font-size: 20px' class='fab fa-discord'></i> Chat on Discord</a>
               </li>
           
@@ -388,14 +451,19 @@
             
         <div id="head-tags">
         
+
+
+
         </div>
         
         <div id="body-inner">
           
+            
             <h1>
               
               Installation
             </h1>
+            
           
 
         
@@ -410,7 +478,7 @@
 users and won&rsquo;t be covered in this guide.</p>
 <h2 id="installing-bdk-repl">Installing BDK <code>repl</code></h2>
 <p>Once Cargo is installed, you can proceed to install the interactive BDK <code>repl</code> tool directly from the GitHub repository, by running:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cargo install --git https://github.com/bitcoindevkit/bdk --features<span style="color:#f92672">=</span>cli-utils --example repl
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cargo install --git https://github.com/bitcoindevkit/bdk --features<span style="color:#f92672">=</span>cli-utils,esplora --example repl
 </code></pre></div><p>This command will probably take a while to finish, since it will fetch and compile all the dependencies and the <code>bdk</code> library itself. Once it&rsquo;s done, you can check if everything went fine
 by running <code>repl --help</code> which should print something like this:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">Magical Bitcoin Wallet 0.1.0
@@ -476,6 +544,40 @@ SUBCOMMANDS:
                     
                     
 
+                    
+                        
+            
+            
+                
+                    
+                        
+                        
+                    
+                
+                
+
+                    
+                    
+                    
+
+                    
+                        
+            
+            
+        
+                    
+                        
+            
+            
+        
+                    
+                        
+            
+            
+        
+                    
+            
+        
                     
                         
             
@@ -641,19 +743,19 @@ SUBCOMMANDS:
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
       <div style="border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;"></div>
     </div>
-    <script src="/js/clipboard.min.js?1600244777"></script>
-    <script src="/js/perfect-scrollbar.min.js?1600244777"></script>
-    <script src="/js/perfect-scrollbar.jquery.min.js?1600244777"></script>
-    <script src="/js/jquery.sticky.js?1600244777"></script>
-    <script src="/js/featherlight.min.js?1600244777"></script>
-    <script src="/js/highlight.pack.js?1600244777"></script>
+    <script src="/js/clipboard.min.js?1610475399"></script>
+    <script src="/js/perfect-scrollbar.min.js?1610475399"></script>
+    <script src="/js/perfect-scrollbar.jquery.min.js?1610475399"></script>
+    <script src="/js/jquery.sticky.js?1610475399"></script>
+    <script src="/js/featherlight.min.js?1610475399"></script>
+    <script src="/js/highlight.pack.js?1610475399"></script>
     <script>hljs.initHighlightingOnLoad();</script>
-    <script src="/js/modernizr.custom-3.6.0.js?1600244777"></script>
-    <script src="/js/learn.js?1600244777"></script>
-    <script src="/js/hugo-learn.js?1600244777"></script>
+    <script src="/js/modernizr.custom-3.6.0.js?1610475399"></script>
+    <script src="/js/learn.js?1610475399"></script>
+    <script src="/js/hugo-learn.js?1610475399"></script>
     
         
-            <script src="/mermaid/mermaid.js?1600244777"></script>
+            <script src="/mermaid/mermaid.js?1610475399"></script>
         
         <script>
             mermaid.initialize({ startOnLoad: true });

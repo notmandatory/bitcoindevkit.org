@@ -1,9 +1,11 @@
+
+
 <!DOCTYPE html>
 <html lang="en" class="js csstransforms3d">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="generator" content="Hugo 0.69.2" />
+    <meta name="generator" content="Hugo 0.79.0" />
     <meta name="description" content="The Bitcoin Dev Kit project aims to build a collection of tools and libraries that are designed to be a solid foundation for Bitcoin wallets.">
 <meta name="author" content="Alekos Filini - @afilini">
 
@@ -18,32 +20,54 @@
     <title>Compiler :: Bitcoin Dev Kit</title>
 
     
-    <link href="/css/nucleus.css?1600244777" rel="stylesheet">
-    <link href="/css/fontawesome-all.min.css?1600244777" rel="stylesheet">
-    <link href="/css/hybrid.css?1600244777" rel="stylesheet">
-    <link href="/css/featherlight.min.css?1600244777" rel="stylesheet">
-    <link href="/css/perfect-scrollbar.min.css?1600244777" rel="stylesheet">
-    <link href="/css/auto-complete.css?1600244777" rel="stylesheet">
-    <link href="/css/atom-one-dark-reasonable.css?1600244777" rel="stylesheet">
-    <link href="/css/theme.css?1600244777" rel="stylesheet">
-    <link href="/css/hugo-theme.css?1600244777" rel="stylesheet">
+    <link href="/css/nucleus.css?1610475399" rel="stylesheet">
+    <link href="/css/fontawesome-all.min.css?1610475399" rel="stylesheet">
+    <link href="/css/hybrid.css?1610475399" rel="stylesheet">
+    <link href="/css/featherlight.min.css?1610475399" rel="stylesheet">
+    <link href="/css/perfect-scrollbar.min.css?1610475399" rel="stylesheet">
+    <link href="/css/auto-complete.css?1610475399" rel="stylesheet">
+    <link href="/css/atom-one-dark-reasonable.css?1610475399" rel="stylesheet">
+    <link href="/css/theme.css?1610475399" rel="stylesheet">
+    <link href="/css/hugo-theme.css?1610475399" rel="stylesheet">
     
-    <link href="/css/theme-blue.css?1600244777" rel="stylesheet">
+    <link href="/css/theme-blue.css?1610475399" rel="stylesheet">
     
-    <link href="/css/style.css?1600244777" rel="stylesheet"><link href="/css/jsonview.css?1600244777" rel="stylesheet">
+    <link href="/css/style.css?1610475399" rel="stylesheet"><link href="/css/jsonview.css?1610475399" rel="stylesheet"><link href="/css/blog.css?1610475399" rel="stylesheet">
 
-    <script src="/js/jquery-3.3.1.min.js?1600244777"></script>
+    <meta property="og:title" content="Compiler" />
+<meta property="og:description" content="Introduction If you want to play around with more complicated spending policies, you&rsquo;ll start to find it harder and harder to manually create the descriptors. This is where the miniscript compiler comes in! The bdk library includes a very simple compiler that can produce a descriptor given a spending policy. The syntax used to encode the spending policy is very well described in this page, specifically in the &ldquo;Policy to Miniscript compiler&rdquo;." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://bitcoindevkit.org/repl/compiler/" />
+<meta property="og:image" content="https://bitcoindevkit.org/images/logo-wide.jpg"/>
+<meta property="article:published_time" content="2020-04-29T12:06:50+02:00" />
+<meta property="article:modified_time" content="2020-04-29T12:06:50+02:00" />
+
+    <meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://bitcoindevkit.org/images/logo-wide.jpg"/>
+
+<meta name="twitter:title" content="Compiler"/>
+<meta name="twitter:description" content="Introduction If you want to play around with more complicated spending policies, you&rsquo;ll start to find it harder and harder to manually create the descriptors. This is where the miniscript compiler comes in! The bdk library includes a very simple compiler that can produce a descriptor given a spending policy. The syntax used to encode the spending policy is very well described in this page, specifically in the &ldquo;Policy to Miniscript compiler&rdquo;."/>
+
+
+    <script src="/js/jquery-3.3.1.min.js?1610475399"></script>
 
     <style>
       :root #header + #content > #left > #rlblock_left{
           display:none !important;
       }
       
+        :not(pre) > code + span.copy-to-clipboard {
+            display: none;
+        }
+      
     </style>
     
   </head>
   <body class="" data-url="/repl/compiler/">
-    <nav id="sidebar" class="">
+    
+
+
+<nav id="sidebar" class="">
 
 
 
@@ -61,17 +85,26 @@
     <span data-search-clear=""><i class="fas fa-times"></i></span>
 </div>
 
-<script type="text/javascript" src="/js/lunr.min.js?1600244777"></script>
-<script type="text/javascript" src="/js/auto-complete.js?1600244777"></script>
+<script type="text/javascript" src="/js/lunr.min.js?1610475399"></script>
+<script type="text/javascript" src="/js/auto-complete.js?1610475399"></script>
 <script type="text/javascript">
     
         var baseurl = "https:\/\/bitcoindevkit.org\/";
     
 </script>
-<script type="text/javascript" src="/js/search.js?1600244777"></script>
+<script type="text/javascript" src="/js/search.js?1610475399"></script>
 
     
   </div>
+  
+    <section id="homelinks">
+      <ul>
+        <li>
+            <a class="padding" href='/'><i class='fas fa-home'></i> Home</a>
+        </li>
+      </ul>
+    </section>
+  
 
     <div class="highlightable">
     <ul class="topics">
@@ -86,7 +119,31 @@
  
   
     
-    <li data-nav-id="/repl/" title="REPL" class="dd-item 
+    <li data-nav-id="/blog/" title="Blog" class="dd-item
+        
+        
+        
+        ">
+      <a href="/blog/">
+          <i class="fas fa-newspaper"></i> Blog
+          
+      </a>
+      
+      
+    </li>
+  
+ 
+
+          
+          
+
+
+
+
+ 
+  
+    
+    <li data-nav-id="/repl/" title="REPL" class="dd-item
         parent
         
         
@@ -101,7 +158,7 @@
           
           
           
-          
+
         
           
             
@@ -232,7 +289,7 @@
           
         
         </ul>
-              
+      
     </li>
   
  
@@ -246,7 +303,7 @@
  
   
     
-    <li data-nav-id="/descriptors/" title="Descriptors" class="dd-item 
+    <li data-nav-id="/descriptors/" title="Descriptors" class="dd-item
         
         
         
@@ -256,7 +313,7 @@
           
       </a>
       
-              
+      
     </li>
   
  
@@ -270,7 +327,7 @@
  
   
     
-    <li data-nav-id="/supporters/" title="Supporters" class="dd-item 
+    <li data-nav-id="/supporters/" title="Supporters" class="dd-item
         
         
         
@@ -280,13 +337,13 @@
           
       </a>
       
-              
+      
     </li>
   
  
 
           
-         
+        
     </ul>
 
     
@@ -295,19 +352,23 @@
         <h3>More</h3>
         <ul>
           
-              <li> 
-                  <a class="padding" href="https://bitcoindevkit.org/docs-rs/bdk/"><i class='fas fa-book-open'></i> Rust Docs</a>
+              <li>
+                  <a class="padding" href="https://docs.rs/bdk"><i class='fas fa-book-open'></i> Stable Docs</a>
               </li>
           
-              <li> 
+              <li>
+                  <a class="padding" href="https://bitcoindevkit.org/docs-rs/bdk/nightly/latest/bdk"><i class='fas fa-tools'></i> Nightly Docs</a>
+              </li>
+          
+              <li>
                   <a class="padding" href="https://bitcoindevkit.org/repl/playground"><i class='fas fa-magic'></i> Playground</a>
               </li>
           
-              <li> 
+              <li>
                   <a class="padding" href="https://twitter.com/intent/follow?screen_name=bitcoindevkit"><i style='font-size: 20px' class='fab fa-twitter-square'></i> Follow on Twitter</a>
               </li>
           
-              <li> 
+              <li>
                   <a class="padding" href="https://discord.gg/dstn4dQ"><i style='font-size: 20px' class='fab fa-discord'></i> Chat on Discord</a>
               </li>
           
@@ -395,14 +456,19 @@
             
         <div id="head-tags">
         
+
+
+
         </div>
         
         <div id="body-inner">
           
+            
             <h1>
               
               Compiler
             </h1>
+            
           
 
         
@@ -558,6 +624,40 @@ shell.</p>
                     
                     
 
+                    
+                        
+            
+            
+                
+                    
+                        
+                        
+                    
+                
+                
+
+                    
+                    
+                    
+
+                    
+                        
+            
+            
+        
+                    
+                        
+            
+            
+        
+                    
+                        
+            
+            
+        
+                    
+            
+        
                     
                         
             
@@ -726,19 +826,19 @@ shell.</p>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
       <div style="border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;"></div>
     </div>
-    <script src="/js/clipboard.min.js?1600244777"></script>
-    <script src="/js/perfect-scrollbar.min.js?1600244777"></script>
-    <script src="/js/perfect-scrollbar.jquery.min.js?1600244777"></script>
-    <script src="/js/jquery.sticky.js?1600244777"></script>
-    <script src="/js/featherlight.min.js?1600244777"></script>
-    <script src="/js/highlight.pack.js?1600244777"></script>
+    <script src="/js/clipboard.min.js?1610475399"></script>
+    <script src="/js/perfect-scrollbar.min.js?1610475399"></script>
+    <script src="/js/perfect-scrollbar.jquery.min.js?1610475399"></script>
+    <script src="/js/jquery.sticky.js?1610475399"></script>
+    <script src="/js/featherlight.min.js?1610475399"></script>
+    <script src="/js/highlight.pack.js?1610475399"></script>
     <script>hljs.initHighlightingOnLoad();</script>
-    <script src="/js/modernizr.custom-3.6.0.js?1600244777"></script>
-    <script src="/js/learn.js?1600244777"></script>
-    <script src="/js/hugo-learn.js?1600244777"></script>
+    <script src="/js/modernizr.custom-3.6.0.js?1610475399"></script>
+    <script src="/js/learn.js?1610475399"></script>
+    <script src="/js/hugo-learn.js?1610475399"></script>
     
         
-            <script src="/mermaid/mermaid.js?1600244777"></script>
+            <script src="/mermaid/mermaid.js?1610475399"></script>
         
         <script>
             mermaid.initialize({ startOnLoad: true });
