@@ -10,17 +10,19 @@ use log::{debug, info};
 
 use serde::Deserialize;
 
-use clap::AppSettings;
+use bdk_cli::bdk::bitcoin;
+use bdk_cli::bdk::blockchain::EsploraBlockchain;
+use bdk_cli::bdk::database::memory::MemoryDatabase;
+use bdk_cli::bdk::keys::{GeneratableDefaultOptions, GeneratedKey};
+use bdk_cli::bdk::miniscript;
+use bdk_cli::bdk::*;
 
-use bdk::bitcoin;
-use bdk::blockchain::EsploraBlockchain;
-use bdk::database::memory::MemoryDatabase;
-use bdk::keys::{GeneratableDefaultOptions, GeneratedKey};
-use bdk::miniscript;
-use bdk::*;
+use structopt::StructOpt;
+use structopt::clap::AppSettings;
 
 use bitcoin::*;
 
+use bdk_cli::WalletSubCommand;
 use miniscript::policy::Concrete;
 use miniscript::Descriptor;
 
@@ -41,6 +43,16 @@ pub fn init() {
 pub struct WalletWrapper {
     _change_descriptor: Option<String>,
     wallet: Rc<Wallet<EsploraBlockchain, MemoryDatabase>>,
+}
+
+#[derive(Debug, StructOpt, Clone, PartialEq)]
+#[structopt(name = "BDK CLI", setting = AppSettings::NoBinaryName,
+version = option_env ! ("CARGO_PKG_VERSION").unwrap_or("unknown"),
+author = option_env ! ("CARGO_PKG_AUTHORS").unwrap_or(""))]
+pub struct CliOpt {
+    /// Wallet sub-command
+    #[structopt(subcommand)]
+    pub subcommand: WalletSubCommand,
 }
 
 #[wasm_bindgen]
@@ -78,17 +90,25 @@ impl WalletWrapper {
 
     #[wasm_bindgen]
     pub fn run(&self, line: String) -> Promise {
-        let mut app = cli::make_cli_subcommands().setting(AppSettings::NoBinaryName);
+        //let mut app = bdk_cli::make_cli_subcommands().setting(AppSettings::NoBinaryName);
         let wallet = Rc::clone(&self.wallet);
 
         future_to_promise(async move {
-            let matches = app
-                .get_matches_from_safe_borrow(line.split(" "))
-                .map_err(|e| e.message)?;
-            let res = cli::handle_matches(&wallet, matches)
+            let split_line: Vec<&str> = line.split(' ').collect();
+            // let matches = app
+            //     .get_matches_from_safe_borrow(line.split(" "))
+            //     .map_err(|e| e.message)?;
+            let cli_opt: CliOpt = CliOpt::from_iter_safe(split_line).unwrap();
+
+            let res = bdk_cli::handle_wallet_subcommand(&wallet, cli_opt.subcommand)
                 .await
                 .map(|json| json.to_string())
-                .map_err(|e| format!("{:?}", e))?;
+                .map_err(|e| format!("{:?}", e)).unwrap();
+
+            // let res = cli::handle_matches(&wallet, matches)
+            //     .await
+            //     .map(|json| json.to_string())
+            //     .map_err(|e| format!("{:?}", e))?;
 
             Ok(res.into())
         })
