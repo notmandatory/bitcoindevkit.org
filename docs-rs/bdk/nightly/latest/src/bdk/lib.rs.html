@@ -268,6 +268,16 @@
 <span id="265">265</span>
 <span id="266">266</span>
 <span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Magical Bitcoin Library</span>
 <span class="comment">// Written in 2020 by</span>
@@ -327,7 +337,7 @@
 <span class="doccomment">//! interact with the bitcoin P2P network.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ```toml</span>
-<span class="doccomment">//! bdk = &quot;0.2.0&quot;</span>
+<span class="doccomment">//! bdk = &quot;0.4.0&quot;</span>
 <span class="doccomment">//! ```</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## Sync the balance of a descriptor</span>
@@ -386,7 +396,7 @@
 <span class="doccomment">//! ### Example</span>
 <span class="doccomment">//! ```ignore</span>
 <span class="doccomment">//! use base64::decode;</span>
-<span class="doccomment">//! use bdk::{FeeRate, TxBuilder, Wallet};</span>
+<span class="doccomment">//! use bdk::{FeeRate, Wallet};</span>
 <span class="doccomment">//! use bdk::database::MemoryDatabase;</span>
 <span class="doccomment">//! use bdk::blockchain::{noop_progress, ElectrumBlockchain};</span>
 <span class="doccomment">//!</span>
@@ -407,12 +417,12 @@
 <span class="doccomment">//!     wallet.sync(noop_progress(), None)?;</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//!     let send_to = wallet.get_new_address()?;</span>
-<span class="doccomment">//!     let (psbt, details) = wallet.create_tx(</span>
-<span class="doccomment">//!         TxBuilder::with_recipients(vec![(send_to.script_pubkey(), 50_000)])</span>
-<span class="doccomment">//!             .enable_rbf()</span>
-<span class="doccomment">//!             .do_not_spend_change()</span>
-<span class="doccomment">//!             .fee_rate(FeeRate::from_sat_per_vb(5.0))</span>
-<span class="doccomment">//!     )?;</span>
+<span class="doccomment">//!     let (psbt, details) = wallet.build_tx()</span>
+<span class="doccomment">//!         .add_recipient(send_to.script_pubkey(), 50_000)</span>
+<span class="doccomment">//!         .enable_rbf()</span>
+<span class="doccomment">//!         .do_not_spend_change()</span>
+<span class="doccomment">//!         .fee_rate(FeeRate::from_sat_per_vb(5.0))</span>
+<span class="doccomment">//!         .finish()?;</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//!     println!(&quot;Transaction details: {:#?}&quot;, details);</span>
 <span class="doccomment">//!     println!(&quot;Unsigned PSBT: {}&quot;, base64::encode(&amp;serialize(&amp;psbt)));</span>
@@ -481,6 +491,11 @@
 <span class="attribute">#[<span class="ident">macro_use</span>]</span>
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">serde_json</span>;
 
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async-interface&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;electrum&quot;</span>))]</span>
+<span class="macro">compile_error</span><span class="macro">!</span>(
+    <span class="string">&quot;Features async-interface and electrum are mutually exclusive and cannot be enabled together&quot;</span>
+);
+
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;keys-bip39&quot;</span>)]</span>
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">bip39</span>;
 
@@ -536,5 +551,11 @@
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">wallet</span>::<span class="ident">signer</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">wallet</span>::<span class="ident">tx_builder</span>::<span class="ident">TxBuilder</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">wallet</span>::<span class="ident">Wallet</span>;
+
+<span class="doccomment">/// Get the version of BDK at runtime</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">version</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
+    <span class="macro">env</span><span class="macro">!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>, <span class="string">&quot;unknown&quot;</span>)
+}
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "bdk";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="bdk"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
