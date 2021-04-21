@@ -312,7 +312,7 @@
 <span class="doccomment">//! interact with the bitcoin P2P network.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ```toml</span>
-<span class="doccomment">//! bdk = &quot;0.5.0&quot;</span>
+<span class="doccomment">//! bdk = &quot;0.6.0&quot;</span>
 <span class="doccomment">//! ```</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## Sync the balance of a descriptor</span>
@@ -469,7 +469,7 @@
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">serde_json</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async-interface&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;electrum&quot;</span>))]</span>
-<span class="macro">compile_error</span><span class="macro">!</span>(
+<span class="macro">compile_error!</span>(
     <span class="string">&quot;Features async-interface and electrum are mutually exclusive and cannot be enabled together&quot;</span>
 );
 
@@ -519,18 +519,18 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod</span> <span class="ident">types</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">wallet</span>;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">descriptor</span>::<span class="ident">template</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">descriptor</span>::<span class="ident">HDKeyPaths</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">error</span>::<span class="ident">Error</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">descriptor::template</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">descriptor::HdKeyPaths</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">error::Error</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">types</span>::<span class="kw-2">*</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">wallet</span>::<span class="ident">address_validator</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">wallet</span>::<span class="ident">signer</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">wallet</span>::<span class="ident">tx_builder</span>::<span class="ident">TxBuilder</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">wallet</span>::<span class="ident">Wallet</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">wallet::address_validator</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">wallet::signer</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">wallet::tx_builder::TxBuilder</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">wallet::Wallet</span>;
 
 <span class="doccomment">/// Get the version of BDK at runtime</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">version</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
-    <span class="macro">env</span><span class="macro">!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>, <span class="string">&quot;unknown&quot;</span>)
+    <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>, <span class="string">&quot;unknown&quot;</span>)
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="bdk" data-search-js="../../search-index.js"></div>
