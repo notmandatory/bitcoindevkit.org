@@ -5704,7 +5704,7 @@
     </span>Reset(u32),
 }
 
-<span class="doccomment">/// A derived address and the index it was found at
+<span class="doccomment">/// A derived address and the index it was found at.
 /// For convenience this automatically derefs to `Address`
 </span><span class="attr">#[derive(Debug, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>AddressInfo {
@@ -6656,7 +6656,7 @@
     }
 
     <span class="doccomment">/// Sign a transaction with all the wallet&#39;s signers, in the order specified by every signer&#39;s
-    /// [`SignerOrdering`]
+    /// [`SignerOrdering`]. This function returns the `Result` type with an encapsulated `bool` that has the value true if the PSBT was finalized, or false otherwise.
     ///
     /// The [`SignOptions`] can be used to tweak the behavior of the software signers, and the way
     /// the transaction is finalized at the end. Note that it can&#39;t be guaranteed that *every*
