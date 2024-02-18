@@ -717,38 +717,6 @@
 <a href="#717" id="717">717</a>
 <a href="#718" id="718">718</a>
 <a href="#719" id="719">719</a>
-<a href="#720" id="720">720</a>
-<a href="#721" id="721">721</a>
-<a href="#722" id="722">722</a>
-<a href="#723" id="723">723</a>
-<a href="#724" id="724">724</a>
-<a href="#725" id="725">725</a>
-<a href="#726" id="726">726</a>
-<a href="#727" id="727">727</a>
-<a href="#728" id="728">728</a>
-<a href="#729" id="729">729</a>
-<a href="#730" id="730">730</a>
-<a href="#731" id="731">731</a>
-<a href="#732" id="732">732</a>
-<a href="#733" id="733">733</a>
-<a href="#734" id="734">734</a>
-<a href="#735" id="735">735</a>
-<a href="#736" id="736">736</a>
-<a href="#737" id="737">737</a>
-<a href="#738" id="738">738</a>
-<a href="#739" id="739">739</a>
-<a href="#740" id="740">740</a>
-<a href="#741" id="741">741</a>
-<a href="#742" id="742">742</a>
-<a href="#743" id="743">743</a>
-<a href="#744" id="744">744</a>
-<a href="#745" id="745">745</a>
-<a href="#746" id="746">746</a>
-<a href="#747" id="747">747</a>
-<a href="#748" id="748">748</a>
-<a href="#749" id="749">749</a>
-<a href="#750" id="750">750</a>
-<a href="#751" id="751">751</a>
 </pre><pre class="rust"><code><span class="kw">pub use </span>anyhow;
 <span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>bdk_coin_select::{coin_select_bnb, CoinSelector, CoinSelectorOpt, WeightedValue};
@@ -780,12 +748,12 @@
     local_chain::ChangeSet,
     indexed_tx_graph::ChangeSet&lt;A, keychain::ChangeSet&lt;Keychain&gt;&gt;,
 );
-<span class="kw">pub type </span>Database&lt;<span class="lifetime">&#39;m</span>, C&gt; = Persist&lt;Store&lt;<span class="lifetime">&#39;m</span>, C&gt;, C&gt;;
+<span class="kw">pub type </span>Database&lt;C&gt; = Persist&lt;Store&lt;C&gt;, C&gt;;
 
 <span class="attr">#[derive(Parser)]
 #[clap(author, version, about, long_about = <span class="prelude-val">None</span>)]
 #[clap(propagate_version = <span class="bool-val">true</span>)]
-</span><span class="kw">pub struct </span>Args&lt;S: clap::Subcommand&gt; {
+</span><span class="kw">pub struct </span>Args&lt;CS: clap::Subcommand, S: clap::Args&gt; {
     <span class="attr">#[clap(env = <span class="string">&quot;DESCRIPTOR&quot;</span>)]
     </span><span class="kw">pub </span>descriptor: String,
     <span class="attr">#[clap(env = <span class="string">&quot;CHANGE_DESCRIPTOR&quot;</span>)]
@@ -801,14 +769,13 @@
     </span><span class="kw">pub </span>cp_limit: usize,
 
     <span class="attr">#[clap(subcommand)]
-    </span><span class="kw">pub </span>command: Commands&lt;S&gt;,
+    </span><span class="kw">pub </span>command: Commands&lt;CS, S&gt;,
 }
 
-<span class="attr">#[allow(clippy::almost_swapped)]
-#[derive(Subcommand, Debug, Clone)]
-</span><span class="kw">pub enum </span>Commands&lt;S: clap::Subcommand&gt; {
+<span class="attr">#[derive(Subcommand, Debug, Clone)]
+</span><span class="kw">pub enum </span>Commands&lt;CS: clap::Subcommand, S: clap::Args&gt; {
     <span class="attr">#[clap(flatten)]
-    </span>ChainSpecific(S),
+    </span>ChainSpecific(CS),
     <span class="doccomment">/// Address generation and inspection.
     </span>Address {
         <span class="attr">#[clap(subcommand)]
@@ -824,10 +791,14 @@
     },
     <span class="doccomment">/// Send coins to an address.
     </span>Send {
-        value: u64,
-        address: Address&lt;address::NetworkUnchecked&gt;,
+        <span class="doccomment">/// Amount to send in satoshis
+        </span>value: u64,
+        <span class="doccomment">/// Destination address
+        </span>address: Address&lt;address::NetworkUnchecked&gt;,
         <span class="attr">#[clap(short, default_value = <span class="string">&quot;bnb&quot;</span>)]
         </span>coin_select: CoinSelectionAlgo,
+        <span class="attr">#[clap(flatten)]
+        </span>chain_specific: S,
     },
 }
 
@@ -884,8 +855,7 @@
     }
 }
 
-<span class="attr">#[allow(clippy::almost_swapped)]
-#[derive(Subcommand, Debug, Clone)]
+<span class="attr">#[derive(Subcommand, Debug, Clone)]
 </span><span class="kw">pub enum </span>AddressCmd {
     <span class="doccomment">/// Get the next unused address.
     </span>Next,
@@ -893,15 +863,18 @@
     </span>New,
     <span class="doccomment">/// List all addresses
     </span>List {
-        <span class="attr">#[clap(long)]
+        <span class="doccomment">/// List change addresses
+        </span><span class="attr">#[clap(long)]
         </span>change: bool,
     },
-    Index,
+    <span class="doccomment">/// Get last revealed address index for each keychain.
+    </span>Index,
 }
 
 <span class="attr">#[derive(Subcommand, Debug, Clone)]
 </span><span class="kw">pub enum </span>TxOutCmd {
-    List {
+    <span class="doccomment">/// List transaction outputs.
+    </span>List {
         <span class="doccomment">/// Return only spent outputs.
         </span><span class="attr">#[clap(short, long)]
         </span>spent: bool,
@@ -934,237 +907,20 @@
     }
 }
 
-<span class="kw">pub fn </span>run_address_cmd&lt;A, C&gt;(
-    graph: <span class="kw-2">&amp;mut </span>KeychainTxGraph&lt;A&gt;,
-    db: <span class="kw-2">&amp;</span>Mutex&lt;Database&lt;C&gt;&gt;,
-    network: Network,
-    cmd: AddressCmd,
-) -&gt; anyhow::Result&lt;()&gt;
-<span class="kw">where
-    </span>C: Default + Append + DeserializeOwned + Serialize + From&lt;KeychainChangeSet&lt;A&gt;&gt;,
-{
-    <span class="kw">let </span>index = <span class="kw-2">&amp;mut </span>graph.index;
-
-    <span class="kw">match </span>cmd {
-        AddressCmd::Next | AddressCmd::New =&gt; {
-            <span class="kw">let </span>spk_chooser = <span class="kw">match </span>cmd {
-                AddressCmd::Next =&gt; KeychainTxOutIndex::next_unused_spk,
-                AddressCmd::New =&gt; KeychainTxOutIndex::reveal_next_spk,
-                <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;only these two variants exist in match arm&quot;</span>),
-            };
-
-            <span class="kw">let </span>((spk_i, spk), index_changeset) = spk_chooser(index, <span class="kw-2">&amp;</span>Keychain::External);
-            <span class="kw">let </span>db = <span class="kw-2">&amp;mut *</span>db.lock().unwrap();
-            db.stage(C::from((
-                local_chain::ChangeSet::default(),
-                indexed_tx_graph::ChangeSet::from(index_changeset),
-            )));
-            db.commit()<span class="question-mark">?</span>;
-            <span class="kw">let </span>addr = Address::from_script(spk, network).context(<span class="string">&quot;failed to derive address&quot;</span>)<span class="question-mark">?</span>;
-            <span class="macro">println!</span>(<span class="string">&quot;[address @ {}] {}&quot;</span>, spk_i, addr);
-            <span class="prelude-val">Ok</span>(())
-        }
-        AddressCmd::Index =&gt; {
-            <span class="kw">for </span>(keychain, derivation_index) <span class="kw">in </span>index.last_revealed_indices() {
-                <span class="macro">println!</span>(<span class="string">&quot;{:?}: {}&quot;</span>, keychain, derivation_index);
-            }
-            <span class="prelude-val">Ok</span>(())
-        }
-        AddressCmd::List { change } =&gt; {
-            <span class="kw">let </span>target_keychain = <span class="kw">match </span>change {
-                <span class="bool-val">true </span>=&gt; Keychain::Internal,
-                <span class="bool-val">false </span>=&gt; Keychain::External,
-            };
-            <span class="kw">for </span>(spk_i, spk) <span class="kw">in </span>index.revealed_spks_of_keychain(<span class="kw-2">&amp;</span>target_keychain) {
-                <span class="kw">let </span>address = Address::from_script(spk, network)
-                    .expect(<span class="string">&quot;should always be able to derive address&quot;</span>);
-                <span class="macro">println!</span>(
-                    <span class="string">&quot;{:?} {} used:{}&quot;</span>,
-                    spk_i,
-                    address,
-                    index.is_used(<span class="kw-2">&amp;</span>(target_keychain, spk_i))
-                );
-            }
-            <span class="prelude-val">Ok</span>(())
-        }
-    }
+<span class="kw">pub struct </span>CreateTxChange {
+    <span class="kw">pub </span>index_changeset: keychain::ChangeSet&lt;Keychain&gt;,
+    <span class="kw">pub </span>change_keychain: Keychain,
+    <span class="kw">pub </span>index: u32,
 }
 
-<span class="kw">pub fn </span>run_balance_cmd&lt;A: Anchor, O: ChainOracle&gt;(
-    graph: <span class="kw-2">&amp;</span>KeychainTxGraph&lt;A&gt;,
-    chain: <span class="kw-2">&amp;</span>O,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(), O::Error&gt; {
-    <span class="kw">fn </span>print_balances&lt;<span class="lifetime">&#39;a</span>&gt;(title_str: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, items: <span class="kw">impl </span>IntoIterator&lt;Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, u64)&gt;) {
-        <span class="macro">println!</span>(<span class="string">&quot;{}:&quot;</span>, title_str);
-        <span class="kw">for </span>(name, amount) <span class="kw">in </span>items.into_iter() {
-            <span class="macro">println!</span>(<span class="string">&quot;    {:&lt;10} {:&gt;12} sats&quot;</span>, name, amount)
-        }
-    }
-
-    <span class="kw">let </span>balance = graph.graph().try_balance(
-        chain,
-        chain.get_chain_tip()<span class="question-mark">?</span>.unwrap_or_default(),
-        graph.index.outpoints().iter().cloned(),
-        |(k, <span class="kw">_</span>), <span class="kw">_</span>| k == <span class="kw-2">&amp;</span>Keychain::Internal,
-    )<span class="question-mark">?</span>;
-
-    <span class="kw">let </span>confirmed_total = balance.confirmed + balance.immature;
-    <span class="kw">let </span>unconfirmed_total = balance.untrusted_pending + balance.trusted_pending;
-
-    print_balances(
-        <span class="string">&quot;confirmed&quot;</span>,
-        [
-            (<span class="string">&quot;total&quot;</span>, confirmed_total),
-            (<span class="string">&quot;spendable&quot;</span>, balance.confirmed),
-            (<span class="string">&quot;immature&quot;</span>, balance.immature),
-        ],
-    );
-    print_balances(
-        <span class="string">&quot;unconfirmed&quot;</span>,
-        [
-            (<span class="string">&quot;total&quot;</span>, unconfirmed_total),
-            (<span class="string">&quot;trusted&quot;</span>, balance.trusted_pending),
-            (<span class="string">&quot;untrusted&quot;</span>, balance.untrusted_pending),
-        ],
-    );
-
-    <span class="prelude-val">Ok</span>(())
-}
-
-<span class="kw">pub fn </span>run_txo_cmd&lt;A: Anchor, O: ChainOracle&gt;(
-    graph: <span class="kw-2">&amp;</span>KeychainTxGraph&lt;A&gt;,
-    chain: <span class="kw-2">&amp;</span>O,
-    network: Network,
-    cmd: TxOutCmd,
-) -&gt; anyhow::Result&lt;()&gt;
-<span class="kw">where
-    </span>O::Error: std::error::Error + Send + Sync + <span class="lifetime">&#39;static</span>,
-{
-    <span class="kw">let </span>chain_tip = chain.get_chain_tip()<span class="question-mark">?</span>.unwrap_or_default();
-    <span class="kw">let </span>outpoints = graph.index.outpoints().iter().cloned();
-
-    <span class="kw">match </span>cmd {
-        TxOutCmd::List {
-            spent,
-            unspent,
-            confirmed,
-            unconfirmed,
-        } =&gt; {
-            <span class="kw">let </span>txouts = graph
-                .graph()
-                .try_filter_chain_txouts(chain, chain_tip, outpoints)
-                .filter(|r| <span class="kw">match </span>r {
-                    <span class="prelude-val">Ok</span>((<span class="kw">_</span>, full_txo)) =&gt; <span class="kw">match </span>(spent, unspent) {
-                        (<span class="bool-val">true</span>, <span class="bool-val">false</span>) =&gt; full_txo.spent_by.is_some(),
-                        (<span class="bool-val">false</span>, <span class="bool-val">true</span>) =&gt; full_txo.spent_by.is_none(),
-                        <span class="kw">_ </span>=&gt; <span class="bool-val">true</span>,
-                    },
-                    <span class="comment">// always keep errored items
-                    </span><span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
-                })
-                .filter(|r| <span class="kw">match </span>r {
-                    <span class="prelude-val">Ok</span>((<span class="kw">_</span>, full_txo)) =&gt; <span class="kw">match </span>(confirmed, unconfirmed) {
-                        (<span class="bool-val">true</span>, <span class="bool-val">false</span>) =&gt; full_txo.chain_position.is_confirmed(),
-                        (<span class="bool-val">false</span>, <span class="bool-val">true</span>) =&gt; !full_txo.chain_position.is_confirmed(),
-                        <span class="kw">_ </span>=&gt; <span class="bool-val">true</span>,
-                    },
-                    <span class="comment">// always keep errored items
-                    </span><span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
-                })
-                .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>;
-
-            <span class="kw">for </span>(spk_i, full_txo) <span class="kw">in </span>txouts {
-                <span class="kw">let </span>addr = Address::from_script(<span class="kw-2">&amp;</span>full_txo.txout.script_pubkey, network)<span class="question-mark">?</span>;
-                <span class="macro">println!</span>(
-                    <span class="string">&quot;{:?} {} {} {} spent:{:?}&quot;</span>,
-                    spk_i, full_txo.txout.value, full_txo.outpoint, addr, full_txo.spent_by
-                )
-            }
-            <span class="prelude-val">Ok</span>(())
-        }
-    }
-}
-
-<span class="attr">#[allow(clippy::too_many_arguments)]
-</span><span class="kw">pub fn </span>run_send_cmd&lt;A: Anchor, O: ChainOracle, C&gt;(
-    graph: <span class="kw-2">&amp;</span>Mutex&lt;KeychainTxGraph&lt;A&gt;&gt;,
-    db: <span class="kw-2">&amp;</span>Mutex&lt;Database&lt;<span class="lifetime">&#39;_</span>, C&gt;&gt;,
-    chain: <span class="kw-2">&amp;</span>O,
-    keymap: <span class="kw-2">&amp;</span>HashMap&lt;DescriptorPublicKey, DescriptorSecretKey&gt;,
-    cs_algorithm: CoinSelectionAlgo,
-    address: Address,
-    value: u64,
-    broadcast: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;</span>Transaction) -&gt; anyhow::Result&lt;()&gt;,
-) -&gt; anyhow::Result&lt;()&gt;
-<span class="kw">where
-    </span>O::Error: std::error::Error + Send + Sync + <span class="lifetime">&#39;static</span>,
-    C: Default + Append + DeserializeOwned + Serialize + From&lt;KeychainChangeSet&lt;A&gt;&gt;,
-{
-    <span class="kw">let </span>(transaction, change_index) = {
-        <span class="kw">let </span>graph = <span class="kw-2">&amp;mut *</span>graph.lock().unwrap();
-        <span class="comment">// take mutable ref to construct tx -- it is only open for a short time while building it.
-        </span><span class="kw">let </span>(tx, change_info) = create_tx(graph, chain, keymap, cs_algorithm, address, value)<span class="question-mark">?</span>;
-
-        <span class="kw">if let </span><span class="prelude-val">Some</span>((index_changeset, (change_keychain, index))) = change_info {
-            <span class="comment">// We must first persist to disk the fact that we&#39;ve got a new address from the
-            // change keychain so future scans will find the tx we&#39;re about to broadcast.
-            // If we&#39;re unable to persist this, then we don&#39;t want to broadcast.
-            </span>{
-                <span class="kw">let </span>db = <span class="kw-2">&amp;mut *</span>db.lock().unwrap();
-                db.stage(C::from((
-                    local_chain::ChangeSet::default(),
-                    indexed_tx_graph::ChangeSet::from(index_changeset),
-                )));
-                db.commit()<span class="question-mark">?</span>;
-            }
-
-            <span class="comment">// We don&#39;t want other callers/threads to use this address while we&#39;re using it
-            // but we also don&#39;t want to scan the tx we just created because it&#39;s not
-            // technically in the blockchain yet.
-            </span>graph.index.mark_used(<span class="kw-2">&amp;</span>change_keychain, index);
-            (tx, <span class="prelude-val">Some</span>((change_keychain, index)))
-        } <span class="kw">else </span>{
-            (tx, <span class="prelude-val">None</span>)
-        }
-    };
-
-    <span class="kw">match </span>(broadcast)(<span class="kw-2">&amp;</span>transaction) {
-        <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
-            <span class="macro">println!</span>(<span class="string">&quot;Broadcasted Tx : {}&quot;</span>, transaction.txid());
-
-            <span class="kw">let </span>keychain_changeset = graph.lock().unwrap().insert_tx(<span class="kw-2">&amp;</span>transaction, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>);
-
-            <span class="comment">// We know the tx is at least unconfirmed now. Note if persisting here fails,
-            // it&#39;s not a big deal since we can always find it again form
-            // blockchain.
-            </span>db.lock().unwrap().stage(C::from((
-                local_chain::ChangeSet::default(),
-                keychain_changeset,
-            )));
-            <span class="prelude-val">Ok</span>(())
-        }
-        <span class="prelude-val">Err</span>(e) =&gt; {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>((keychain, index)) = change_index {
-                <span class="comment">// We failed to broadcast, so allow our change address to be used in the future
-                </span>graph.lock().unwrap().index.unmark_used(<span class="kw-2">&amp;</span>keychain, index);
-            }
-            <span class="prelude-val">Err</span>(e)
-        }
-    }
-}
-
-<span class="attr">#[allow(clippy::type_complexity)]
-</span><span class="kw">pub fn </span>create_tx&lt;A: Anchor, O: ChainOracle&gt;(
+<span class="kw">pub fn </span>create_tx&lt;A: Anchor, O: ChainOracle&gt;(
     graph: <span class="kw-2">&amp;mut </span>KeychainTxGraph&lt;A&gt;,
     chain: <span class="kw-2">&amp;</span>O,
     keymap: <span class="kw-2">&amp;</span>HashMap&lt;DescriptorPublicKey, DescriptorSecretKey&gt;,
     cs_algorithm: CoinSelectionAlgo,
     address: Address,
     value: u64,
-) -&gt; anyhow::Result&lt;(
-    Transaction,
-    <span class="prelude-ty">Option</span>&lt;(keychain::ChangeSet&lt;Keychain&gt;, (Keychain, u32))&gt;,
-)&gt;
+) -&gt; anyhow::Result&lt;(Transaction, <span class="prelude-ty">Option</span>&lt;CreateTxChange&gt;)&gt;
 <span class="kw">where
     </span>O::Error: std::error::Error + Send + Sync + <span class="lifetime">&#39;static</span>,
 {
@@ -1283,10 +1039,8 @@
         version: <span class="number">0x02</span>,
         <span class="comment">// because the temporary planning module does not support timelocks, we can use the chain
         // tip as the `lock_time` for anti-fee-sniping purposes
-        </span>lock_time: chain
-            .get_chain_tip()<span class="question-mark">?
-            </span>.and_then(|block_id| absolute::LockTime::from_height(block_id.height).ok())
-            .unwrap_or(absolute::LockTime::ZERO),
+        </span>lock_time: absolute::LockTime::from_height(chain.get_chain_tip()<span class="question-mark">?</span>.height)
+            .expect(<span class="string">&quot;invalid height&quot;</span>),
         input: selected_txos
             .iter()
             .map(|(<span class="kw">_</span>, utxo)| TxIn {
@@ -1358,7 +1112,11 @@
     }
 
     <span class="kw">let </span>change_info = <span class="kw">if </span>selection_meta.drain_value.is_some() {
-        <span class="prelude-val">Some</span>((changeset, (internal_keychain, change_index)))
+        <span class="prelude-val">Some</span>(CreateTxChange {
+            index_changeset: changeset,
+            change_keychain: internal_keychain,
+            index: change_index,
+        })
     } <span class="kw">else </span>{
         <span class="prelude-val">None
     </span>};
@@ -1366,46 +1124,45 @@
     <span class="prelude-val">Ok</span>((transaction, change_info))
 }
 
-<span class="attr">#[allow(clippy::type_complexity)]
-</span><span class="kw">pub fn </span>planned_utxos&lt;A: Anchor, O: ChainOracle, K: Clone + bdk_tmp_plan::CanDerive&gt;(
+<span class="comment">// Alias the elements of `Result` of `planned_utxos`
+</span><span class="kw">pub type </span>PlannedUtxo&lt;K, A&gt; = (bdk_tmp_plan::Plan&lt;K&gt;, FullTxOut&lt;A&gt;);
+
+<span class="kw">pub fn </span>planned_utxos&lt;A: Anchor, O: ChainOracle, K: Clone + bdk_tmp_plan::CanDerive&gt;(
     graph: <span class="kw-2">&amp;</span>KeychainTxGraph&lt;A&gt;,
     chain: <span class="kw-2">&amp;</span>O,
     assets: <span class="kw-2">&amp;</span>bdk_tmp_plan::Assets&lt;K&gt;,
-) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(bdk_tmp_plan::Plan&lt;K&gt;, FullTxOut&lt;A&gt;)&gt;, O::Error&gt; {
-    <span class="kw">let </span>chain_tip = chain.get_chain_tip()<span class="question-mark">?</span>.unwrap_or_default();
+) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;PlannedUtxo&lt;K, A&gt;&gt;, O::Error&gt; {
+    <span class="kw">let </span>chain_tip = chain.get_chain_tip()<span class="question-mark">?</span>;
     <span class="kw">let </span>outpoints = graph.index.outpoints().iter().cloned();
     graph
         .graph()
         .try_filter_chain_unspents(chain, chain_tip, outpoints)
-        .filter_map(
-            <span class="attr">#[allow(clippy::type_complexity)]
-            </span>|r| -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;(bdk_tmp_plan::Plan&lt;K&gt;, FullTxOut&lt;A&gt;), <span class="kw">_</span>&gt;&gt; {
-                <span class="kw">let </span>(k, i, full_txo) = <span class="kw">match </span>r {
-                    <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(err)),
-                    <span class="prelude-val">Ok</span>(((k, i), full_txo)) =&gt; (k, i, full_txo),
-                };
-                <span class="kw">let </span>desc = graph
-                    .index
-                    .keychains()
-                    .get(<span class="kw-2">&amp;</span>k)
-                    .expect(<span class="string">&quot;keychain must exist&quot;</span>)
-                    .at_derivation_index(i)
-                    .expect(<span class="string">&quot;i can&#39;t be hardened&quot;</span>);
-                <span class="kw">let </span>plan = bdk_tmp_plan::plan_satisfaction(<span class="kw-2">&amp;</span>desc, assets)<span class="question-mark">?</span>;
-                <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>((plan, full_txo)))
-            },
-        )
+        .filter_map(|r| -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;PlannedUtxo&lt;K, A&gt;, <span class="kw">_</span>&gt;&gt; {
+            <span class="kw">let </span>(k, i, full_txo) = <span class="kw">match </span>r {
+                <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(err)),
+                <span class="prelude-val">Ok</span>(((k, i), full_txo)) =&gt; (k, i, full_txo),
+            };
+            <span class="kw">let </span>desc = graph
+                .index
+                .keychains()
+                .get(<span class="kw-2">&amp;</span>k)
+                .expect(<span class="string">&quot;keychain must exist&quot;</span>)
+                .at_derivation_index(i)
+                .expect(<span class="string">&quot;i can&#39;t be hardened&quot;</span>);
+            <span class="kw">let </span>plan = bdk_tmp_plan::plan_satisfaction(<span class="kw-2">&amp;</span>desc, assets)<span class="question-mark">?</span>;
+            <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>((plan, full_txo)))
+        })
         .collect()
 }
 
-<span class="kw">pub fn </span>handle_commands&lt;S: clap::Subcommand, A: Anchor, O: ChainOracle, C&gt;(
+<span class="kw">pub fn </span>handle_commands&lt;CS: clap::Subcommand, S: clap::Args, A: Anchor, O: ChainOracle, C&gt;(
     graph: <span class="kw-2">&amp;</span>Mutex&lt;KeychainTxGraph&lt;A&gt;&gt;,
     db: <span class="kw-2">&amp;</span>Mutex&lt;Database&lt;C&gt;&gt;,
     chain: <span class="kw-2">&amp;</span>Mutex&lt;O&gt;,
     keymap: <span class="kw-2">&amp;</span>HashMap&lt;DescriptorPublicKey, DescriptorSecretKey&gt;,
     network: Network,
-    broadcast: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;</span>Transaction) -&gt; anyhow::Result&lt;()&gt;,
-    cmd: Commands&lt;S&gt;,
+    broadcast: <span class="kw">impl </span>FnOnce(S, <span class="kw-2">&amp;</span>Transaction) -&gt; anyhow::Result&lt;()&gt;,
+    cmd: Commands&lt;CS, S&gt;,
 ) -&gt; anyhow::Result&lt;()&gt;
 <span class="kw">where
     </span>O::Error: std::error::Error + Send + Sync + <span class="lifetime">&#39;static</span>,
@@ -1415,57 +1172,236 @@
         Commands::ChainSpecific(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;example code should handle this!&quot;</span>),
         Commands::Address { addr_cmd } =&gt; {
             <span class="kw">let </span>graph = <span class="kw-2">&amp;mut *</span>graph.lock().unwrap();
-            run_address_cmd(graph, db, network, addr_cmd)
+            <span class="kw">let </span>index = <span class="kw-2">&amp;mut </span>graph.index;
+
+            <span class="kw">match </span>addr_cmd {
+                AddressCmd::Next | AddressCmd::New =&gt; {
+                    <span class="kw">let </span>spk_chooser = <span class="kw">match </span>addr_cmd {
+                        AddressCmd::Next =&gt; KeychainTxOutIndex::next_unused_spk,
+                        AddressCmd::New =&gt; KeychainTxOutIndex::reveal_next_spk,
+                        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;only these two variants exist in match arm&quot;</span>),
+                    };
+
+                    <span class="kw">let </span>((spk_i, spk), index_changeset) = spk_chooser(index, <span class="kw-2">&amp;</span>Keychain::External);
+                    <span class="kw">let </span>db = <span class="kw-2">&amp;mut *</span>db.lock().unwrap();
+                    db.stage_and_commit(C::from((
+                        local_chain::ChangeSet::default(),
+                        indexed_tx_graph::ChangeSet::from(index_changeset),
+                    )))<span class="question-mark">?</span>;
+                    <span class="kw">let </span>addr =
+                        Address::from_script(spk, network).context(<span class="string">&quot;failed to derive address&quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">println!</span>(<span class="string">&quot;[address @ {}] {}&quot;</span>, spk_i, addr);
+                    <span class="prelude-val">Ok</span>(())
+                }
+                AddressCmd::Index =&gt; {
+                    <span class="kw">for </span>(keychain, derivation_index) <span class="kw">in </span>index.last_revealed_indices() {
+                        <span class="macro">println!</span>(<span class="string">&quot;{:?}: {}&quot;</span>, keychain, derivation_index);
+                    }
+                    <span class="prelude-val">Ok</span>(())
+                }
+                AddressCmd::List { change } =&gt; {
+                    <span class="kw">let </span>target_keychain = <span class="kw">match </span>change {
+                        <span class="bool-val">true </span>=&gt; Keychain::Internal,
+                        <span class="bool-val">false </span>=&gt; Keychain::External,
+                    };
+                    <span class="kw">for </span>(spk_i, spk) <span class="kw">in </span>index.revealed_keychain_spks(<span class="kw-2">&amp;</span>target_keychain) {
+                        <span class="kw">let </span>address = Address::from_script(spk, network)
+                            .expect(<span class="string">&quot;should always be able to derive address&quot;</span>);
+                        <span class="macro">println!</span>(
+                            <span class="string">&quot;{:?} {} used:{}&quot;</span>,
+                            spk_i,
+                            address,
+                            index.is_used(target_keychain, spk_i)
+                        );
+                    }
+                    <span class="prelude-val">Ok</span>(())
+                }
+            }
         }
         Commands::Balance =&gt; {
             <span class="kw">let </span>graph = <span class="kw-2">&amp;*</span>graph.lock().unwrap();
             <span class="kw">let </span>chain = <span class="kw-2">&amp;*</span>chain.lock().unwrap();
-            run_balance_cmd(graph, chain).map_err(anyhow::Error::from)
+            <span class="kw">fn </span>print_balances&lt;<span class="lifetime">&#39;a</span>&gt;(
+                title_str: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
+                items: <span class="kw">impl </span>IntoIterator&lt;Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, u64)&gt;,
+            ) {
+                <span class="macro">println!</span>(<span class="string">&quot;{}:&quot;</span>, title_str);
+                <span class="kw">for </span>(name, amount) <span class="kw">in </span>items.into_iter() {
+                    <span class="macro">println!</span>(<span class="string">&quot;    {:&lt;10} {:&gt;12} sats&quot;</span>, name, amount)
+                }
+            }
+
+            <span class="kw">let </span>balance = graph.graph().try_balance(
+                chain,
+                chain.get_chain_tip()<span class="question-mark">?</span>,
+                graph.index.outpoints().iter().cloned(),
+                |(k, <span class="kw">_</span>), <span class="kw">_</span>| k == <span class="kw-2">&amp;</span>Keychain::Internal,
+            )<span class="question-mark">?</span>;
+
+            <span class="kw">let </span>confirmed_total = balance.confirmed + balance.immature;
+            <span class="kw">let </span>unconfirmed_total = balance.untrusted_pending + balance.trusted_pending;
+
+            print_balances(
+                <span class="string">&quot;confirmed&quot;</span>,
+                [
+                    (<span class="string">&quot;total&quot;</span>, confirmed_total),
+                    (<span class="string">&quot;spendable&quot;</span>, balance.confirmed),
+                    (<span class="string">&quot;immature&quot;</span>, balance.immature),
+                ],
+            );
+            print_balances(
+                <span class="string">&quot;unconfirmed&quot;</span>,
+                [
+                    (<span class="string">&quot;total&quot;</span>, unconfirmed_total),
+                    (<span class="string">&quot;trusted&quot;</span>, balance.trusted_pending),
+                    (<span class="string">&quot;untrusted&quot;</span>, balance.untrusted_pending),
+                ],
+            );
+
+            <span class="prelude-val">Ok</span>(())
         }
         Commands::TxOut { txout_cmd } =&gt; {
             <span class="kw">let </span>graph = <span class="kw-2">&amp;*</span>graph.lock().unwrap();
             <span class="kw">let </span>chain = <span class="kw-2">&amp;*</span>chain.lock().unwrap();
-            run_txo_cmd(graph, chain, network, txout_cmd)
+            <span class="kw">let </span>chain_tip = chain.get_chain_tip()<span class="question-mark">?</span>;
+            <span class="kw">let </span>outpoints = graph.index.outpoints().iter().cloned();
+
+            <span class="kw">match </span>txout_cmd {
+                TxOutCmd::List {
+                    spent,
+                    unspent,
+                    confirmed,
+                    unconfirmed,
+                } =&gt; {
+                    <span class="kw">let </span>txouts = graph
+                        .graph()
+                        .try_filter_chain_txouts(chain, chain_tip, outpoints)
+                        .filter(|r| <span class="kw">match </span>r {
+                            <span class="prelude-val">Ok</span>((<span class="kw">_</span>, full_txo)) =&gt; <span class="kw">match </span>(spent, unspent) {
+                                (<span class="bool-val">true</span>, <span class="bool-val">false</span>) =&gt; full_txo.spent_by.is_some(),
+                                (<span class="bool-val">false</span>, <span class="bool-val">true</span>) =&gt; full_txo.spent_by.is_none(),
+                                <span class="kw">_ </span>=&gt; <span class="bool-val">true</span>,
+                            },
+                            <span class="comment">// always keep errored items
+                            </span><span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
+                        })
+                        .filter(|r| <span class="kw">match </span>r {
+                            <span class="prelude-val">Ok</span>((<span class="kw">_</span>, full_txo)) =&gt; <span class="kw">match </span>(confirmed, unconfirmed) {
+                                (<span class="bool-val">true</span>, <span class="bool-val">false</span>) =&gt; full_txo.chain_position.is_confirmed(),
+                                (<span class="bool-val">false</span>, <span class="bool-val">true</span>) =&gt; !full_txo.chain_position.is_confirmed(),
+                                <span class="kw">_ </span>=&gt; <span class="bool-val">true</span>,
+                            },
+                            <span class="comment">// always keep errored items
+                            </span><span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
+                        })
+                        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>;
+
+                    <span class="kw">for </span>(spk_i, full_txo) <span class="kw">in </span>txouts {
+                        <span class="kw">let </span>addr = Address::from_script(<span class="kw-2">&amp;</span>full_txo.txout.script_pubkey, network)<span class="question-mark">?</span>;
+                        <span class="macro">println!</span>(
+                            <span class="string">&quot;{:?} {} {} {} spent:{:?}&quot;</span>,
+                            spk_i, full_txo.txout.value, full_txo.outpoint, addr, full_txo.spent_by
+                        )
+                    }
+                    <span class="prelude-val">Ok</span>(())
+                }
+            }
         }
         Commands::Send {
             value,
             address,
             coin_select,
+            chain_specific,
         } =&gt; {
             <span class="kw">let </span>chain = <span class="kw-2">&amp;*</span>chain.lock().unwrap();
             <span class="kw">let </span>address = address.require_network(network)<span class="question-mark">?</span>;
-            run_send_cmd(
-                graph,
-                db,
-                chain,
-                keymap,
-                coin_select,
-                address,
-                value,
-                broadcast,
-            )
+            <span class="kw">let </span>(transaction, change_index) = {
+                <span class="kw">let </span>graph = <span class="kw-2">&amp;mut *</span>graph.lock().unwrap();
+                <span class="comment">// take mutable ref to construct tx -- it is only open for a short time while building it.
+                </span><span class="kw">let </span>(tx, change_info) =
+                    create_tx(graph, chain, keymap, coin_select, address, value)<span class="question-mark">?</span>;
+
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(CreateTxChange {
+                    index_changeset,
+                    change_keychain,
+                    index,
+                }) = change_info
+                {
+                    <span class="comment">// We must first persist to disk the fact that we&#39;ve got a new address from the
+                    // change keychain so future scans will find the tx we&#39;re about to broadcast.
+                    // If we&#39;re unable to persist this, then we don&#39;t want to broadcast.
+                    </span>{
+                        <span class="kw">let </span>db = <span class="kw-2">&amp;mut *</span>db.lock().unwrap();
+                        db.stage_and_commit(C::from((
+                            local_chain::ChangeSet::default(),
+                            indexed_tx_graph::ChangeSet::from(index_changeset),
+                        )))<span class="question-mark">?</span>;
+                    }
+
+                    <span class="comment">// We don&#39;t want other callers/threads to use this address while we&#39;re using it
+                    // but we also don&#39;t want to scan the tx we just created because it&#39;s not
+                    // technically in the blockchain yet.
+                    </span>graph.index.mark_used(change_keychain, index);
+                    (tx, <span class="prelude-val">Some</span>((change_keychain, index)))
+                } <span class="kw">else </span>{
+                    (tx, <span class="prelude-val">None</span>)
+                }
+            };
+
+            <span class="kw">match </span>(broadcast)(chain_specific, <span class="kw-2">&amp;</span>transaction) {
+                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
+                    <span class="macro">println!</span>(<span class="string">&quot;Broadcasted Tx : {}&quot;</span>, transaction.txid());
+
+                    <span class="kw">let </span>keychain_changeset = graph.lock().unwrap().insert_tx(transaction);
+
+                    <span class="comment">// We know the tx is at least unconfirmed now. Note if persisting here fails,
+                    // it&#39;s not a big deal since we can always find it again form
+                    // blockchain.
+                    </span>db.lock().unwrap().stage_and_commit(C::from((
+                        local_chain::ChangeSet::default(),
+                        keychain_changeset,
+                    )))<span class="question-mark">?</span>;
+                    <span class="prelude-val">Ok</span>(())
+                }
+                <span class="prelude-val">Err</span>(e) =&gt; {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>((keychain, index)) = change_index {
+                        <span class="comment">// We failed to broadcast, so allow our change address to be used in the future
+                        </span>graph.lock().unwrap().index.unmark_used(keychain, index);
+                    }
+                    <span class="prelude-val">Err</span>(e)
+                }
+            }
         }
     }
 }
 
-<span class="attr">#[allow(clippy::type_complexity)]
-</span><span class="kw">pub fn </span>init&lt;<span class="lifetime">&#39;m</span>, S: clap::Subcommand, C&gt;(
-    db_magic: <span class="kw-2">&amp;</span><span class="lifetime">&#39;m </span>[u8],
+<span class="doccomment">/// The initial state returned by [`init`].
+</span><span class="kw">pub struct </span>Init&lt;CS: clap::Subcommand, S: clap::Args, C&gt; {
+    <span class="doccomment">/// Arguments parsed by the cli.
+    </span><span class="kw">pub </span>args: Args&lt;CS, S&gt;,
+    <span class="doccomment">/// Descriptor keymap.
+    </span><span class="kw">pub </span>keymap: KeyMap,
+    <span class="doccomment">/// Keychain-txout index.
+    </span><span class="kw">pub </span>index: KeychainTxOutIndex&lt;Keychain&gt;,
+    <span class="doccomment">/// Persistence backend.
+    </span><span class="kw">pub </span>db: Mutex&lt;Database&lt;C&gt;&gt;,
+    <span class="doccomment">/// Initial changeset.
+    </span><span class="kw">pub </span>init_changeset: C,
+}
+
+<span class="doccomment">/// Parses command line arguments and initializes all components, creating
+/// a file store with the given parameters, or loading one if it exists.
+</span><span class="kw">pub fn </span>init&lt;CS: clap::Subcommand, S: clap::Args, C&gt;(
+    db_magic: <span class="kw-2">&amp;</span>[u8],
     db_default_path: <span class="kw-2">&amp;</span>str,
-) -&gt; anyhow::Result&lt;(
-    Args&lt;S&gt;,
-    KeyMap,
-    KeychainTxOutIndex&lt;Keychain&gt;,
-    Mutex&lt;Database&lt;<span class="lifetime">&#39;m</span>, C&gt;&gt;,
-    C,
-)&gt;
+) -&gt; anyhow::Result&lt;Init&lt;CS, S, C&gt;&gt;
 <span class="kw">where
     </span>C: Default + Append + Serialize + DeserializeOwned,
 {
     <span class="kw">if </span>std::env::var(<span class="string">&quot;BDK_DB_PATH&quot;</span>).is_err() {
         std::env::set_var(<span class="string">&quot;BDK_DB_PATH&quot;</span>, db_default_path);
     }
-    <span class="kw">let </span>args = Args::&lt;S&gt;::parse();
+    <span class="kw">let </span>args = Args::&lt;CS, S&gt;::parse();
     <span class="kw">let </span>secp = Secp256k1::default();
 
     <span class="kw">let </span><span class="kw-2">mut </span>index = KeychainTxOutIndex::&lt;Keychain&gt;::default();
@@ -1484,21 +1420,21 @@
         index.add_keychain(Keychain::Internal, internal_descriptor);
     }
 
-    <span class="kw">let </span><span class="kw-2">mut </span>db_backend = <span class="kw">match </span>Store::&lt;<span class="lifetime">&#39;m</span>, C&gt;::new_from_path(db_magic, <span class="kw-2">&amp;</span>args.db_path) {
+    <span class="kw">let </span><span class="kw-2">mut </span>db_backend = <span class="kw">match </span>Store::&lt;C&gt;::open_or_create_new(db_magic, <span class="kw-2">&amp;</span>args.db_path) {
         <span class="prelude-val">Ok</span>(db_backend) =&gt; db_backend,
         <span class="comment">// we cannot return `err` directly as it has lifetime `&#39;m`
         </span><span class="prelude-val">Err</span>(err) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;failed to init db backend: {:?}&quot;</span>, err)),
     };
 
-    <span class="kw">let </span>init_changeset = db_backend.load_from_persistence()<span class="question-mark">?</span>;
+    <span class="kw">let </span>init_changeset = db_backend.load_from_persistence()<span class="question-mark">?</span>.unwrap_or_default();
 
-    <span class="prelude-val">Ok</span>((
+    <span class="prelude-val">Ok</span>(Init {
         args,
         keymap,
         index,
-        Mutex::new(Database::new(db_backend)),
+        db: Mutex::new(Database::new(db_backend)),
         init_changeset,
-    ))
+    })
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="example_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (0f529f0f4 2022-12-13)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

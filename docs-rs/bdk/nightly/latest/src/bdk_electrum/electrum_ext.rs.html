@@ -544,11 +544,24 @@
 <a href="#544" id="544">544</a>
 <a href="#545" id="545">545</a>
 <a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
 </pre><pre class="rust"><code><span class="kw">use </span>bdk_chain::{
     bitcoin::{OutPoint, ScriptBuf, Transaction, Txid},
     local_chain::{<span class="self">self</span>, CheckPoint},
     tx_graph::{<span class="self">self</span>, TxGraph},
-    Anchor, BlockId, ConfirmationHeightAnchor, ConfirmationTimeAnchor,
+    Anchor, BlockId, ConfirmationHeightAnchor, ConfirmationTimeHeightAnchor,
 };
 <span class="kw">use </span>electrum_client::{Client, ElectrumApi, Error, HeaderNotification};
 <span class="kw">use </span>std::{
@@ -557,8 +570,8 @@
     str::FromStr,
 };
 
-<span class="doccomment">/// We assume that a block of this depth and deeper cannot be reorged.
-</span><span class="kw">const </span>ASSUME_FINAL_DEPTH: u32 = <span class="number">8</span>;
+<span class="doccomment">/// We include a chain suffix of a certain length for the purpose of robustness.
+</span><span class="kw">const </span>CHAIN_SUFFIX_LENGTH: u32 = <span class="number">8</span>;
 
 <span class="doccomment">/// Represents updates fetched from an Electrum server, but excludes full transactions.
 ///
@@ -602,18 +615,20 @@
         <span class="prelude-val">Ok</span>(graph)
     }
 
-    <span class="doccomment">/// Finalizes [`RelevantTxids`] with `new_txs` and anchors of type
-    /// [`ConfirmationTimeAnchor`].
+    <span class="doccomment">/// Finalizes the update by fetching `missing` txids from the `client`, where the
+    /// resulting [`TxGraph`] has anchors of type [`ConfirmationTimeHeightAnchor`].
+    ///
+    /// Refer to [`RelevantTxids`] for more details.
     ///
     /// **Note:** The confirmation time might not be precisely correct if there has been a reorg.
-    /// Electrum&#39;s API intends that we use the merkle proof API, we should change `bdk_electrum` to
-    /// use it.
+    </span><span class="comment">// Electrum&#39;s API intends that we use the merkle proof API, we should change `bdk_electrum` to
+    // use it.
     </span><span class="kw">pub fn </span>into_confirmation_time_tx_graph(
         <span class="self">self</span>,
         client: <span class="kw-2">&amp;</span>Client,
         seen_at: <span class="prelude-ty">Option</span>&lt;u64&gt;,
         missing: Vec&lt;Txid&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;TxGraph&lt;ConfirmationTimeAnchor&gt;, Error&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;TxGraph&lt;ConfirmationTimeHeightAnchor&gt;, Error&gt; {
         <span class="kw">let </span>graph = <span class="self">self</span>.into_tx_graph(client, seen_at, missing)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>relevant_heights = {
@@ -649,7 +664,7 @@
                     .map(|(height_anchor, txid)| {
                         <span class="kw">let </span>confirmation_height = height_anchor.confirmation_height;
                         <span class="kw">let </span>confirmation_time = height_to_time[<span class="kw-2">&amp;</span>confirmation_height];
-                        <span class="kw">let </span>time_anchor = ConfirmationTimeAnchor {
+                        <span class="kw">let </span>time_anchor = ConfirmationTimeHeightAnchor {
                             anchor_block: height_anchor.anchor_block,
                             confirmation_height,
                             confirmation_time,
@@ -680,75 +695,62 @@
 
 <span class="doccomment">/// Trait to extend [`Client`] functionality.
 </span><span class="kw">pub trait </span>ElectrumExt {
-    <span class="doccomment">/// Scan the blockchain (via electrum) for the data specified and returns updates for
-    /// [`bdk_chain`] data structures.
+    <span class="doccomment">/// Full scan the keychain scripts specified with the blockchain (via an Electrum client) and
+    /// returns updates for [`bdk_chain`] data structures.
     ///
     /// - `prev_tip`: the most recent blockchain tip present locally
     /// - `keychain_spks`: keychains that we want to scan transactions for
-    /// - `txids`: transactions for which we want updated [`Anchor`]s
-    /// - `outpoints`: transactions associated with these outpoints (residing, spending) that we
-    ///     want to included in the update
     ///
-    /// The scan for each keychain stops after a gap of `stop_gap` script pubkeys with no associated
+    /// The full scan for each keychain stops after a gap of `stop_gap` script pubkeys with no associated
     /// transactions. `batch_size` specifies the max number of script pubkeys to request for in a
     /// single batch request.
-    </span><span class="kw">fn </span>scan&lt;K: Ord + Clone&gt;(
+    </span><span class="kw">fn </span>full_scan&lt;K: Ord + Clone&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        prev_tip: <span class="prelude-ty">Option</span>&lt;CheckPoint&gt;,
+        prev_tip: CheckPoint,
         keychain_spks: BTreeMap&lt;K, <span class="kw">impl </span>IntoIterator&lt;Item = (u32, ScriptBuf)&gt;&gt;,
-        txids: <span class="kw">impl </span>IntoIterator&lt;Item = Txid&gt;,
-        outpoints: <span class="kw">impl </span>IntoIterator&lt;Item = OutPoint&gt;,
         stop_gap: usize,
         batch_size: usize,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(ElectrumUpdate, BTreeMap&lt;K, u32&gt;), Error&gt;;
 
-    <span class="doccomment">/// Convenience method to call [`scan`] without requiring a keychain.
+    <span class="doccomment">/// Sync a set of scripts with the blockchain (via an Electrum client) for the data specified
+    /// and returns updates for [`bdk_chain`] data structures.
     ///
-    /// [`scan`]: ElectrumExt::scan
-    </span><span class="kw">fn </span>scan_without_keychain(
+    /// - `prev_tip`: the most recent blockchain tip present locally
+    /// - `misc_spks`: an iterator of scripts we want to sync transactions for
+    /// - `txids`: transactions for which we want updated [`Anchor`]s
+    /// - `outpoints`: transactions associated with these outpoints (residing, spending) that we
+    ///     want to include in the update
+    ///
+    /// `batch_size` specifies the max number of script pubkeys to request for in a single batch
+    /// request.
+    ///
+    /// If the scripts to sync are unknown, such as when restoring or importing a keychain that
+    /// may include scripts that have been used, use [`full_scan`] with the keychain.
+    ///
+    /// [`full_scan`]: ElectrumExt::full_scan
+    </span><span class="kw">fn </span>sync(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        prev_tip: <span class="prelude-ty">Option</span>&lt;CheckPoint&gt;,
+        prev_tip: CheckPoint,
         misc_spks: <span class="kw">impl </span>IntoIterator&lt;Item = ScriptBuf&gt;,
         txids: <span class="kw">impl </span>IntoIterator&lt;Item = Txid&gt;,
         outpoints: <span class="kw">impl </span>IntoIterator&lt;Item = OutPoint&gt;,
         batch_size: usize,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;ElectrumUpdate, Error&gt; {
-        <span class="kw">let </span>spk_iter = misc_spks
-            .into_iter()
-            .enumerate()
-            .map(|(i, spk)| (i <span class="kw">as </span>u32, spk));
-
-        <span class="kw">let </span>(electrum_update, <span class="kw">_</span>) = <span class="self">self</span>.scan(
-            prev_tip,
-            [((), spk_iter)].into(),
-            txids,
-            outpoints,
-            usize::MAX,
-            batch_size,
-        )<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(electrum_update)
-    }
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;ElectrumUpdate, Error&gt;;
 }
 
-<span class="kw">impl </span>ElectrumExt <span class="kw">for </span>Client {
-    <span class="kw">fn </span>scan&lt;K: Ord + Clone&gt;(
+<span class="kw">impl</span>&lt;A: ElectrumApi&gt; ElectrumExt <span class="kw">for </span>A {
+    <span class="kw">fn </span>full_scan&lt;K: Ord + Clone&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        prev_tip: <span class="prelude-ty">Option</span>&lt;CheckPoint&gt;,
+        prev_tip: CheckPoint,
         keychain_spks: BTreeMap&lt;K, <span class="kw">impl </span>IntoIterator&lt;Item = (u32, ScriptBuf)&gt;&gt;,
-        txids: <span class="kw">impl </span>IntoIterator&lt;Item = Txid&gt;,
-        outpoints: <span class="kw">impl </span>IntoIterator&lt;Item = OutPoint&gt;,
         stop_gap: usize,
         batch_size: usize,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(ElectrumUpdate, BTreeMap&lt;K, u32&gt;), Error&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>request_spks = keychain_spks
             .into_iter()
-            .map(|(k, s)| (k, s.into_iter()))
+            .map(|(k, s)| (k.clone(), s.into_iter()))
             .collect::&lt;BTreeMap&lt;K, <span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span><span class="kw-2">mut </span>scanned_spks = BTreeMap::&lt;(K, u32), (ScriptBuf, bool)&gt;::new();
-
-        <span class="kw">let </span>txids = txids.into_iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        <span class="kw">let </span>outpoints = outpoints.into_iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
         <span class="kw">let </span>(electrum_update, keychain_update) = <span class="kw">loop </span>{
             <span class="kw">let </span>(tip, <span class="kw">_</span>) = construct_update_tip(<span class="self">self</span>, prev_tip.clone())<span class="question-mark">?</span>;
@@ -788,15 +790,6 @@
                 }
             }
 
-            populate_with_txids(<span class="self">self</span>, <span class="kw-2">&amp;</span>cps, <span class="kw-2">&amp;mut </span>relevant_txids, <span class="kw-2">&amp;mut </span>txids.iter().cloned())<span class="question-mark">?</span>;
-
-            <span class="kw">let </span>_txs = populate_with_outpoints(
-                <span class="self">self</span>,
-                <span class="kw-2">&amp;</span>cps,
-                <span class="kw-2">&amp;mut </span>relevant_txids,
-                <span class="kw-2">&amp;mut </span>outpoints.iter().cloned(),
-            )<span class="question-mark">?</span>;
-
             <span class="comment">// check for reorgs during scan process
             </span><span class="kw">let </span>server_blockhash = <span class="self">self</span>.block_header(tip.height() <span class="kw">as </span>usize)<span class="question-mark">?</span>.block_hash();
             <span class="kw">if </span>tip.hash() != server_blockhash {
@@ -830,30 +823,63 @@
 
         <span class="prelude-val">Ok</span>((electrum_update, keychain_update))
     }
+
+    <span class="kw">fn </span>sync(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        prev_tip: CheckPoint,
+        misc_spks: <span class="kw">impl </span>IntoIterator&lt;Item = ScriptBuf&gt;,
+        txids: <span class="kw">impl </span>IntoIterator&lt;Item = Txid&gt;,
+        outpoints: <span class="kw">impl </span>IntoIterator&lt;Item = OutPoint&gt;,
+        batch_size: usize,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;ElectrumUpdate, Error&gt; {
+        <span class="kw">let </span>spk_iter = misc_spks
+            .into_iter()
+            .enumerate()
+            .map(|(i, spk)| (i <span class="kw">as </span>u32, spk));
+
+        <span class="kw">let </span>(<span class="kw-2">mut </span>electrum_update, <span class="kw">_</span>) = <span class="self">self</span>.full_scan(
+            prev_tip.clone(),
+            [((), spk_iter)].into(),
+            usize::MAX,
+            batch_size,
+        )<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>(tip, <span class="kw">_</span>) = construct_update_tip(<span class="self">self</span>, prev_tip)<span class="question-mark">?</span>;
+        <span class="kw">let </span>cps = tip
+            .iter()
+            .take(<span class="number">10</span>)
+            .map(|cp| (cp.height(), cp))
+            .collect::&lt;BTreeMap&lt;u32, CheckPoint&gt;&gt;();
+
+        populate_with_txids(<span class="self">self</span>, <span class="kw-2">&amp;</span>cps, <span class="kw-2">&amp;mut </span>electrum_update.relevant_txids, txids)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>_txs =
+            populate_with_outpoints(<span class="self">self</span>, <span class="kw-2">&amp;</span>cps, <span class="kw-2">&amp;mut </span>electrum_update.relevant_txids, outpoints)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(electrum_update)
+    }
 }
 
 <span class="doccomment">/// Return a [`CheckPoint`] of the latest tip, that connects with `prev_tip`.
 </span><span class="kw">fn </span>construct_update_tip(
-    client: <span class="kw-2">&amp;</span>Client,
-    prev_tip: <span class="prelude-ty">Option</span>&lt;CheckPoint&gt;,
+    client: <span class="kw-2">&amp;</span><span class="kw">impl </span>ElectrumApi,
+    prev_tip: CheckPoint,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(CheckPoint, <span class="prelude-ty">Option</span>&lt;u32&gt;), Error&gt; {
     <span class="kw">let </span>HeaderNotification { height, .. } = client.block_headers_subscribe()<span class="question-mark">?</span>;
     <span class="kw">let </span>new_tip_height = height <span class="kw">as </span>u32;
 
     <span class="comment">// If electrum returns a tip height that is lower than our previous tip, then checkpoints do
     // not need updating. We just return the previous tip and use that as the point of agreement.
-    </span><span class="kw">if let </span><span class="prelude-val">Some</span>(prev_tip) = prev_tip.as_ref() {
-        <span class="kw">if </span>new_tip_height &lt; prev_tip.height() {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>((prev_tip.clone(), <span class="prelude-val">Some</span>(prev_tip.height())));
-        }
+    </span><span class="kw">if </span>new_tip_height &lt; prev_tip.height() {
+        <span class="kw">return </span><span class="prelude-val">Ok</span>((prev_tip.clone(), <span class="prelude-val">Some</span>(prev_tip.height())));
     }
 
-    <span class="comment">// Atomically fetch the latest `ASSUME_FINAL_DEPTH` count of blocks from Electrum. We use this
+    <span class="comment">// Atomically fetch the latest `CHAIN_SUFFIX_LENGTH` count of blocks from Electrum. We use this
     // to construct our checkpoint update.
     </span><span class="kw">let </span><span class="kw-2">mut </span>new_blocks = {
-        <span class="kw">let </span>start_height = new_tip_height.saturating_sub(ASSUME_FINAL_DEPTH);
+        <span class="kw">let </span>start_height = new_tip_height.saturating_sub(CHAIN_SUFFIX_LENGTH - <span class="number">1</span>);
         <span class="kw">let </span>hashes = client
-            .block_headers(start_height <span class="kw">as _</span>, ASSUME_FINAL_DEPTH <span class="kw">as _</span>)<span class="question-mark">?
+            .block_headers(start_height <span class="kw">as _</span>, CHAIN_SUFFIX_LENGTH <span class="kw">as _</span>)<span class="question-mark">?
             </span>.headers
             .into_iter()
             .map(|h| h.block_hash());
@@ -863,7 +889,7 @@
     <span class="comment">// Find the &quot;point of agreement&quot; (if any).
     </span><span class="kw">let </span>agreement_cp = {
         <span class="kw">let </span><span class="kw-2">mut </span>agreement_cp = <span class="prelude-ty">Option</span>::&lt;CheckPoint&gt;::None;
-        <span class="kw">for </span>cp <span class="kw">in </span>prev_tip.iter().flat_map(CheckPoint::iter) {
+        <span class="kw">for </span>cp <span class="kw">in </span>prev_tip.iter() {
             <span class="kw">let </span>cp_block = cp.block_id();
             <span class="kw">let </span>hash = <span class="kw">match </span>new_blocks.get(<span class="kw-2">&amp;</span>cp_block.height) {
                 <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>hash) =&gt; hash,
@@ -950,10 +976,10 @@
 }
 
 <span class="kw">fn </span>populate_with_outpoints(
-    client: <span class="kw-2">&amp;</span>Client,
+    client: <span class="kw-2">&amp;</span><span class="kw">impl </span>ElectrumApi,
     cps: <span class="kw-2">&amp;</span>BTreeMap&lt;u32, CheckPoint&gt;,
     relevant_txids: <span class="kw-2">&amp;mut </span>RelevantTxids,
-    outpoints: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Iterator&lt;Item = OutPoint&gt;,
+    outpoints: <span class="kw">impl </span>IntoIterator&lt;Item = OutPoint&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;HashMap&lt;Txid, Transaction&gt;, Error&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>full_txs = HashMap::new();
     <span class="kw">for </span>outpoint <span class="kw">in </span>outpoints {
@@ -1011,10 +1037,10 @@
 }
 
 <span class="kw">fn </span>populate_with_txids(
-    client: <span class="kw-2">&amp;</span>Client,
+    client: <span class="kw-2">&amp;</span><span class="kw">impl </span>ElectrumApi,
     cps: <span class="kw-2">&amp;</span>BTreeMap&lt;u32, CheckPoint&gt;,
     relevant_txids: <span class="kw-2">&amp;mut </span>RelevantTxids,
-    txids: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Iterator&lt;Item = Txid&gt;,
+    txids: <span class="kw">impl </span>IntoIterator&lt;Item = Txid&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
     <span class="kw">for </span>txid <span class="kw">in </span>txids {
         <span class="kw">let </span>tx = <span class="kw">match </span>client.transaction_get(<span class="kw-2">&amp;</span>txid) {
@@ -1025,7 +1051,7 @@
 
         <span class="kw">let </span>spk = tx
             .output
-            .get(<span class="number">0</span>)
+            .first()
             .map(|txo| <span class="kw-2">&amp;</span>txo.script_pubkey)
             .expect(<span class="string">&quot;tx must have an output&quot;</span>);
 
@@ -1047,7 +1073,7 @@
 }
 
 <span class="kw">fn </span>populate_with_spks&lt;I: Ord + Clone&gt;(
-    client: <span class="kw-2">&amp;</span>Client,
+    client: <span class="kw-2">&amp;</span><span class="kw">impl </span>ElectrumApi,
     cps: <span class="kw-2">&amp;</span>BTreeMap&lt;u32, CheckPoint&gt;,
     relevant_txids: <span class="kw-2">&amp;mut </span>RelevantTxids,
     spks: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Iterator&lt;Item = (I, ScriptBuf)&gt;,

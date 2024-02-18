@@ -1904,8 +1904,6 @@
 <a href="#1903" id="1903">1903</a>
 <a href="#1904" id="1904">1904</a>
 <a href="#1905" id="1905">1905</a>
-<a href="#1906" id="1906">1906</a>
-<a href="#1907" id="1907">1907</a>
 </pre><pre class="rust"><code><span class="comment">// Bitcoin Dev Kit
 // Written in 2020 by Alekos Filini &lt;alekos.filini@gmail.com&gt;
 //
@@ -1941,13 +1939,14 @@
 //! let signers = Arc::new(SignersContainer::build(key_map, &amp;extended_desc, &amp;secp));
 //! let policy = extended_desc.extract_policy(&amp;signers, BuildSatisfaction::None, &amp;secp)?;
 //! println!(&quot;policy: {}&quot;, serde_json::to_string(&amp;policy).unwrap());
-//! # Ok::&lt;(), bdk::Error&gt;(())
+//! # Ok::&lt;(), anyhow::Error&gt;(())
 //! ```
 
 </span><span class="kw">use </span><span class="kw">crate</span>::collections::{BTreeMap, HashSet, VecDeque};
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::vec::Vec;
 <span class="kw">use </span>core::cmp::max;
+
 <span class="kw">use </span>core::fmt;
 
 <span class="kw">use </span>serde::ser::SerializeMap;
@@ -1964,9 +1963,6 @@
 <span class="kw">use </span>miniscript::{
     Descriptor, Miniscript, Satisfier, ScriptContext, SigType, Terminal, ToPublicKey,
 };
-
-<span class="attr">#[allow(unused_imports)]
-</span><span class="kw">use </span>log::{debug, error, info, trace};
 
 <span class="kw">use </span><span class="kw">crate</span>::descriptor::ExtractPolicy;
 <span class="kw">use </span><span class="kw">crate</span>::keys::ExtScriptContext;
@@ -2429,7 +2425,7 @@
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>PolicyError {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::NotEnoughItemsSelected(err) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Not enought items selected: {}&quot;</span>, err),
+            <span class="self">Self</span>::NotEnoughItemsSelected(err) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Not enough items selected: {}&quot;</span>, err),
             <span class="self">Self</span>::IndexOutOfRange(index) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Index out of range: {}&quot;</span>, index),
             <span class="self">Self</span>::AddOnLeaf =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Add on leaf&quot;</span>),
             <span class="self">Self</span>::AddOnPartialComplete =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Add on partial complete&quot;</span>),
