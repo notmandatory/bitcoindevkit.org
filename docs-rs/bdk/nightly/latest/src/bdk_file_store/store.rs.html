@@ -442,30 +442,8 @@
 <a href="#442" id="442">442</a>
 <a href="#443" id="443">443</a>
 <a href="#444" id="444">444</a>
-<a href="#445" id="445">445</a>
-<a href="#446" id="446">446</a>
-<a href="#447" id="447">447</a>
-<a href="#448" id="448">448</a>
-<a href="#449" id="449">449</a>
-<a href="#450" id="450">450</a>
-<a href="#451" id="451">451</a>
-<a href="#452" id="452">452</a>
-<a href="#453" id="453">453</a>
-<a href="#454" id="454">454</a>
-<a href="#455" id="455">455</a>
-<a href="#456" id="456">456</a>
-<a href="#457" id="457">457</a>
-<a href="#458" id="458">458</a>
-<a href="#459" id="459">459</a>
-<a href="#460" id="460">460</a>
-<a href="#461" id="461">461</a>
-<a href="#462" id="462">462</a>
-<a href="#463" id="463">463</a>
-<a href="#464" id="464">464</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{bincode_options, EntryIter, FileError, IterError};
-<span class="kw">use </span>anyhow::anyhow;
-<span class="kw">use </span>bdk_chain::Append;
-<span class="kw">use </span>bdk_persist::PersistBackend;
+<span class="kw">use </span>bdk_core::Merge;
 <span class="kw">use </span>bincode::Options;
 <span class="kw">use </span>std::{
     fmt::{<span class="self">self</span>, Debug},
@@ -476,6 +454,9 @@
 };
 
 <span class="doccomment">/// Persists an append-only list of changesets (`C`) to a single file.
+///
+/// &gt; ⚠ This is a development/testing database. It does not natively support backwards compatible
+/// &gt; BDK version upgrades so should not be used in production.
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>Store&lt;C&gt;
 <span class="kw">where
@@ -486,28 +467,9 @@
     marker: PhantomData&lt;C&gt;,
 }
 
-<span class="kw">impl</span>&lt;C&gt; PersistBackend&lt;C&gt; <span class="kw">for </span>Store&lt;C&gt;
-<span class="kw">where
-    </span>C: Append
-        + serde::Serialize
-        + serde::de::DeserializeOwned
-        + core::marker::Send
-        + core::marker::Sync,
-{
-    <span class="kw">fn </span>write_changes(<span class="kw-2">&amp;mut </span><span class="self">self</span>, changeset: <span class="kw-2">&amp;</span>C) -&gt; anyhow::Result&lt;()&gt; {
-        <span class="self">self</span>.append_changeset(changeset)
-            .map_err(|e| <span class="macro">anyhow!</span>(e).context(<span class="string">"failed to write changes to persistence backend"</span>))
-    }
-
-    <span class="kw">fn </span>load_from_persistence(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; anyhow::Result&lt;<span class="prelude-ty">Option</span>&lt;C&gt;&gt; {
-        <span class="self">self</span>.aggregate_changesets()
-            .map_err(|e| <span class="macro">anyhow!</span>(e.iter_error).context(<span class="string">"error loading from persistence backend"</span>))
-    }
-}
-
 <span class="kw">impl</span>&lt;C&gt; Store&lt;C&gt;
 <span class="kw">where
-    </span>C: Append
+    </span>C: Merge
         + serde::Serialize
         + serde::de::DeserializeOwned
         + core::marker::Send
@@ -632,7 +594,7 @@
                 }
             };
             <span class="kw">match </span><span class="kw-2">&amp;mut </span>changeset {
-                <span class="prelude-val">Some</span>(changeset) =&gt; changeset.append(next_changeset),
+                <span class="prelude-val">Some</span>(changeset) =&gt; changeset.merge(next_changeset),
                 changeset =&gt; <span class="kw-2">*</span>changeset = <span class="prelude-val">Some</span>(next_changeset),
             }
         }
@@ -825,7 +787,6 @@
 
         <span class="kw">for </span>short_write_len <span class="kw">in </span><span class="number">1</span>..last_changeset_bytes.len() - <span class="number">1 </span>{
             <span class="kw">let </span>file_path = temp_dir.path().join(<span class="macro">format!</span>(<span class="string">"{}.dat"</span>, short_write_len));
-            <span class="macro">println!</span>(<span class="string">"Test file: {:?}"</span>, file_path);
 
             <span class="comment">// simulate creating a file, writing data where the last write is incomplete
             </span>{
@@ -850,7 +811,7 @@
                 <span class="macro">assert_eq!</span>(
                     err.changeset,
                     changesets.iter().cloned().reduce(|<span class="kw-2">mut </span>acc, cs| {
-                        Append::append(<span class="kw-2">&amp;mut </span>acc, cs);
+                        Merge::merge(<span class="kw-2">&amp;mut </span>acc, cs);
                         acc
                     }),
                     <span class="string">"should recover all changesets that are written in full"</span>,
@@ -871,7 +832,7 @@
                         .cloned()
                         .chain(core::iter::once(last_changeset.clone()))
                         .reduce(|<span class="kw-2">mut </span>acc, cs| {
-                            Append::append(<span class="kw-2">&amp;mut </span>acc, cs);
+                            Merge::merge(<span class="kw-2">&amp;mut </span>acc, cs);
                             acc
                         }),
                     <span class="string">"should recover all changesets"</span>,
@@ -891,7 +852,6 @@
 
         <span class="kw">for </span>read_count <span class="kw">in </span><span class="number">0</span>..changesets.len() {
             <span class="kw">let </span>file_path = temp_dir.path().join(<span class="macro">format!</span>(<span class="string">"{}.dat"</span>, read_count));
-            <span class="macro">println!</span>(<span class="string">"Test file: {:?}"</span>, file_path);
 
             <span class="comment">// First, we create the file with all the changesets!
             </span><span class="kw">let </span><span class="kw-2">mut </span>db = Store::&lt;TestChangeSet&gt;::create_new(<span class="kw-2">&amp;</span>TEST_MAGIC_BYTES, <span class="kw-2">&amp;</span>file_path).unwrap();
@@ -907,13 +867,13 @@
                 .take(read_count)
                 .map(|r| r.expect(<span class="string">"must read valid changeset"</span>))
                 .fold(TestChangeSet::default(), |<span class="kw-2">mut </span>acc, v| {
-                    Append::append(<span class="kw-2">&amp;mut </span>acc, v);
+                    Merge::merge(<span class="kw-2">&amp;mut </span>acc, v);
                     acc
                 });
             <span class="comment">// We write after a short read.
-            </span>db.write_changes(<span class="kw-2">&amp;</span>last_changeset)
+            </span>db.append_changeset(<span class="kw-2">&amp;</span>last_changeset)
                 .expect(<span class="string">"last write must succeed"</span>);
-            Append::append(<span class="kw-2">&amp;mut </span>exp_aggregation, last_changeset.clone());
+            Merge::merge(<span class="kw-2">&amp;mut </span>exp_aggregation, last_changeset.clone());
             drop(db);
 
             <span class="comment">// We open the file again and check whether aggregate changeset is expected.

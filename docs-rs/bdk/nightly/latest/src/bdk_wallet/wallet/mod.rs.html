@@ -2636,6 +2636,19 @@
 <a href="#2636" id="2636">2636</a>
 <a href="#2637" id="2637">2637</a>
 <a href="#2638" id="2638">2638</a>
+<a href="#2639" id="2639">2639</a>
+<a href="#2640" id="2640">2640</a>
+<a href="#2641" id="2641">2641</a>
+<a href="#2642" id="2642">2642</a>
+<a href="#2643" id="2643">2643</a>
+<a href="#2644" id="2644">2644</a>
+<a href="#2645" id="2645">2645</a>
+<a href="#2646" id="2646">2646</a>
+<a href="#2647" id="2647">2647</a>
+<a href="#2648" id="2648">2648</a>
+<a href="#2649" id="2649">2649</a>
+<a href="#2650" id="2650">2650</a>
+<a href="#2651" id="2651">2651</a>
 </pre></div><pre class="rust"><code><span class="comment">// Bitcoin Dev Kit
 // Written in 2020 by Alekos Filini &lt;alekos.filini@gmail.com&gt;
 //
@@ -2650,65 +2663,83 @@
 </span><span class="doccomment">//! Wallet
 //!
 //! This module defines the [`Wallet`].
-</span><span class="kw">use </span><span class="kw">crate</span>::collections::{BTreeMap, HashMap};
+</span><span class="kw">use crate</span>::{
+    collections::{BTreeMap, HashMap},
+    descriptor::check_wallet_descriptor,
+};
 <span class="kw">use </span>alloc::{
     boxed::Box,
     string::{String, ToString},
     sync::Arc,
     vec::Vec,
 };
-<span class="kw">pub use </span>bdk_chain::keychain::Balance;
+<span class="kw">pub use </span>bdk_chain::Balance;
 <span class="kw">use </span>bdk_chain::{
     indexed_tx_graph,
-    keychain::KeychainTxOutIndex,
+    indexer::keychain_txout::KeychainTxOutIndex,
     local_chain::{
         <span class="self">self</span>, ApplyHeaderError, CannotConnectError, CheckPoint, CheckPointIter, LocalChain,
     },
-    spk_client::{FullScanRequest, FullScanResult, SyncRequest, SyncResult},
-    tx_graph::{CanonicalTx, TxGraph},
-    Append, BlockId, ChainPosition, ConfirmationTime, ConfirmationTimeHeightAnchor, FullTxOut,
-    IndexedTxGraph,
+    spk_client::{
+        FullScanRequest, FullScanRequestBuilder, FullScanResult, SyncRequest, SyncRequestBuilder,
+        SyncResult,
+    },
+    tx_graph::{CanonicalTx, TxGraph, TxNode, TxUpdate},
+    BlockId, ChainPosition, ConfirmationBlockTime, DescriptorExt, FullTxOut, Indexed,
+    IndexedTxGraph, Merge,
 };
-<span class="kw">use </span>bdk_persist::{Persist, PersistBackend};
-<span class="kw">use </span>bitcoin::secp256k1::{All, Secp256k1};
 <span class="kw">use </span>bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 <span class="kw">use </span>bitcoin::{
-    absolute, psbt, Address, Block, FeeRate, Network, OutPoint, Script, ScriptBuf, Sequence,
-    Transaction, TxOut, Txid, Witness,
+    absolute, psbt, Address, Block, FeeRate, Network, OutPoint, ScriptBuf, Sequence, Transaction,
+    TxOut, Txid, Witness,
 };
 <span class="kw">use </span>bitcoin::{consensus::encode::serialize, transaction, BlockHash, Psbt};
 <span class="kw">use </span>bitcoin::{constants::genesis_block, Amount};
+<span class="kw">use </span>bitcoin::{secp256k1::Secp256k1, Weight};
+<span class="kw">use </span>core::cmp::Ordering;
 <span class="kw">use </span>core::fmt;
+<span class="kw">use </span>core::mem;
 <span class="kw">use </span>core::ops::Deref;
+<span class="kw">use </span>rand_core::RngCore;
+
 <span class="kw">use </span>descriptor::error::Error <span class="kw">as </span>DescriptorError;
-<span class="kw">use </span>miniscript::psbt::{PsbtExt, PsbtInputExt, PsbtInputSatisfier};
+<span class="kw">use </span>miniscript::{
+    descriptor::KeyMap,
+    psbt::{PsbtExt, PsbtInputExt, PsbtInputSatisfier},
+};
 
 <span class="kw">use </span>bdk_chain::tx_graph::CalculateFeeError;
 
+<span class="kw">mod </span>changeset;
 <span class="kw">pub mod </span>coin_selection;
 <span class="kw">pub mod </span>export;
+<span class="kw">mod </span>params;
 <span class="kw">pub mod </span>signer;
 <span class="kw">pub mod </span>tx_builder;
+<span class="kw">pub use </span>changeset::<span class="kw-2">*</span>;
+<span class="kw">pub use </span>params::<span class="kw-2">*</span>;
+<span class="kw">mod </span>persisted;
+<span class="kw">pub use </span>persisted::<span class="kw-2">*</span>;
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>utils;
 
 <span class="kw">pub mod </span>error;
 
 <span class="kw">pub use </span>utils::IsDust;
 
-<span class="kw">use </span>coin_selection::DefaultCoinSelectionAlgorithm;
+<span class="kw">use </span>coin_selection::{DefaultCoinSelectionAlgorithm, InsufficientFunds};
 <span class="kw">use </span>signer::{SignOptions, SignerOrdering, SignersContainer, TransactionSigner};
 <span class="kw">use </span>tx_builder::{FeePolicy, TxBuilder, TxParams};
 <span class="kw">use </span>utils::{check_nsequence_rbf, After, Older, SecpCtx};
 
 <span class="kw">use </span><span class="kw">crate</span>::descriptor::policy::BuildSatisfaction;
 <span class="kw">use </span><span class="kw">crate</span>::descriptor::{
-    <span class="self">self</span>, calc_checksum, into_wallet_descriptor_checked, DerivedDescriptor, DescriptorMeta,
-    ExtendedDescriptor, ExtractPolicy, IntoWalletDescriptor, Policy, XKeyUtils,
+    <span class="self">self</span>, DerivedDescriptor, DescriptorMeta, ExtendedDescriptor, ExtractPolicy,
+    IntoWalletDescriptor, Policy, XKeyUtils,
 };
 <span class="kw">use </span><span class="kw">crate</span>::psbt::PsbtUtils;
 <span class="kw">use </span><span class="kw">crate</span>::signer::SignerError;
 <span class="kw">use </span><span class="kw">crate</span>::types::<span class="kw-2">*</span>;
-<span class="kw">use </span><span class="kw">crate</span>::wallet::coin_selection::Excess::{Change, NoChange};
+<span class="kw">use </span><span class="kw">crate</span>::wallet::coin_selection::Excess::{<span class="self">self</span>, Change, NoChange};
 <span class="kw">use </span><span class="kw">crate</span>::wallet::error::{BuildFeeBumpError, CreateTxError, MiniscriptPsbtError};
 
 <span class="kw">const </span>COINBASE_MATURITY: u32 = <span class="number">100</span>;
@@ -2721,21 +2752,29 @@
 /// 1. output *descriptors* from which it can derive addresses.
 /// 2. [`signer`]s that can contribute signatures to addresses instantiated from the descriptors.
 ///
+/// The user is responsible for loading and writing wallet changes which are represented as
+/// [`ChangeSet`]s (see [`take_staged`]). Also see individual functions and example for instructions
+/// on when [`Wallet`] state needs to be persisted.
+///
+/// The `Wallet` descriptor (external) and change descriptor (internal) must not derive the same
+/// script pubkeys. See [`KeychainTxOutIndex::insert_descriptor()`] for more details.
+///
 /// [`signer`]: crate::signer
+/// [`take_staged`]: Wallet::take_staged
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>Wallet {
     signers: Arc&lt;SignersContainer&gt;,
     change_signers: Arc&lt;SignersContainer&gt;,
     chain: LocalChain,
-    indexed_graph: IndexedTxGraph&lt;ConfirmationTimeHeightAnchor, KeychainTxOutIndex&lt;KeychainKind&gt;&gt;,
-    persist: Persist&lt;ChangeSet&gt;,
+    indexed_graph: IndexedTxGraph&lt;ConfirmationBlockTime, KeychainTxOutIndex&lt;KeychainKind&gt;&gt;,
+    stage: ChangeSet,
     network: Network,
     secp: SecpCtx,
 }
 
 <span class="doccomment">/// An update to [`Wallet`].
 ///
-/// It updates [`bdk_chain::keychain::KeychainTxOutIndex`], [`bdk_chain::TxGraph`] and [`local_chain::LocalChain`] atomically.
+/// It updates [`KeychainTxOutIndex`], [`bdk_chain::TxGraph`] and [`local_chain::LocalChain`] atomically.
 </span><span class="attr">#[derive(Debug, Clone, Default)]
 </span><span class="kw">pub struct </span>Update {
     <span class="doccomment">/// Contains the last active derivation indices per keychain (`K`), which is used to update the
@@ -2743,7 +2782,7 @@
     </span><span class="kw">pub </span>last_active_indices: BTreeMap&lt;KeychainKind, u32&gt;,
 
     <span class="doccomment">/// Update for the wallet's internal [`TxGraph`].
-    </span><span class="kw">pub </span>graph: TxGraph&lt;ConfirmationTimeHeightAnchor&gt;,
+    </span><span class="kw">pub </span>tx_update: TxUpdate&lt;ConfirmationBlockTime&gt;,
 
     <span class="doccomment">/// Update for the wallet's internal [`LocalChain`].
     ///
@@ -2755,8 +2794,8 @@
     <span class="kw">fn </span>from(value: FullScanResult&lt;KeychainKind&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             last_active_indices: value.last_active_indices,
-            graph: value.graph_update,
-            chain: <span class="prelude-val">Some</span>(value.chain_update),
+            tx_update: value.tx_update,
+            chain: value.chain_update,
         }
     }
 }
@@ -2765,18 +2804,15 @@
     <span class="kw">fn </span>from(value: SyncResult) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             last_active_indices: BTreeMap::new(),
-            graph: value.graph_update,
-            chain: <span class="prelude-val">Some</span>(value.chain_update),
+            tx_update: value.tx_update,
+            chain: value.chain_update,
         }
     }
 }
 
-<span class="doccomment">/// The changes made to a wallet by applying an [`Update`].
-</span><span class="kw">pub type </span>ChangeSet = bdk_persist::CombinedChangeSet&lt;KeychainKind, ConfirmationTimeHeightAnchor&gt;;
-
 <span class="doccomment">/// A derived address and the index it was found at.
 /// For convenience this automatically derefs to `Address`
-</span><span class="attr">#[derive(Debug, PartialEq, Eq)]
+</span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>AddressInfo {
     <span class="doccomment">/// Child index of this address
     </span><span class="kw">pub </span>index: u32,
@@ -2800,100 +2836,31 @@
     }
 }
 
-<span class="kw">impl </span>Wallet {
-    <span class="doccomment">/// Creates a wallet that does not persist data.
-    </span><span class="kw">pub fn </span>new_no_persist&lt;E: IntoWalletDescriptor&gt;(
-        descriptor: E,
-        change_descriptor: <span class="prelude-ty">Option</span>&lt;E&gt;,
-        network: Network,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, DescriptorError&gt; {
-        <span class="self">Self</span>::new(descriptor, change_descriptor, (), network).map_err(|e| <span class="kw">match </span>e {
-            NewError::NonEmptyDatabase =&gt; <span class="macro">unreachable!</span>(<span class="string">"mock-database cannot have data"</span>),
-            NewError::Descriptor(e) =&gt; e,
-            NewError::Persist(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(<span class="string">"mock-write must always succeed"</span>),
-        })
-    }
-
-    <span class="doccomment">/// Creates a wallet that does not persist data, with a custom genesis hash.
-    </span><span class="kw">pub fn </span>new_no_persist_with_genesis_hash&lt;E: IntoWalletDescriptor&gt;(
-        descriptor: E,
-        change_descriptor: <span class="prelude-ty">Option</span>&lt;E&gt;,
-        network: Network,
-        genesis_hash: BlockHash,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="kw">crate</span>::descriptor::DescriptorError&gt; {
-        <span class="self">Self</span>::new_with_genesis_hash(descriptor, change_descriptor, (), network, genesis_hash)
-            .map_err(|e| <span class="kw">match </span>e {
-                NewError::NonEmptyDatabase =&gt; <span class="macro">unreachable!</span>(<span class="string">"mock-database cannot have data"</span>),
-                NewError::Descriptor(e) =&gt; e,
-                NewError::Persist(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(<span class="string">"mock-write must always succeed"</span>),
-            })
-    }
-}
-
-<span class="doccomment">/// The error type when constructing a fresh [`Wallet`].
-///
-/// Methods [`new`] and [`new_with_genesis_hash`] may return this error.
-///
-/// [`new`]: Wallet::new
-/// [`new_with_genesis_hash`]: Wallet::new_with_genesis_hash
-</span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub enum </span>NewError {
-    <span class="doccomment">/// Database already has data.
-    </span>NonEmptyDatabase,
-    <span class="doccomment">/// There was problem with the passed-in descriptor(s).
-    </span>Descriptor(<span class="kw">crate</span>::descriptor::DescriptorError),
-    <span class="doccomment">/// We were unable to write the wallet's data to the persistence backend.
-    </span>Persist(anyhow::Error),
-}
-
-<span class="kw">impl </span>fmt::Display <span class="kw">for </span>NewError {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-        <span class="kw">match </span><span class="self">self </span>{
-            NewError::NonEmptyDatabase =&gt; <span class="macro">write!</span>(
-                f,
-                <span class="string">"database already has data - use `load` or `new_or_load` methods instead"
-            </span>),
-            NewError::Descriptor(e) =&gt; e.fmt(f),
-            NewError::Persist(e) =&gt; e.fmt(f),
-        }
-    }
-}
-
-<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
-</span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>NewError {}
-
-<span class="doccomment">/// The error type when loading a [`Wallet`] from persistence.
-///
-/// Method [`load`] may return this error.
-///
-/// [`load`]: Wallet::load
-</span><span class="attr">#[derive(Debug)]
+<span class="doccomment">/// The error type when loading a [`Wallet`] from a [`ChangeSet`].
+</span><span class="attr">#[derive(Debug, PartialEq)]
 </span><span class="kw">pub enum </span>LoadError {
     <span class="doccomment">/// There was a problem with the passed-in descriptor(s).
     </span>Descriptor(<span class="kw">crate</span>::descriptor::DescriptorError),
-    <span class="doccomment">/// Loading data from the persistence backend failed.
-    </span>Persist(anyhow::Error),
-    <span class="doccomment">/// Wallet not initialized, persistence backend is empty.
-    </span>NotInitialized,
     <span class="doccomment">/// Data loaded from persistence is missing network type.
     </span>MissingNetwork,
     <span class="doccomment">/// Data loaded from persistence is missing genesis hash.
     </span>MissingGenesis,
     <span class="doccomment">/// Data loaded from persistence is missing descriptor.
-    </span>MissingDescriptor,
+    </span>MissingDescriptor(KeychainKind),
+    <span class="doccomment">/// Data loaded is unexpected.
+    </span>Mismatch(LoadMismatch),
 }
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>LoadError {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">match </span><span class="self">self </span>{
             LoadError::Descriptor(e) =&gt; e.fmt(f),
-            LoadError::Persist(e) =&gt; e.fmt(f),
-            LoadError::NotInitialized =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">"wallet is not initialized, persistence backend is empty"</span>)
-            }
             LoadError::MissingNetwork =&gt; <span class="macro">write!</span>(f, <span class="string">"loaded data is missing network type"</span>),
             LoadError::MissingGenesis =&gt; <span class="macro">write!</span>(f, <span class="string">"loaded data is missing genesis hash"</span>),
-            LoadError::MissingDescriptor =&gt; <span class="macro">write!</span>(f, <span class="string">"loaded data is missing descriptor"</span>),
+            LoadError::MissingDescriptor(k) =&gt; {
+                <span class="macro">write!</span>(f, <span class="string">"loaded data is missing descriptor for keychain {k:?}"</span>)
+            }
+            LoadError::Mismatch(mismatch) =&gt; <span class="macro">write!</span>(f, <span class="string">"data mismatch: {mismatch:?}"</span>),
         }
     }
 }
@@ -2901,103 +2868,45 @@
 <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>LoadError {}
 
-<span class="doccomment">/// Error type for when we try load a [`Wallet`] from persistence and creating it if non-existent.
-///
-/// Methods [`new_or_load`] and [`new_or_load_with_genesis_hash`] may return this error.
-///
-/// [`new_or_load`]: Wallet::new_or_load
-/// [`new_or_load_with_genesis_hash`]: Wallet::new_or_load_with_genesis_hash
-</span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub enum </span>NewOrLoadError {
-    <span class="doccomment">/// There is a problem with the passed-in descriptor.
-    </span>Descriptor(<span class="kw">crate</span>::descriptor::DescriptorError),
-    <span class="doccomment">/// Either writing to or loading from the persistence backend failed.
-    </span>Persist(anyhow::Error),
-    <span class="doccomment">/// Wallet is not initialized, persistence backend is empty.
-    </span>NotInitialized,
-    <span class="doccomment">/// The loaded genesis hash does not match what was provided.
-    </span>LoadedGenesisDoesNotMatch {
-        <span class="doccomment">/// The expected genesis block hash.
-        </span>expected: BlockHash,
-        <span class="doccomment">/// The block hash loaded from persistence.
-        </span>got: <span class="prelude-ty">Option</span>&lt;BlockHash&gt;,
-    },
-    <span class="doccomment">/// The loaded network type does not match what was provided.
-    </span>LoadedNetworkDoesNotMatch {
-        <span class="doccomment">/// The expected network type.
+<span class="doccomment">/// Represents a mismatch with what is loaded and what is expected from [`LoadParams`].
+</span><span class="attr">#[derive(Debug, PartialEq)]
+</span><span class="kw">pub enum </span>LoadMismatch {
+    <span class="doccomment">/// Network does not match.
+    </span>Network {
+        <span class="doccomment">/// The network that is loaded.
+        </span>loaded: Network,
+        <span class="doccomment">/// The expected network.
         </span>expected: Network,
-        <span class="doccomment">/// The network type loaded from persistence.
-        </span>got: <span class="prelude-ty">Option</span>&lt;Network&gt;,
     },
-    <span class="doccomment">/// The loaded desccriptor does not match what was provided.
-    </span>LoadedDescriptorDoesNotMatch {
-        <span class="doccomment">/// The descriptor loaded from persistence.
-        </span>got: <span class="prelude-ty">Option</span>&lt;ExtendedDescriptor&gt;,
-        <span class="doccomment">/// The keychain of the descriptor not matching
+    <span class="doccomment">/// Genesis hash does not match.
+    </span>Genesis {
+        <span class="doccomment">/// The genesis hash that is loaded.
+        </span>loaded: BlockHash,
+        <span class="doccomment">/// The expected genesis hash.
+        </span>expected: BlockHash,
+    },
+    <span class="doccomment">/// Descriptor's [`DescriptorId`](bdk_chain::DescriptorId) does not match.
+    </span>Descriptor {
+        <span class="doccomment">/// Keychain identifying the descriptor.
         </span>keychain: KeychainKind,
+        <span class="doccomment">/// The loaded descriptor.
+        </span>loaded: <span class="prelude-ty">Option</span>&lt;ExtendedDescriptor&gt;,
+        <span class="doccomment">/// The expected descriptor.
+        </span>expected: <span class="prelude-ty">Option</span>&lt;ExtendedDescriptor&gt;,
     },
 }
 
-<span class="kw">impl </span>fmt::Display <span class="kw">for </span>NewOrLoadError {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-        <span class="kw">match </span><span class="self">self </span>{
-            NewOrLoadError::Descriptor(e) =&gt; e.fmt(f),
-            NewOrLoadError::Persist(e) =&gt; <span class="macro">write!</span>(
-                f,
-                <span class="string">"failed to either write to or load from persistence, {}"</span>,
-                e
-            ),
-            NewOrLoadError::NotInitialized =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">"wallet is not initialized, persistence backend is empty"</span>)
-            }
-            NewOrLoadError::LoadedGenesisDoesNotMatch { expected, got } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">"loaded genesis hash is not {}, got {:?}"</span>, expected, got)
-            }
-            NewOrLoadError::LoadedNetworkDoesNotMatch { expected, got } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">"loaded network type is not {}, got {:?}"</span>, expected, got)
-            }
-            NewOrLoadError::LoadedDescriptorDoesNotMatch { got, keychain } =&gt; {
-                <span class="macro">write!</span>(
-                    f,
-                    <span class="string">"loaded descriptor is different from what was provided, got {:?} for keychain {:?}"</span>,
-                    got, keychain
-                )
-            }
-        }
+<span class="kw">impl </span>From&lt;LoadMismatch&gt; <span class="kw">for </span>LoadError {
+    <span class="kw">fn </span>from(mismatch: LoadMismatch) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::Mismatch(mismatch)
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
-</span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>NewOrLoadError {}
-
-<span class="doccomment">/// An error that may occur when inserting a transaction into [`Wallet`].
-</span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub enum </span>InsertTxError {
-    <span class="doccomment">/// The error variant that occurs when the caller attempts to insert a transaction with a
-    /// confirmation height that is greater than the internal chain tip.
-    </span>ConfirmationHeightCannotBeGreaterThanTip {
-        <span class="doccomment">/// The internal chain's tip height.
-        </span>tip_height: u32,
-        <span class="doccomment">/// The introduced transaction's confirmation height.
-        </span>tx_height: u32,
-    },
-}
-
-<span class="kw">impl </span>fmt::Display <span class="kw">for </span>InsertTxError {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-        <span class="kw">match </span><span class="self">self </span>{
-            InsertTxError::ConfirmationHeightCannotBeGreaterThanTip {
-                tip_height,
-                tx_height,
-            } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">"cannot insert tx with confirmation height ({}) higher than internal tip height ({})"</span>, tx_height, tip_height)
-            }
-        }
+<span class="kw">impl</span>&lt;E&gt; From&lt;LoadMismatch&gt; <span class="kw">for </span>LoadWithPersistError&lt;E&gt; {
+    <span class="kw">fn </span>from(mismatch: LoadMismatch) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::InvalidChangeSet(LoadError::Mismatch(mismatch))
     }
 }
-
-<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
-</span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>InsertTxError {}
 
 <span class="doccomment">/// An error that may occur when applying a block to [`Wallet`].
 </span><span class="attr">#[derive(Debug)]
@@ -3032,308 +2941,345 @@
 <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>ApplyBlockError {}
 
+<span class="doccomment">/// A `CanonicalTx` managed by a `Wallet`.
+</span><span class="kw">pub type </span>WalletTx&lt;<span class="lifetime">'a</span>&gt; = CanonicalTx&lt;<span class="lifetime">'a</span>, Arc&lt;Transaction&gt;, ConfirmationBlockTime&gt;;
+
 <span class="kw">impl </span>Wallet {
-    <span class="doccomment">/// Initialize an empty [`Wallet`].
-    </span><span class="kw">pub fn </span>new&lt;E: IntoWalletDescriptor&gt;(
-        descriptor: E,
-        change_descriptor: <span class="prelude-ty">Option</span>&lt;E&gt;,
-        db: <span class="kw">impl </span>PersistBackend&lt;ChangeSet&gt; + Send + Sync + <span class="lifetime">'static</span>,
-        network: Network,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, NewError&gt; {
-        <span class="kw">let </span>genesis_hash = genesis_block(network).block_hash();
-        <span class="self">Self</span>::new_with_genesis_hash(descriptor, change_descriptor, db, network, genesis_hash)
-    }
-
-    <span class="doccomment">/// Initialize an empty [`Wallet`] with a custom genesis hash.
+    <span class="doccomment">/// Build a new single descriptor [`Wallet`].
     ///
-    /// This is like [`Wallet::new`] with an additional `genesis_hash` parameter. This is useful
-    /// for syncing from alternative networks.
-    </span><span class="kw">pub fn </span>new_with_genesis_hash&lt;E: IntoWalletDescriptor&gt;(
-        descriptor: E,
-        change_descriptor: <span class="prelude-ty">Option</span>&lt;E&gt;,
-        <span class="kw-2">mut </span>db: <span class="kw">impl </span>PersistBackend&lt;ChangeSet&gt; + Send + Sync + <span class="lifetime">'static</span>,
-        network: Network,
-        genesis_hash: BlockHash,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, NewError&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Ok</span>(changeset) = db.load_from_persistence() {
-            <span class="kw">if </span>changeset.is_some() {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(NewError::NonEmptyDatabase);
-            }
-        }
-        <span class="kw">let </span>secp = Secp256k1::new();
-        <span class="kw">let </span>(chain, chain_changeset) = LocalChain::from_genesis_hash(genesis_hash);
-        <span class="kw">let </span><span class="kw-2">mut </span>index = KeychainTxOutIndex::&lt;KeychainKind&gt;::default();
-
-        <span class="kw">let </span>(signers, change_signers) =
-            create_signers(<span class="kw-2">&amp;mut </span>index, <span class="kw-2">&amp;</span>secp, descriptor, change_descriptor, network)
-                .map_err(NewError::Descriptor)<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>indexed_graph = IndexedTxGraph::new(index);
-
-        <span class="kw">let </span><span class="kw-2">mut </span>persist = Persist::new(db);
-        persist.stage(ChangeSet {
-            chain: chain_changeset,
-            indexed_tx_graph: indexed_graph.initial_changeset(),
-            network: <span class="prelude-val">Some</span>(network),
-        });
-        persist.commit().map_err(NewError::Persist)<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(Wallet {
-            signers,
-            change_signers,
-            network,
-            chain,
-            indexed_graph,
-            persist,
-            secp,
-        })
-    }
-
-    <span class="doccomment">/// Load [`Wallet`] from the given persistence backend.
+    /// If you have previously created a wallet, use [`load`](Self::load) instead.
     ///
-    /// Note that the descriptor secret keys are not persisted to the db; this means that after
-    /// calling this method the [`Wallet`] **won't** know the secret keys, and as such, won't be
-    /// able to sign transactions.
+    /// # Note
     ///
-    /// If you wish to use the wallet to sign transactions, you need to add the secret keys
-    /// manually to the [`Wallet`]:
+    /// Only use this method when creating a wallet designed to be used with a single
+    /// descriptor and keychain. Otherwise the recommended way to construct a new wallet is
+    /// by using [`Wallet::create`]. It's worth noting that not all features are available
+    /// with single descriptor wallets, for example setting a [`change_policy`] on [`TxBuilder`]
+    /// and related methods such as [`do_not_spend_change`]. This is because all payments are
+    /// received on the external keychain (including change), and without a change keychain
+    /// BDK lacks enough information to distinguish between change and outside payments.
     ///
-    /// ```rust,no_run
+    /// Additionally because this wallet has no internal (change) keychain, all methods that
+    /// require a [`KeychainKind`] as input, e.g. [`reveal_next_address`] should only be called
+    /// using the [`External`] variant. In most cases passing [`Internal`] is treated as the
+    /// equivalent of [`External`] but this behavior must not be relied on.
+    ///
+    /// # Example
+    ///
+    /// ```rust
     /// # use bdk_wallet::Wallet;
-    /// # use bdk_wallet::signer::{SignersContainer, SignerOrdering};
-    /// # use bdk_wallet::descriptor::Descriptor;
-    /// # use bitcoin::key::Secp256k1;
-    /// # use bdk_wallet::KeychainKind;
-    /// # use bdk_sqlite::{Store, rusqlite::Connection};
-    /// #
-    /// # fn main() -&gt; Result&lt;(), anyhow::Error&gt; {
+    /// # use bitcoin::Network;
+    /// # const EXTERNAL_DESC: &amp;str = "wpkh(tprv8ZgxMBicQKsPdy6LMhUtFHAgpocR8GC6QmwMSFpZs7h6Eziw3SpThFfczTDh5rW2krkqffa11UpX3XkeTTB2FvzZKWXqPY54Y6Rq4AQ5R8L/84'/1'/0'/0/*)";
     /// # let temp_dir = tempfile::tempdir().expect("must create tempdir");
     /// # let file_path = temp_dir.path().join("store.db");
-    /// # let conn = Connection::open(file_path).expect("must open connection");
-    /// # let db = Store::new(conn).expect("must create db");
-    /// let secp = Secp256k1::new();
+    /// // Create a wallet that is persisted to SQLite database.
+    /// use bdk_wallet::rusqlite::Connection;
+    /// let mut conn = Connection::open(file_path)?;
+    /// let wallet = Wallet::create_single(EXTERNAL_DESC)
+    ///     .network(Network::Testnet)
+    ///     .create_wallet(&amp;mut conn)?;
+    /// # Ok::&lt;_, anyhow::Error&gt;(())
+    /// ```
+    /// [`change_policy`]: TxBuilder::change_policy
+    /// [`do_not_spend_change`]: TxBuilder::do_not_spend_change
+    /// [`External`]: KeychainKind::External
+    /// [`Internal`]: KeychainKind::Internal
+    /// [`reveal_next_address`]: Self::reveal_next_address
+    </span><span class="kw">pub fn </span>create_single&lt;D&gt;(descriptor: D) -&gt; CreateParams
+    <span class="kw">where
+        </span>D: IntoWalletDescriptor + Send + Clone + <span class="lifetime">'static</span>,
+    {
+        CreateParams::new_single(descriptor)
+    }
+
+    <span class="doccomment">/// Build a new [`Wallet`].
     ///
-    /// let (external_descriptor, external_keymap) = Descriptor::parse_descriptor(&amp;secp, "wpkh(tprv8ZgxMBicQKsPdy6LMhUtFHAgpocR8GC6QmwMSFpZs7h6Eziw3SpThFfczTDh5rW2krkqffa11UpX3XkeTTB2FvzZKWXqPY54Y6Rq4AQ5R8L/84'/1'/0'/0/*)").unwrap();
-    /// let (internal_descriptor, internal_keymap) = Descriptor::parse_descriptor(&amp;secp, "wpkh(tprv8ZgxMBicQKsPdy6LMhUtFHAgpocR8GC6QmwMSFpZs7h6Eziw3SpThFfczTDh5rW2krkqffa11UpX3XkeTTB2FvzZKWXqPY54Y6Rq4AQ5R8L/84'/1'/0'/1/*)").unwrap();
+    /// If you have previously created a wallet, use [`load`](Self::load) instead.
     ///
-    /// let external_signer_container = SignersContainer::build(external_keymap, &amp;external_descriptor, &amp;secp);
-    /// let internal_signer_container = SignersContainer::build(internal_keymap, &amp;internal_descriptor, &amp;secp);
+    /// # Synopsis
     ///
-    /// let mut wallet = Wallet::load(db)?;
+    /// ```rust
+    /// # use bdk_wallet::Wallet;
+    /// # use bitcoin::Network;
+    /// # fn main() -&gt; anyhow::Result&lt;()&gt; {
+    /// # const EXTERNAL_DESC: &amp;str = "wpkh(tprv8ZgxMBicQKsPdy6LMhUtFHAgpocR8GC6QmwMSFpZs7h6Eziw3SpThFfczTDh5rW2krkqffa11UpX3XkeTTB2FvzZKWXqPY54Y6Rq4AQ5R8L/84'/1'/0'/0/*)";
+    /// # const INTERNAL_DESC: &amp;str = "wpkh(tprv8ZgxMBicQKsPdy6LMhUtFHAgpocR8GC6QmwMSFpZs7h6Eziw3SpThFfczTDh5rW2krkqffa11UpX3XkeTTB2FvzZKWXqPY54Y6Rq4AQ5R8L/84'/1'/0'/1/*)";
+    /// // Create a non-persisted wallet.
+    /// let wallet = Wallet::create(EXTERNAL_DESC, INTERNAL_DESC)
+    ///     .network(Network::Testnet)
+    ///     .create_wallet_no_persist()?;
     ///
-    /// external_signer_container.signers().into_iter()
-    ///     .for_each(|s| wallet.add_signer(KeychainKind::External, SignerOrdering::default(), s.clone()));
-    /// internal_signer_container.signers().into_iter()
-    ///     .for_each(|s| wallet.add_signer(KeychainKind::Internal, SignerOrdering::default(), s.clone()));
+    /// // Create a wallet that is persisted to SQLite database.
+    /// # let temp_dir = tempfile::tempdir().expect("must create tempdir");
+    /// # let file_path = temp_dir.path().join("store.db");
+    /// use bdk_wallet::rusqlite::Connection;
+    /// let mut conn = Connection::open(file_path)?;
+    /// let wallet = Wallet::create(EXTERNAL_DESC, INTERNAL_DESC)
+    ///     .network(Network::Testnet)
+    ///     .create_wallet(&amp;mut conn)?;
     /// # Ok(())
     /// # }
     /// ```
-    ///
-    /// Alternatively, you can call [`Wallet::new_or_load`], which will add the private keys of the
-    /// passed-in descriptors to the [`Wallet`].
-    </span><span class="kw">pub fn </span>load(
-        <span class="kw-2">mut </span>db: <span class="kw">impl </span>PersistBackend&lt;ChangeSet&gt; + Send + Sync + <span class="lifetime">'static</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, LoadError&gt; {
-        <span class="kw">let </span>changeset = db
-            .load_from_persistence()
-            .map_err(LoadError::Persist)<span class="question-mark">?
-            </span>.ok_or(LoadError::NotInitialized)<span class="question-mark">?</span>;
-        <span class="self">Self</span>::load_from_changeset(db, changeset)
+    </span><span class="kw">pub fn </span>create&lt;D&gt;(descriptor: D, change_descriptor: D) -&gt; CreateParams
+    <span class="kw">where
+        </span>D: IntoWalletDescriptor + Send + Clone + <span class="lifetime">'static</span>,
+    {
+        CreateParams::new(descriptor, change_descriptor)
     }
 
-    <span class="kw">fn </span>load_from_changeset(
-        db: <span class="kw">impl </span>PersistBackend&lt;ChangeSet&gt; + Send + Sync + <span class="lifetime">'static</span>,
-        changeset: ChangeSet,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, LoadError&gt; {
-        <span class="kw">let </span>secp = Secp256k1::new();
-        <span class="kw">let </span>network = changeset.network.ok_or(LoadError::MissingNetwork)<span class="question-mark">?</span>;
-        <span class="kw">let </span>chain =
-            LocalChain::from_changeset(changeset.chain).map_err(|<span class="kw">_</span>| LoadError::MissingGenesis)<span class="question-mark">?</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>index = KeychainTxOutIndex::&lt;KeychainKind&gt;::default();
-        <span class="kw">let </span>descriptor = changeset
-            .indexed_tx_graph
-            .indexer
-            .keychains_added
-            .get(<span class="kw-2">&amp;</span>KeychainKind::External)
-            .ok_or(LoadError::MissingDescriptor)<span class="question-mark">?
-            </span>.clone();
-        <span class="kw">let </span>change_descriptor = changeset
-            .indexed_tx_graph
-            .indexer
-            .keychains_added
-            .get(<span class="kw-2">&amp;</span>KeychainKind::Internal)
-            .cloned();
+    <span class="doccomment">/// Create a new [`Wallet`] with given `params`.
+    ///
+    /// Refer to [`Wallet::create`] for more.
+    </span><span class="kw">pub fn </span>create_with_params(params: CreateParams) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, DescriptorError&gt; {
+        <span class="kw">let </span>secp = SecpCtx::new();
+        <span class="kw">let </span>network = params.network;
+        <span class="kw">let </span>genesis_hash = params
+            .genesis_hash
+            .unwrap_or(genesis_block(network).block_hash());
+        <span class="kw">let </span>(chain, chain_changeset) = LocalChain::from_genesis_hash(genesis_hash);
 
-        <span class="kw">let </span>(signers, change_signers) =
-            create_signers(<span class="kw-2">&amp;mut </span>index, <span class="kw-2">&amp;</span>secp, descriptor, change_descriptor, network)
-                .expect(<span class="string">"Can't fail: we passed in valid descriptors, recovered from the changeset"</span>);
+        <span class="kw">let </span>(descriptor, <span class="kw-2">mut </span>descriptor_keymap) = (params.descriptor)(<span class="kw-2">&amp;</span>secp, network)<span class="question-mark">?</span>;
+        check_wallet_descriptor(<span class="kw-2">&amp;</span>descriptor)<span class="question-mark">?</span>;
+        descriptor_keymap.extend(params.descriptor_keymap);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>indexed_graph = IndexedTxGraph::new(index);
-        indexed_graph.apply_changeset(changeset.indexed_tx_graph);
+        <span class="kw">let </span>signers = Arc::new(SignersContainer::build(
+            descriptor_keymap,
+            <span class="kw-2">&amp;</span>descriptor,
+            <span class="kw-2">&amp;</span>secp,
+        ));
 
-        <span class="kw">let </span>persist = Persist::new(db);
+        <span class="kw">let </span>(change_descriptor, change_signers) = <span class="kw">match </span>params.change_descriptor {
+            <span class="prelude-val">Some</span>(make_desc) =&gt; {
+                <span class="kw">let </span>(change_descriptor, <span class="kw-2">mut </span>internal_keymap) = make_desc(<span class="kw-2">&amp;</span>secp, network)<span class="question-mark">?</span>;
+                check_wallet_descriptor(<span class="kw-2">&amp;</span>change_descriptor)<span class="question-mark">?</span>;
+                internal_keymap.extend(params.change_descriptor_keymap);
+                <span class="kw">let </span>change_signers = Arc::new(SignersContainer::build(
+                    internal_keymap,
+                    <span class="kw-2">&amp;</span>change_descriptor,
+                    <span class="kw-2">&amp;</span>secp,
+                ));
+                (<span class="prelude-val">Some</span>(change_descriptor), change_signers)
+            }
+            <span class="prelude-val">None </span>=&gt; (<span class="prelude-val">None</span>, Arc::new(SignersContainer::new())),
+        };
+
+        <span class="kw">let </span>index = create_indexer(descriptor, change_descriptor, params.lookahead)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>descriptor = index.get_descriptor(KeychainKind::External).cloned();
+        <span class="kw">let </span>change_descriptor = index.get_descriptor(KeychainKind::Internal).cloned();
+        <span class="kw">let </span>indexed_graph = IndexedTxGraph::new(index);
+        <span class="kw">let </span>indexed_graph_changeset = indexed_graph.initial_changeset();
+
+        <span class="kw">let </span>stage = ChangeSet {
+            descriptor,
+            change_descriptor,
+            local_chain: chain_changeset,
+            tx_graph: indexed_graph_changeset.tx_graph,
+            indexer: indexed_graph_changeset.indexer,
+            network: <span class="prelude-val">Some</span>(network),
+        };
 
         <span class="prelude-val">Ok</span>(Wallet {
             signers,
             change_signers,
+            network,
             chain,
             indexed_graph,
-            persist,
-            network,
+            stage,
             secp,
         })
     }
 
-    <span class="doccomment">/// Either loads [`Wallet`] from persistence, or initializes it if it does not exist.
+    <span class="doccomment">/// Build [`Wallet`] by loading from persistence or [`ChangeSet`].
     ///
-    /// This method will fail if the loaded [`Wallet`] has different parameters to those provided.
-    </span><span class="kw">pub fn </span>new_or_load&lt;E: IntoWalletDescriptor&gt;(
-        descriptor: E,
-        change_descriptor: <span class="prelude-ty">Option</span>&lt;E&gt;,
-        db: <span class="kw">impl </span>PersistBackend&lt;ChangeSet&gt; + Send + Sync + <span class="lifetime">'static</span>,
-        network: Network,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, NewOrLoadError&gt; {
-        <span class="kw">let </span>genesis_hash = genesis_block(network).block_hash();
-        <span class="self">Self</span>::new_or_load_with_genesis_hash(
-            descriptor,
-            change_descriptor,
-            db,
-            network,
-            genesis_hash,
-        )
+    /// Note that the descriptor secret keys are not persisted to the db. You can add
+    /// signers after-the-fact with [`Wallet::add_signer`] or [`Wallet::set_keymap`]. You
+    /// can also add keys when building the wallet by using [`LoadParams::keymap`]. Finally
+    /// you can check the wallet's descriptors are what you expect with [`LoadParams::descriptor`]
+    /// which will try to populate signers if [`LoadParams::extract_keys`] is enabled.
+    ///
+    /// # Synopsis
+    ///
+    /// ```rust,no_run
+    /// # use bdk_wallet::{Wallet, ChangeSet, KeychainKind};
+    /// # use bitcoin::{BlockHash, Network, hashes::Hash};
+    /// # fn main() -&gt; anyhow::Result&lt;()&gt; {
+    /// # const EXTERNAL_DESC: &amp;str = "wpkh(tprv8ZgxMBicQKsPdy6LMhUtFHAgpocR8GC6QmwMSFpZs7h6Eziw3SpThFfczTDh5rW2krkqffa11UpX3XkeTTB2FvzZKWXqPY54Y6Rq4AQ5R8L/84'/1'/0'/0/*)";
+    /// # const INTERNAL_DESC: &amp;str = "wpkh(tprv8ZgxMBicQKsPdy6LMhUtFHAgpocR8GC6QmwMSFpZs7h6Eziw3SpThFfczTDh5rW2krkqffa11UpX3XkeTTB2FvzZKWXqPY54Y6Rq4AQ5R8L/84'/1'/0'/1/*)";
+    /// # let changeset = ChangeSet::default();
+    /// // Load a wallet from changeset (no persistence).
+    /// let wallet = Wallet::load()
+    ///     .load_wallet_no_persist(changeset)?
+    ///     .expect("must have data to load wallet");
+    ///
+    /// // Load a wallet that is persisted to SQLite database.
+    /// # let temp_dir = tempfile::tempdir().expect("must create tempdir");
+    /// # let file_path = temp_dir.path().join("store.db");
+    /// # let external_keymap = Default::default();
+    /// # let internal_keymap = Default::default();
+    /// # let genesis_hash = BlockHash::all_zeros();
+    /// let mut conn = bdk_wallet::rusqlite::Connection::open(file_path)?;
+    /// let mut wallet = Wallet::load()
+    ///     // check loaded descriptors matches these values and extract private keys
+    ///     .descriptor(KeychainKind::External, Some(EXTERNAL_DESC))
+    ///     .descriptor(KeychainKind::Internal, Some(INTERNAL_DESC))
+    ///     .extract_keys()
+    ///     // you can also manually add private keys
+    ///     .keymap(KeychainKind::External, external_keymap)
+    ///     .keymap(KeychainKind::Internal, internal_keymap)
+    ///     // ensure loaded wallet's genesis hash matches this value
+    ///     .check_genesis_hash(genesis_hash)
+    ///     // set a lookahead for our indexer
+    ///     .lookahead(101)
+    ///     .load_wallet(&amp;mut conn)?
+    ///     .expect("must have data to load wallet");
+    /// # Ok(())
+    /// # }
+    /// ```
+    </span><span class="kw">pub fn </span>load() -&gt; LoadParams {
+        LoadParams::new()
     }
 
-    <span class="doccomment">/// Either loads [`Wallet`] from persistence, or initializes it if it does not exist, using the
-    /// provided descriptor, change descriptor, network, and custom genesis hash.
+    <span class="doccomment">/// Load [`Wallet`] from the given previously persisted [`ChangeSet`] and `params`.
     ///
-    /// This method will fail if the loaded [`Wallet`] has different parameters to those provided.
-    /// This is like [`Wallet::new_or_load`] with an additional `genesis_hash` parameter. This is
-    /// useful for syncing from alternative networks.
-    </span><span class="kw">pub fn </span>new_or_load_with_genesis_hash&lt;E: IntoWalletDescriptor&gt;(
-        descriptor: E,
-        change_descriptor: <span class="prelude-ty">Option</span>&lt;E&gt;,
-        <span class="kw-2">mut </span>db: <span class="kw">impl </span>PersistBackend&lt;ChangeSet&gt; + Send + Sync + <span class="lifetime">'static</span>,
-        network: Network,
-        genesis_hash: BlockHash,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, NewOrLoadError&gt; {
-        <span class="kw">let </span>changeset = db
-            .load_from_persistence()
-            .map_err(NewOrLoadError::Persist)<span class="question-mark">?</span>;
-        <span class="kw">match </span>changeset {
-            <span class="prelude-val">Some</span>(changeset) =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>wallet = <span class="self">Self</span>::load_from_changeset(db, changeset).map_err(|e| <span class="kw">match </span>e {
-                    LoadError::Descriptor(e) =&gt; NewOrLoadError::Descriptor(e),
-                    LoadError::Persist(e) =&gt; NewOrLoadError::Persist(e),
-                    LoadError::NotInitialized =&gt; NewOrLoadError::NotInitialized,
-                    LoadError::MissingNetwork =&gt; NewOrLoadError::LoadedNetworkDoesNotMatch {
-                        expected: network,
-                        got: <span class="prelude-val">None</span>,
-                    },
-                    LoadError::MissingGenesis =&gt; NewOrLoadError::LoadedGenesisDoesNotMatch {
-                        expected: genesis_hash,
-                        got: <span class="prelude-val">None</span>,
-                    },
-                    LoadError::MissingDescriptor =&gt; NewOrLoadError::LoadedDescriptorDoesNotMatch {
-                        got: <span class="prelude-val">None</span>,
-                        keychain: KeychainKind::External,
-                    },
-                })<span class="question-mark">?</span>;
-                <span class="kw">if </span>wallet.network != network {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(NewOrLoadError::LoadedNetworkDoesNotMatch {
-                        expected: network,
-                        got: <span class="prelude-val">Some</span>(wallet.network),
-                    });
-                }
-                <span class="kw">if </span>wallet.chain.genesis_hash() != genesis_hash {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(NewOrLoadError::LoadedGenesisDoesNotMatch {
-                        expected: genesis_hash,
-                        got: <span class="prelude-val">Some</span>(wallet.chain.genesis_hash()),
-                    });
-                }
-
-                <span class="kw">let </span>(expected_descriptor, expected_descriptor_keymap) = descriptor
-                    .into_wallet_descriptor(<span class="kw-2">&amp;</span>wallet.secp, network)
-                    .map_err(NewOrLoadError::Descriptor)<span class="question-mark">?</span>;
-                <span class="kw">let </span>wallet_descriptor = wallet.public_descriptor(KeychainKind::External).cloned();
-                <span class="kw">if </span>wallet_descriptor != <span class="prelude-val">Some</span>(expected_descriptor.clone()) {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(NewOrLoadError::LoadedDescriptorDoesNotMatch {
-                        got: wallet_descriptor,
-                        keychain: KeychainKind::External,
-                    });
-                }
-                <span class="comment">// if expected descriptor has private keys add them as new signers
-                </span><span class="kw">if </span>!expected_descriptor_keymap.is_empty() {
-                    <span class="kw">let </span>signer_container = SignersContainer::build(
-                        expected_descriptor_keymap,
-                        <span class="kw-2">&amp;</span>expected_descriptor,
-                        <span class="kw-2">&amp;</span>wallet.secp,
-                    );
-                    signer_container.signers().into_iter().for_each(|signer| {
-                        wallet.add_signer(
-                            KeychainKind::External,
-                            SignerOrdering::default(),
-                            signer.clone(),
-                        )
-                    });
-                }
-
-                <span class="kw">let </span>expected_change_descriptor = <span class="kw">if let </span><span class="prelude-val">Some</span>(c) = change_descriptor {
-                    <span class="prelude-val">Some</span>(
-                        c.into_wallet_descriptor(<span class="kw-2">&amp;</span>wallet.secp, network)
-                            .map_err(NewOrLoadError::Descriptor)<span class="question-mark">?</span>,
-                    )
-                } <span class="kw">else </span>{
-                    <span class="prelude-val">None
-                </span>};
-                <span class="kw">let </span>wallet_change_descriptor =
-                    wallet.public_descriptor(KeychainKind::Internal).cloned();
-
-                <span class="kw">match </span>(expected_change_descriptor, wallet_change_descriptor) {
-                    (<span class="prelude-val">Some</span>((expected_descriptor, expected_keymap)), <span class="prelude-val">Some</span>(wallet_descriptor))
-                        <span class="kw">if </span>wallet_descriptor == expected_descriptor =&gt;
-                    {
-                        <span class="comment">// if expected change descriptor has private keys add them as new signers
-                        </span><span class="kw">if </span>!expected_keymap.is_empty() {
-                            <span class="kw">let </span>signer_container = SignersContainer::build(
-                                expected_keymap,
-                                <span class="kw-2">&amp;</span>expected_descriptor,
-                                <span class="kw-2">&amp;</span>wallet.secp,
-                            );
-                            signer_container.signers().into_iter().for_each(|signer| {
-                                wallet.add_signer(
-                                    KeychainKind::Internal,
-                                    SignerOrdering::default(),
-                                    signer.clone(),
-                                )
-                            });
-                        }
-                    }
-                    (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) =&gt; (),
-                    (<span class="kw">_</span>, wallet_descriptor) =&gt; {
-                        <span class="kw">return </span><span class="prelude-val">Err</span>(NewOrLoadError::LoadedDescriptorDoesNotMatch {
-                            got: wallet_descriptor,
-                            keychain: KeychainKind::Internal,
-                        });
-                    }
-                }
-
-                <span class="prelude-val">Ok</span>(wallet)
-            }
-            <span class="prelude-val">None </span>=&gt; <span class="self">Self</span>::new_with_genesis_hash(
-                descriptor,
-                change_descriptor,
-                db,
-                network,
-                genesis_hash,
-            )
-            .map_err(|e| <span class="kw">match </span>e {
-                NewError::NonEmptyDatabase =&gt; {
-                    <span class="macro">unreachable!</span>(<span class="string">"database is already checked to have no data"</span>)
-                }
-                NewError::Descriptor(e) =&gt; NewOrLoadError::Descriptor(e),
-                NewError::Persist(e) =&gt; NewOrLoadError::Persist(e),
-            }),
+    /// Refer to [`Wallet::load`] for more.
+    </span><span class="kw">pub fn </span>load_with_params(
+        changeset: ChangeSet,
+        params: LoadParams,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt;, LoadError&gt; {
+        <span class="kw">if </span>changeset.is_empty() {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
+        <span class="kw">let </span>secp = Secp256k1::new();
+        <span class="kw">let </span>network = changeset.network.ok_or(LoadError::MissingNetwork)<span class="question-mark">?</span>;
+        <span class="kw">let </span>chain = LocalChain::from_changeset(changeset.local_chain)
+            .map_err(|<span class="kw">_</span>| LoadError::MissingGenesis)<span class="question-mark">?</span>;
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(exp_network) = params.check_network {
+            <span class="kw">if </span>network != exp_network {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(LoadError::Mismatch(LoadMismatch::Network {
+                    loaded: network,
+                    expected: exp_network,
+                }));
+            }
+        }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(exp_genesis_hash) = params.check_genesis_hash {
+            <span class="kw">if </span>chain.genesis_hash() != exp_genesis_hash {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(LoadError::Mismatch(LoadMismatch::Genesis {
+                    loaded: chain.genesis_hash(),
+                    expected: exp_genesis_hash,
+                }));
+            }
+        }
+
+        <span class="kw">let </span>descriptor = changeset
+            .descriptor
+            .ok_or(LoadError::MissingDescriptor(KeychainKind::External))<span class="question-mark">?</span>;
+        check_wallet_descriptor(<span class="kw-2">&amp;</span>descriptor).map_err(LoadError::Descriptor)<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>external_keymap = params.descriptor_keymap;
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(expected) = params.check_descriptor {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(make_desc) = expected {
+                <span class="kw">let </span>(exp_desc, keymap) =
+                    make_desc(<span class="kw-2">&amp;</span>secp, network).map_err(LoadError::Descriptor)<span class="question-mark">?</span>;
+                <span class="kw">if </span>descriptor.descriptor_id() != exp_desc.descriptor_id() {
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(LoadError::Mismatch(LoadMismatch::Descriptor {
+                        keychain: KeychainKind::External,
+                        loaded: <span class="prelude-val">Some</span>(descriptor),
+                        expected: <span class="prelude-val">Some</span>(exp_desc),
+                    }));
+                }
+                <span class="kw">if </span>params.extract_keys {
+                    external_keymap.extend(keymap);
+                }
+            } <span class="kw">else </span>{
+                <span class="kw">return </span><span class="prelude-val">Err</span>(LoadError::Mismatch(LoadMismatch::Descriptor {
+                    keychain: KeychainKind::External,
+                    loaded: <span class="prelude-val">Some</span>(descriptor),
+                    expected: <span class="prelude-val">None</span>,
+                }));
+            }
+        }
+        <span class="kw">let </span>signers = Arc::new(SignersContainer::build(external_keymap, <span class="kw-2">&amp;</span>descriptor, <span class="kw-2">&amp;</span>secp));
+
+        <span class="kw">let </span><span class="kw-2">mut </span>change_descriptor = <span class="prelude-val">None</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>internal_keymap = params.change_descriptor_keymap;
+
+        <span class="kw">match </span>(changeset.change_descriptor, params.check_change_descriptor) {
+            <span class="comment">// empty signer
+            </span>(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) =&gt; {}
+            (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(expect)) =&gt; {
+                <span class="comment">// expected desc but none loaded
+                </span><span class="kw">if let </span><span class="prelude-val">Some</span>(make_desc) = expect {
+                    <span class="kw">let </span>(exp_desc, <span class="kw">_</span>) = make_desc(<span class="kw-2">&amp;</span>secp, network).map_err(LoadError::Descriptor)<span class="question-mark">?</span>;
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(LoadError::Mismatch(LoadMismatch::Descriptor {
+                        keychain: KeychainKind::Internal,
+                        loaded: <span class="prelude-val">None</span>,
+                        expected: <span class="prelude-val">Some</span>(exp_desc),
+                    }));
+                }
+            }
+            <span class="comment">// nothing expected
+            </span>(<span class="prelude-val">Some</span>(desc), <span class="prelude-val">None</span>) =&gt; {
+                check_wallet_descriptor(<span class="kw-2">&amp;</span>desc).map_err(LoadError::Descriptor)<span class="question-mark">?</span>;
+                change_descriptor = <span class="prelude-val">Some</span>(desc);
+            }
+            (<span class="prelude-val">Some</span>(desc), <span class="prelude-val">Some</span>(expect)) =&gt; <span class="kw">match </span>expect {
+                <span class="comment">// expected none for existing
+                </span><span class="prelude-val">None </span>=&gt; {
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(LoadError::Mismatch(LoadMismatch::Descriptor {
+                        keychain: KeychainKind::Internal,
+                        loaded: <span class="prelude-val">Some</span>(desc),
+                        expected: <span class="prelude-val">None</span>,
+                    }))
+                }
+                <span class="comment">// parameters must match
+                </span><span class="prelude-val">Some</span>(make_desc) =&gt; {
+                    check_wallet_descriptor(<span class="kw-2">&amp;</span>desc).map_err(LoadError::Descriptor)<span class="question-mark">?</span>;
+                    <span class="kw">let </span>(exp_desc, keymap) =
+                        make_desc(<span class="kw-2">&amp;</span>secp, network).map_err(LoadError::Descriptor)<span class="question-mark">?</span>;
+                    <span class="kw">if </span>desc.descriptor_id() != exp_desc.descriptor_id() {
+                        <span class="kw">return </span><span class="prelude-val">Err</span>(LoadError::Mismatch(LoadMismatch::Descriptor {
+                            keychain: KeychainKind::Internal,
+                            loaded: <span class="prelude-val">Some</span>(desc),
+                            expected: <span class="prelude-val">Some</span>(exp_desc),
+                        }));
+                    }
+                    <span class="kw">if </span>params.extract_keys {
+                        internal_keymap.extend(keymap);
+                    }
+                    change_descriptor = <span class="prelude-val">Some</span>(desc);
+                }
+            },
+        }
+
+        <span class="kw">let </span>change_signers = <span class="kw">match </span>change_descriptor {
+            <span class="prelude-val">Some</span>(<span class="kw-2">ref </span>change_descriptor) =&gt; Arc::new(SignersContainer::build(
+                internal_keymap,
+                change_descriptor,
+                <span class="kw-2">&amp;</span>secp,
+            )),
+            <span class="prelude-val">None </span>=&gt; Arc::new(SignersContainer::new()),
+        };
+
+        <span class="kw">let </span>index = create_indexer(descriptor, change_descriptor, params.lookahead)
+            .map_err(LoadError::Descriptor)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span><span class="kw-2">mut </span>indexed_graph = IndexedTxGraph::new(index);
+        indexed_graph.apply_changeset(changeset.indexer.into());
+        indexed_graph.apply_changeset(changeset.tx_graph.into());
+
+        <span class="kw">let </span>stage = ChangeSet::default();
+
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Wallet {
+            signers,
+            change_signers,
+            chain,
+            indexed_graph,
+            stage,
+            network,
+            secp,
+        }))
     }
 
     <span class="doccomment">/// Get the Bitcoin network the wallet is using.
@@ -3342,7 +3288,7 @@
     }
 
     <span class="doccomment">/// Iterator over all keychains in this wallet
-    </span><span class="kw">pub fn </span>keychains(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span>KeychainKind, <span class="kw-2">&amp;</span>ExtendedDescriptor)&gt; {
+    </span><span class="kw">pub fn </span>keychains(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (KeychainKind, <span class="kw-2">&amp;</span>ExtendedDescriptor)&gt; {
         <span class="self">self</span>.indexed_graph.index.keychains()
     }
 
@@ -3359,8 +3305,8 @@
         <span class="kw">let </span><span class="kw-2">mut </span>spk_iter = <span class="self">self
             </span>.indexed_graph
             .index
-            .unbounded_spk_iter(<span class="kw-2">&amp;</span>keychain)
-            .expect(<span class="string">"Must exist (we called map_keychain)"</span>);
+            .unbounded_spk_iter(keychain)
+            .expect(<span class="string">"keychain must exist"</span>);
         <span class="kw">if </span>!spk_iter.descriptor().has_wildcard() {
             index = <span class="number">0</span>;
         }
@@ -3377,30 +3323,46 @@
 
     <span class="doccomment">/// Attempt to reveal the next address of the given `keychain`.
     ///
-    /// This will increment the internal derivation index. If the keychain's descriptor doesn't
+    /// This will increment the keychain's derivation index. If the keychain's descriptor doesn't
     /// contain a wildcard or every address is already revealed up to the maximum derivation
     /// index defined in [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki),
-    /// then returns the last revealed address.
+    /// then the last revealed address will be returned.
     ///
-    /// # Errors
+    /// **WARNING**: To avoid address reuse you must persist the changes resulting from one or more
+    /// calls to this method before closing the wallet. For example:
     ///
-    /// If writing to persistent storage fails.
-    </span><span class="kw">pub fn </span>reveal_next_address(<span class="kw-2">&amp;mut </span><span class="self">self</span>, keychain: KeychainKind) -&gt; anyhow::Result&lt;AddressInfo&gt; {
+    /// ```rust,no_run
+    /// # use bdk_wallet::{LoadParams, ChangeSet, KeychainKind};
+    /// use bdk_chain::rusqlite::Connection;
+    /// let mut conn = Connection::open_in_memory().expect("must open connection");
+    /// let mut wallet = LoadParams::new()
+    ///     .load_wallet(&amp;mut conn)
+    ///     .expect("database is okay")
+    ///     .expect("database has data");
+    /// let next_address = wallet.reveal_next_address(KeychainKind::External);
+    /// wallet.persist(&amp;mut conn).expect("write is okay");
+    ///
+    /// // Now it's safe to show the user their next address!
+    /// println!("Next address: {}", next_address.address);
+    /// # Ok::&lt;(), anyhow::Error&gt;(())
+    /// ```
+    </span><span class="kw">pub fn </span>reveal_next_address(<span class="kw-2">&amp;mut </span><span class="self">self</span>, keychain: KeychainKind) -&gt; AddressInfo {
         <span class="kw">let </span>keychain = <span class="self">self</span>.map_keychain(keychain);
-        <span class="kw">let </span>((index, spk), index_changeset) = <span class="self">self
-            </span>.indexed_graph
-            .index
-            .reveal_next_spk(<span class="kw-2">&amp;</span>keychain)
-            .expect(<span class="string">"Must exist (we called map_keychain)"</span>);
+        <span class="kw">let </span>index = <span class="kw-2">&amp;mut </span><span class="self">self</span>.indexed_graph.index;
+        <span class="kw">let </span>stage = <span class="kw-2">&amp;mut </span><span class="self">self</span>.stage;
 
-        <span class="self">self</span>.persist
-            .stage_and_commit(indexed_tx_graph::ChangeSet::from(index_changeset).into())<span class="question-mark">?</span>;
+        <span class="kw">let </span>((index, spk), index_changeset) = index
+            .reveal_next_spk(keychain)
+            .expect(<span class="string">"keychain must exist"</span>);
 
-        <span class="prelude-val">Ok</span>(AddressInfo {
+        stage.merge(index_changeset.into());
+
+        AddressInfo {
             index,
-            address: Address::from_script(spk, <span class="self">self</span>.network).expect(<span class="string">"must have address form"</span>),
+            address: Address::from_script(spk.as_script(), <span class="self">self</span>.network)
+                .expect(<span class="string">"must have address form"</span>),
             keychain,
-        })
+        }
     }
 
     <span class="doccomment">/// Reveal addresses up to and including the target `index` and return an iterator
@@ -3410,29 +3372,27 @@
     /// possible index. If all addresses up to the given `index` are already revealed, then
     /// no new addresses are returned.
     ///
-    /// # Errors
-    ///
-    /// If writing to persistent storage fails.
+    /// **WARNING**: To avoid address reuse you must persist the changes resulting from one or more
+    /// calls to this method before closing the wallet. See [`Wallet::reveal_next_address`].
     </span><span class="kw">pub fn </span>reveal_addresses_to(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         keychain: KeychainKind,
         index: u32,
-    ) -&gt; anyhow::Result&lt;<span class="kw">impl </span>Iterator&lt;Item = AddressInfo&gt; + <span class="lifetime">'_</span>&gt; {
+    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = AddressInfo&gt; + <span class="lifetime">'_ </span>{
         <span class="kw">let </span>keychain = <span class="self">self</span>.map_keychain(keychain);
-        <span class="kw">let </span>(spk_iter, index_changeset) = <span class="self">self
+        <span class="kw">let </span>(spks, index_changeset) = <span class="self">self
             </span>.indexed_graph
             .index
-            .reveal_to_target(<span class="kw-2">&amp;</span>keychain, index)
-            .expect(<span class="string">"must exist (we called map_keychain)"</span>);
+            .reveal_to_target(keychain, index)
+            .expect(<span class="string">"keychain must exist"</span>);
 
-        <span class="self">self</span>.persist
-            .stage_and_commit(indexed_tx_graph::ChangeSet::from(index_changeset).into())<span class="question-mark">?</span>;
+        <span class="self">self</span>.stage.merge(index_changeset.into());
 
-        <span class="prelude-val">Ok</span>(spk_iter.map(<span class="kw">move </span>|(index, spk)| AddressInfo {
+        spks.into_iter().map(<span class="kw">move </span>|(index, spk)| AddressInfo {
             index,
             address: Address::from_script(<span class="kw-2">&amp;</span>spk, <span class="self">self</span>.network).expect(<span class="string">"must have address form"</span>),
             keychain,
-        }))
+        })
     }
 
     <span class="doccomment">/// Get the next unused address for the given `keychain`, i.e. the address with the lowest
@@ -3441,25 +3401,25 @@
     /// This will attempt to derive and reveal a new address if no newly revealed addresses
     /// are available. See also [`reveal_next_address`](Self::reveal_next_address).
     ///
-    /// # Errors
-    ///
-    /// If writing to persistent storage fails.
-    </span><span class="kw">pub fn </span>next_unused_address(<span class="kw-2">&amp;mut </span><span class="self">self</span>, keychain: KeychainKind) -&gt; anyhow::Result&lt;AddressInfo&gt; {
+    /// **WARNING**: To avoid address reuse you must persist the changes resulting from one or more
+    /// calls to this method before closing the wallet. See [`Wallet::reveal_next_address`].
+    </span><span class="kw">pub fn </span>next_unused_address(<span class="kw-2">&amp;mut </span><span class="self">self</span>, keychain: KeychainKind) -&gt; AddressInfo {
         <span class="kw">let </span>keychain = <span class="self">self</span>.map_keychain(keychain);
-        <span class="kw">let </span>((index, spk), index_changeset) = <span class="self">self
-            </span>.indexed_graph
-            .index
-            .next_unused_spk(<span class="kw-2">&amp;</span>keychain)
-            .expect(<span class="string">"must exist (we called map_keychain)"</span>);
+        <span class="kw">let </span>index = <span class="kw-2">&amp;mut </span><span class="self">self</span>.indexed_graph.index;
 
-        <span class="self">self</span>.persist
-            .stage_and_commit(indexed_tx_graph::ChangeSet::from(index_changeset).into())<span class="question-mark">?</span>;
+        <span class="kw">let </span>((index, spk), index_changeset) = index
+            .next_unused_spk(keychain)
+            .expect(<span class="string">"keychain must exist"</span>);
 
-        <span class="prelude-val">Ok</span>(AddressInfo {
+        <span class="self">self</span>.stage
+            .merge(indexed_tx_graph::ChangeSet::from(index_changeset).into());
+
+        AddressInfo {
             index,
-            address: Address::from_script(spk, <span class="self">self</span>.network).expect(<span class="string">"must have address form"</span>),
+            address: Address::from_script(spk.as_script(), <span class="self">self</span>.network)
+                .expect(<span class="string">"must have address form"</span>),
             keychain,
-        })
+        }
     }
 
     <span class="doccomment">/// Marks an address used of the given `keychain` at `index`.
@@ -3490,27 +3450,27 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         keychain: KeychainKind,
     ) -&gt; <span class="kw">impl </span>DoubleEndedIterator&lt;Item = AddressInfo&gt; + <span class="lifetime">'_ </span>{
-        <span class="kw">let </span>keychain = <span class="self">self</span>.map_keychain(keychain);
         <span class="self">self</span>.indexed_graph
             .index
-            .unused_keychain_spks(<span class="kw-2">&amp;</span>keychain)
+            .unused_keychain_spks(<span class="self">self</span>.map_keychain(keychain))
             .map(<span class="kw">move </span>|(index, spk)| AddressInfo {
                 index,
-                address: Address::from_script(spk, <span class="self">self</span>.network).expect(<span class="string">"must have address form"</span>),
+                address: Address::from_script(spk.as_script(), <span class="self">self</span>.network)
+                    .expect(<span class="string">"must have address form"</span>),
                 keychain,
             })
     }
 
     <span class="doccomment">/// Return whether or not a `script` is part of this wallet (either internal or external)
-    </span><span class="kw">pub fn </span>is_mine(<span class="kw-2">&amp;</span><span class="self">self</span>, script: <span class="kw-2">&amp;</span>Script) -&gt; bool {
+    </span><span class="kw">pub fn </span>is_mine(<span class="kw-2">&amp;</span><span class="self">self</span>, script: ScriptBuf) -&gt; bool {
         <span class="self">self</span>.indexed_graph.index.index_of_spk(script).is_some()
     }
 
     <span class="doccomment">/// Finds how the wallet derived the script pubkey `spk`.
     ///
     /// Will only return `Some(_)` if the wallet has given out the spk.
-    </span><span class="kw">pub fn </span>derivation_of_spk(<span class="kw-2">&amp;</span><span class="self">self</span>, spk: <span class="kw-2">&amp;</span>Script) -&gt; <span class="prelude-ty">Option</span>&lt;(KeychainKind, u32)&gt; {
-        <span class="self">self</span>.indexed_graph.index.index_of_spk(spk)
+    </span><span class="kw">pub fn </span>derivation_of_spk(<span class="kw-2">&amp;</span><span class="self">self</span>, spk: ScriptBuf) -&gt; <span class="prelude-ty">Option</span>&lt;(KeychainKind, u32)&gt; {
+        <span class="self">self</span>.indexed_graph.index.index_of_spk(spk).cloned()
     }
 
     <span class="doccomment">/// Return the list of unspent outputs of this wallet
@@ -3520,7 +3480,7 @@
             .filter_chain_unspents(
                 <span class="kw-2">&amp;</span><span class="self">self</span>.chain,
                 <span class="self">self</span>.chain.tip().block_id(),
-                <span class="self">self</span>.indexed_graph.index.outpoints(),
+                <span class="self">self</span>.indexed_graph.index.outpoints().iter().cloned(),
             )
             .map(|((k, i), full_txo)| new_local_utxo(k, i, full_txo))
     }
@@ -3534,7 +3494,7 @@
             .filter_chain_txouts(
                 <span class="kw-2">&amp;</span><span class="self">self</span>.chain,
                 <span class="self">self</span>.chain.tip().block_id(),
-                <span class="self">self</span>.indexed_graph.index.outpoints(),
+                <span class="self">self</span>.indexed_graph.index.outpoints().iter().cloned(),
             )
             .map(|((k, i), full_txo)| new_local_utxo(k, i, full_txo))
     }
@@ -3559,7 +3519,7 @@
     /// script pubkeys the wallet is storing internally).
     </span><span class="kw">pub fn </span>all_unbounded_spk_iters(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; BTreeMap&lt;KeychainKind, <span class="kw">impl </span>Iterator&lt;Item = (u32, ScriptBuf)&gt; + Clone&gt; {
+    ) -&gt; BTreeMap&lt;KeychainKind, <span class="kw">impl </span>Iterator&lt;Item = Indexed&lt;ScriptBuf&gt;&gt; + Clone&gt; {
         <span class="self">self</span>.indexed_graph.index.all_unbounded_spk_iters()
     }
 
@@ -3571,18 +3531,17 @@
     </span><span class="kw">pub fn </span>unbounded_spk_iter(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         keychain: KeychainKind,
-    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (u32, ScriptBuf)&gt; + Clone {
-        <span class="kw">let </span>keychain = <span class="self">self</span>.map_keychain(keychain);
+    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Indexed&lt;ScriptBuf&gt;&gt; + Clone {
         <span class="self">self</span>.indexed_graph
             .index
-            .unbounded_spk_iter(<span class="kw-2">&amp;</span>keychain)
-            .expect(<span class="string">"Must exist (we called map_keychain)"</span>)
+            .unbounded_spk_iter(<span class="self">self</span>.map_keychain(keychain))
+            .expect(<span class="string">"keychain must exist"</span>)
     }
 
     <span class="doccomment">/// Returns the utxo owned by this wallet corresponding to `outpoint` if it exists in the
     /// wallet's database.
     </span><span class="kw">pub fn </span>get_utxo(<span class="kw-2">&amp;</span><span class="self">self</span>, op: OutPoint) -&gt; <span class="prelude-ty">Option</span>&lt;LocalOutput&gt; {
-        <span class="kw">let </span>(keychain, index, <span class="kw">_</span>) = <span class="self">self</span>.indexed_graph.index.txout(op)<span class="question-mark">?</span>;
+        <span class="kw">let </span>((keychain, index), <span class="kw">_</span>) = <span class="self">self</span>.indexed_graph.index.txout(op)<span class="question-mark">?</span>;
         <span class="self">self</span>.indexed_graph
             .graph()
             .filter_chain_unspents(
@@ -3600,19 +3559,20 @@
     /// or [`calculate_fee_rate`] on a given transaction. Outputs inserted with this method will
     /// not be returned in [`list_unspent`] or [`list_output`].
     ///
-    /// Any inserted `TxOut`s are not persisted until [`commit`] is called.
-    ///
-    /// **WARNING:** This should only be used to add `TxOut`s that the wallet does not own. Only
+    /// **WARNINGS:** This should only be used to add `TxOut`s that the wallet does not own. Only
     /// insert `TxOut`s that you trust the values for!
+    ///
+    /// You must persist the changes resulting from one or more calls to this method if you need
+    /// the inserted `TxOut` data to be reloaded after closing the wallet.
+    /// See [`Wallet::reveal_next_address`].
     ///
     /// [`calculate_fee`]: Self::calculate_fee
     /// [`calculate_fee_rate`]: Self::calculate_fee_rate
     /// [`list_unspent`]: Self::list_unspent
     /// [`list_output`]: Self::list_output
-    /// [`commit`]: Self::commit
     </span><span class="kw">pub fn </span>insert_txout(<span class="kw-2">&amp;mut </span><span class="self">self</span>, outpoint: OutPoint, txout: TxOut) {
         <span class="kw">let </span>additions = <span class="self">self</span>.indexed_graph.insert_txout(outpoint, txout);
-        <span class="self">self</span>.persist.stage(ChangeSet::from(additions));
+        <span class="self">self</span>.stage.merge(additions.into());
     }
 
     <span class="doccomment">/// Calculates the fee of a given transaction. Returns [`Amount::ZERO`] if `tx` is a coinbase transaction.
@@ -3706,9 +3666,9 @@
         <span class="self">self</span>.indexed_graph.index.sent_and_received(tx, ..)
     }
 
-    <span class="doccomment">/// Get a single transaction from the wallet as a [`CanonicalTx`] (if the transaction exists).
+    <span class="doccomment">/// Get a single transaction from the wallet as a [`WalletTx`] (if the transaction exists).
     ///
-    /// `CanonicalTx` contains the full transaction alongside meta-data such as:
+    /// `WalletTx` contains the full transaction alongside meta-data such as:
     /// * Blocks that the transaction is [`Anchor`]ed in. These may or may not be blocks that exist
     ///   in the best chain.
     /// * The [`ChainPosition`] of the transaction in the best chain - whether the transaction is
@@ -3722,13 +3682,13 @@
     /// # let wallet: Wallet = todo!();
     /// # let my_txid: bitcoin::Txid = todo!();
     ///
-    /// let canonical_tx = wallet.get_tx(my_txid).expect("panic if tx does not exist");
+    /// let wallet_tx = wallet.get_tx(my_txid).expect("panic if tx does not exist");
     ///
     /// // get reference to full transaction
-    /// println!("my tx: {:#?}", canonical_tx.tx_node.tx);
+    /// println!("my tx: {:#?}", wallet_tx.tx_node.tx);
     ///
     /// // list all transaction anchors
-    /// for anchor in canonical_tx.tx_node.anchors {
+    /// for anchor in wallet_tx.tx_node.anchors {
     ///     println!(
     ///         "tx is anchored by block of hash {}",
     ///         anchor.anchor_block().hash
@@ -3736,10 +3696,10 @@
     /// }
     ///
     /// // get confirmation status of transaction
-    /// match canonical_tx.chain_position {
+    /// match wallet_tx.chain_position {
     ///     ChainPosition::Confirmed(anchor) =&gt; println!(
     ///         "tx is confirmed at height {}, we know this since {}:{} is in the best chain",
-    ///         anchor.confirmation_height, anchor.anchor_block.height, anchor.anchor_block.hash,
+    ///         anchor.block_id.height, anchor.block_id.height, anchor.block_id.hash,
     ///     ),
     ///     ChainPosition::Unconfirmed(last_seen) =&gt; println!(
     ///         "tx is last seen at {}, it is unconfirmed as it is not anchored in the best chain",
@@ -3749,13 +3709,10 @@
     /// ```
     ///
     /// [`Anchor`]: bdk_chain::Anchor
-    </span><span class="kw">pub fn </span>get_tx(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        txid: Txid,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;CanonicalTx&lt;<span class="lifetime">'_</span>, Arc&lt;Transaction&gt;, ConfirmationTimeHeightAnchor&gt;&gt; {
+    </span><span class="kw">pub fn </span>get_tx(<span class="kw-2">&amp;</span><span class="self">self</span>, txid: Txid) -&gt; <span class="prelude-ty">Option</span>&lt;WalletTx&gt; {
         <span class="kw">let </span>graph = <span class="self">self</span>.indexed_graph.graph();
 
-        <span class="prelude-val">Some</span>(CanonicalTx {
+        <span class="prelude-val">Some</span>(WalletTx {
             chain_position: graph.get_chain_position(
                 <span class="kw-2">&amp;</span><span class="self">self</span>.chain,
                 <span class="self">self</span>.chain.tip().block_id(),
@@ -3766,89 +3723,69 @@
     }
 
     <span class="doccomment">/// Add a new checkpoint to the wallet's internal view of the chain.
-    /// This stages but does not [`commit`] the change.
     ///
     /// Returns whether anything changed with the insertion (e.g. `false` if checkpoint was already
     /// there).
     ///
-    /// [`commit`]: Self::commit
+    /// **WARNING**: You must persist the changes resulting from one or more calls to this method
+    /// if you need the inserted checkpoint data to be reloaded after closing the wallet.
+    /// See [`Wallet::reveal_next_address`].
     </span><span class="kw">pub fn </span>insert_checkpoint(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         block_id: BlockId,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, local_chain::AlterCheckPointError&gt; {
         <span class="kw">let </span>changeset = <span class="self">self</span>.chain.insert_block(block_id)<span class="question-mark">?</span>;
         <span class="kw">let </span>changed = !changeset.is_empty();
-        <span class="self">self</span>.persist.stage(changeset.into());
+        <span class="self">self</span>.stage.merge(changeset.into());
         <span class="prelude-val">Ok</span>(changed)
     }
 
-    <span class="doccomment">/// Add a transaction to the wallet's internal view of the chain. This stages but does not
-    /// [`commit`] the change.
+    <span class="doccomment">/// Add a transaction to the wallet's internal view of the chain. This stages the change,
+    /// you must persist it later.
     ///
-    /// Returns whether anything changed with the transaction insertion (e.g. `false` if the
-    /// transaction was already inserted at the same position).
+    /// This method inserts the given `tx` and returns whether anything changed after insertion,
+    /// which will be false if the same transaction already exists in the wallet's transaction
+    /// graph. Any changes are staged but not committed.
     ///
-    /// A `tx` can be rejected if `position` has a height greater than the [`latest_checkpoint`].
-    /// Therefore you should use [`insert_checkpoint`] to insert new checkpoints before manually
-    /// inserting new transactions.
+    /// # Note
     ///
-    /// **WARNING:** If `position` is confirmed, we anchor the `tx` to a the lowest checkpoint that
-    /// is &gt;= the `position`'s height. The caller is responsible for ensuring the `tx` exists in our
-    /// local view of the best chain's history.
-    ///
-    /// [`commit`]: Self::commit
-    /// [`latest_checkpoint`]: Self::latest_checkpoint
-    /// [`insert_checkpoint`]: Self::insert_checkpoint
-    </span><span class="kw">pub fn </span>insert_tx(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        tx: Transaction,
-        position: ConfirmationTime,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, InsertTxError&gt; {
-        <span class="kw">let </span>(anchor, last_seen) = <span class="kw">match </span>position {
-            ConfirmationTime::Confirmed { height, time } =&gt; {
-                <span class="comment">// anchor tx to checkpoint with lowest height that is &gt;= position's height
-                </span><span class="kw">let </span>anchor = <span class="self">self
-                    </span>.chain
-                    .range(height..)
-                    .last()
-                    .ok_or(InsertTxError::ConfirmationHeightCannotBeGreaterThanTip {
-                        tip_height: <span class="self">self</span>.chain.tip().height(),
-                        tx_height: height,
-                    })
-                    .map(|anchor_cp| ConfirmationTimeHeightAnchor {
-                        anchor_block: anchor_cp.block_id(),
-                        confirmation_height: height,
-                        confirmation_time: time,
-                    })<span class="question-mark">?</span>;
-
-                (<span class="prelude-val">Some</span>(anchor), <span class="prelude-val">None</span>)
-            }
-            ConfirmationTime::Unconfirmed { last_seen } =&gt; (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(last_seen)),
-        };
-
+    /// By default the inserted `tx` won't be considered "canonical" because it's not known
+    /// whether the transaction exists in the best chain. To know whether it exists, the tx
+    /// must be broadcast to the network and the wallet synced via a chain source.
+    </span><span class="kw">pub fn </span>insert_tx&lt;T: Into&lt;Arc&lt;Transaction&gt;&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, tx: T) -&gt; bool {
         <span class="kw">let </span><span class="kw-2">mut </span>changeset = ChangeSet::default();
-        <span class="kw">let </span>txid = tx.txid();
-        changeset.append(<span class="self">self</span>.indexed_graph.insert_tx(tx).into());
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(anchor) = anchor {
-            changeset.append(<span class="self">self</span>.indexed_graph.insert_anchor(txid, anchor).into());
-        }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(last_seen) = last_seen {
-            changeset.append(<span class="self">self</span>.indexed_graph.insert_seen_at(txid, last_seen).into());
-        }
-
-        <span class="kw">let </span>changed = !changeset.is_empty();
-        <span class="self">self</span>.persist.stage(changeset);
-        <span class="prelude-val">Ok</span>(changed)
+        changeset.merge(<span class="self">self</span>.indexed_graph.insert_tx(tx).into());
+        <span class="kw">let </span>ret = !changeset.is_empty();
+        <span class="self">self</span>.stage.merge(changeset);
+        ret
     }
 
     <span class="doccomment">/// Iterate over the transactions in the wallet.
-    </span><span class="kw">pub fn </span>transactions(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = CanonicalTx&lt;<span class="lifetime">'_</span>, Arc&lt;Transaction&gt;, ConfirmationTimeHeightAnchor&gt;&gt; + <span class="lifetime">'_
-    </span>{
+    </span><span class="kw">pub fn </span>transactions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = WalletTx&gt; + <span class="lifetime">'_ </span>{
         <span class="self">self</span>.indexed_graph
             .graph()
-            .list_chain_txs(<span class="kw-2">&amp;</span><span class="self">self</span>.chain, <span class="self">self</span>.chain.tip().block_id())
+            .list_canonical_txs(<span class="kw-2">&amp;</span><span class="self">self</span>.chain, <span class="self">self</span>.chain.tip().block_id())
+    }
+
+    <span class="doccomment">/// Array of transactions in the wallet sorted with a comparator function.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use bdk_wallet::{LoadParams, Wallet, WalletTx};
+    /// # let mut wallet:Wallet = todo!();
+    /// // Transactions by chain position: first unconfirmed then descending by confirmed height.
+    /// let sorted_txs: Vec&lt;WalletTx&gt; =
+    ///     wallet.transactions_sort_by(|tx1, tx2| tx2.chain_position.cmp(&amp;tx1.chain_position));
+    /// # Ok::&lt;(), anyhow::Error&gt;(())
+    /// ```
+    </span><span class="kw">pub fn </span>transactions_sort_by&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, compare: F) -&gt; Vec&lt;WalletTx&gt;
+    <span class="kw">where
+        </span>F: FnMut(<span class="kw-2">&amp;</span>WalletTx, <span class="kw-2">&amp;</span>WalletTx) -&gt; Ordering,
+    {
+        <span class="kw">let </span><span class="kw-2">mut </span>txs: Vec&lt;WalletTx&gt; = <span class="self">self</span>.transactions().collect();
+        txs.sort_unstable_by(compare);
+        txs
     }
 
     <span class="doccomment">/// Return the balance, separated into available, trusted-pending, untrusted-pending and immature
@@ -3857,7 +3794,7 @@
         <span class="self">self</span>.indexed_graph.graph().balance(
             <span class="kw-2">&amp;</span><span class="self">self</span>.chain,
             <span class="self">self</span>.chain.tip().block_id(),
-            <span class="self">self</span>.indexed_graph.index.outpoints(),
+            <span class="self">self</span>.indexed_graph.index.outpoints().iter().cloned(),
             |<span class="kw-2">&amp;</span>(k, <span class="kw">_</span>), <span class="kw">_</span>| k == KeychainKind::Internal,
         )
     }
@@ -3879,6 +3816,27 @@
         signers.add_external(signer.id(<span class="kw-2">&amp;</span><span class="self">self</span>.secp), ordering, signer);
     }
 
+    <span class="doccomment">/// Set the keymap for a given keychain.
+    ///
+    /// Note this does nothing if the given keychain has no descriptor because we won't
+    /// know the context (segwit, taproot, etc) in which to create signatures.
+    </span><span class="kw">pub fn </span>set_keymap(<span class="kw-2">&amp;mut </span><span class="self">self</span>, keychain: KeychainKind, keymap: KeyMap) {
+        <span class="kw">let </span>wallet_signers = <span class="kw">match </span>keychain {
+            KeychainKind::External =&gt; Arc::make_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>.signers),
+            KeychainKind::Internal =&gt; Arc::make_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>.change_signers),
+        };
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(descriptor) = <span class="self">self</span>.indexed_graph.index.get_descriptor(keychain) {
+            <span class="kw-2">*</span>wallet_signers = SignersContainer::build(keymap, descriptor, <span class="kw-2">&amp;</span><span class="self">self</span>.secp)
+        }
+    }
+
+    <span class="doccomment">/// Set the keymap for each keychain.
+    </span><span class="kw">pub fn </span>set_keymaps(<span class="kw-2">&amp;mut </span><span class="self">self</span>, keymaps: <span class="kw">impl </span>IntoIterator&lt;Item = (KeychainKind, KeyMap)&gt;) {
+        <span class="kw">for </span>(keychain, keymap) <span class="kw">in </span>keymaps {
+            <span class="self">self</span>.set_keymap(keychain, keymap);
+        }
+    }
+
     <span class="doccomment">/// Get the signers
     ///
     /// ## Example
@@ -3886,7 +3844,11 @@
     /// ```
     /// # use bdk_wallet::{Wallet, KeychainKind};
     /// # use bdk_wallet::bitcoin::Network;
-    /// let wallet = Wallet::new_no_persist("wpkh(tprv8ZgxMBicQKsPe73PBRSmNbTfbcsZnwWhz5eVmhHpi31HW29Z7mc9B4cWGRQzopNUzZUT391DeDJxL2PefNunWyLgqCKRMDkU1s2s8bAfoSk/84'/0'/0'/0/*)", None, Network::Testnet)?;
+    /// let descriptor = "wpkh(tprv8ZgxMBicQKsPe73PBRSmNbTfbcsZnwWhz5eVmhHpi31HW29Z7mc9B4cWGRQzopNUzZUT391DeDJxL2PefNunWyLgqCKRMDkU1s2s8bAfoSk/84'/1'/0'/0/*)";
+    /// let change_descriptor = "wpkh(tprv8ZgxMBicQKsPe73PBRSmNbTfbcsZnwWhz5eVmhHpi31HW29Z7mc9B4cWGRQzopNUzZUT391DeDJxL2PefNunWyLgqCKRMDkU1s2s8bAfoSk/84'/1'/0'/1/*)";
+    /// let wallet = Wallet::create(descriptor, change_descriptor)
+    ///     .network(Network::Testnet)
+    ///     .create_wallet_no_persist()?;
     /// for secret_key in wallet.get_signers(KeychainKind::External).signers().iter().filter_map(|s| s.descriptor_secret_key()) {
     ///     // secret_key: tprv8ZgxMBicQKsPe73PBRSmNbTfbcsZnwWhz5eVmhHpi31HW29Z7mc9B4cWGRQzopNUzZUT391DeDJxL2PefNunWyLgqCKRMDkU1s2s8bAfoSk/84'/0'/0'/0/*
     ///     println!("secret_key: {}", secret_key);
@@ -3911,9 +3873,8 @@
     /// # use std::str::FromStr;
     /// # use bitcoin::*;
     /// # use bdk_wallet::*;
-    /// # use bdk_wallet::wallet::ChangeSet;
-    /// # use bdk_wallet::wallet::error::CreateTxError;
-    /// # use bdk_persist::PersistBackend;
+    /// # use bdk_wallet::ChangeSet;
+    /// # use bdk_wallet::error::CreateTxError;
     /// # use anyhow::Error;
     /// # let descriptor = "wpkh(tpubD6NzVbkrYhZ4Xferm7Pz4VnjdcDPFyjVu5K4iZXQ4pVN8Cks4pHVowTBXBKRhX64pkRyJZJN5xAKj4UDNnLPb5p2sSKXhewoYx5GbTdUFWq/*)";
     /// # let mut wallet = doctest_wallet!();
@@ -3942,6 +3903,7 @@
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         coin_selection: Cs,
         params: TxParams,
+        rng: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>RngCore,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Psbt, CreateTxError&gt; {
         <span class="kw">let </span>keychains: BTreeMap&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt; = <span class="self">self</span>.indexed_graph.index.keychains().collect();
         <span class="kw">let </span>external_descriptor = keychains.get(<span class="kw-2">&amp;</span>KeychainKind::External).expect(<span class="string">"must exist"</span>);
@@ -3951,7 +3913,6 @@
             .extract_policy(<span class="kw-2">&amp;</span><span class="self">self</span>.signers, BuildSatisfaction::None, <span class="kw-2">&amp;</span><span class="self">self</span>.secp)<span class="question-mark">?
             </span>.unwrap();
         <span class="kw">let </span>internal_policy = internal_descriptor
-            .as_ref()
             .map(|desc| {
                 <span class="prelude-val">Ok</span>::&lt;<span class="kw">_</span>, CreateTxError&gt;(
                     desc.extract_policy(<span class="kw-2">&amp;</span><span class="self">self</span>.change_signers, BuildSatisfaction::None, <span class="kw-2">&amp;</span><span class="self">self</span>.secp)<span class="question-mark">?
@@ -3970,7 +3931,7 @@
                 KeychainKind::External,
             ));
         };
-        <span class="comment">// Same for the internal_policy path, if present
+        <span class="comment">// Same for the internal_policy path
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(internal_policy) = <span class="kw-2">&amp;</span>internal_policy {
             <span class="kw">if </span>params.change_policy != tx_builder::ChangeSpendPolicy::ChangeForbidden
                 &amp;&amp; internal_policy.requires_path()
@@ -4064,36 +4025,20 @@
             }
         };
 
-        <span class="comment">// The nSequence to be by default for inputs unless an explicit sequence is specified.
-        </span><span class="kw">let </span>n_sequence = <span class="kw">match </span>(params.rbf, requirements.csv) {
-            <span class="comment">// No RBF or CSV but there's an nLockTime, so the nSequence cannot be final
-            </span>(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) <span class="kw">if </span>lock_time != absolute::LockTime::ZERO =&gt; {
-                Sequence::ENABLE_LOCKTIME_NO_RBF
-            }
-            <span class="comment">// No RBF, CSV or nLockTime, make the transaction final
-            </span>(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) =&gt; Sequence::MAX,
-
-            <span class="comment">// No RBF requested, use the value from CSV. Note that this value is by definition
-            // non-final, so even if a timelock is enabled this nSequence is fine, hence why we
-            // don't bother checking for it here. The same is true for all the other branches below
+        <span class="comment">// nSequence value for inputs
+        // When not explicitly specified, defaults to 0xFFFFFFFD,
+        // meaning RBF signaling is enabled
+        </span><span class="kw">let </span>n_sequence = <span class="kw">match </span>(params.sequence, requirements.csv) {
+            <span class="comment">// Enable RBF by default
+            </span>(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) =&gt; Sequence::ENABLE_RBF_NO_LOCKTIME,
+            <span class="comment">// None requested, use required
             </span>(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(csv)) =&gt; csv,
-
-            <span class="comment">// RBF with a specific value but that value is too high
-            </span>(<span class="prelude-val">Some</span>(tx_builder::RbfValue::Value(rbf)), <span class="kw">_</span>) <span class="kw">if </span>!rbf.is_rbf() =&gt; {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(CreateTxError::RbfSequence)
+            <span class="comment">// Requested sequence is incompatible with requirements
+            </span>(<span class="prelude-val">Some</span>(sequence), <span class="prelude-val">Some</span>(csv)) <span class="kw">if </span>!check_nsequence_rbf(sequence, csv) =&gt; {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(CreateTxError::RbfSequenceCsv { sequence, csv })
             }
-            <span class="comment">// RBF with a specific value requested, but the value is incompatible with CSV
-            </span>(<span class="prelude-val">Some</span>(tx_builder::RbfValue::Value(rbf)), <span class="prelude-val">Some</span>(csv))
-                <span class="kw">if </span>!check_nsequence_rbf(rbf, csv) =&gt;
-            {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(CreateTxError::RbfSequenceCsv { rbf, csv })
-            }
-
-            <span class="comment">// RBF enabled with the default value with CSV also enabled. CSV takes precedence
-            </span>(<span class="prelude-val">Some</span>(tx_builder::RbfValue::Default), <span class="prelude-val">Some</span>(csv)) =&gt; csv,
-            <span class="comment">// Valid RBF, either default or with a specific value. We ignore the `CSV` value
-            // because we've already checked it before
-            </span>(<span class="prelude-val">Some</span>(rbf), <span class="kw">_</span>) =&gt; rbf.get_value(),
+            <span class="comment">// Use requested nSequence value
+            </span>(<span class="prelude-val">Some</span>(sequence), <span class="kw">_</span>) =&gt; sequence,
         };
 
         <span class="kw">let </span>(fee_rate, <span class="kw-2">mut </span>fee_amount) = <span class="kw">match </span>params.fee_policy.unwrap_or_default() {
@@ -4102,7 +4047,7 @@
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(previous_fee) = params.bumping_fee {
                     <span class="kw">if </span>fee &lt; previous_fee.absolute {
                         <span class="kw">return </span><span class="prelude-val">Err</span>(CreateTxError::FeeTooLow {
-                            required: Amount::from_sat(previous_fee.absolute),
+                            required: previous_fee.absolute,
                         });
                     }
                 }
@@ -4120,7 +4065,7 @@
                         });
                     }
                 }
-                (rate, <span class="number">0</span>)
+                (rate, Amount::ZERO)
             }
         };
 
@@ -4141,55 +4086,52 @@
         <span class="kw">let </span>recipients = params.recipients.iter().map(|(r, v)| (r, <span class="kw-2">*</span>v));
 
         <span class="kw">for </span>(index, (script_pubkey, value)) <span class="kw">in </span>recipients.enumerate() {
-            <span class="kw">if </span>!params.allow_dust
-                &amp;&amp; value.is_dust(script_pubkey)
-                &amp;&amp; !script_pubkey.is_provably_unspendable()
-            {
+            <span class="kw">if </span>!params.allow_dust &amp;&amp; value.is_dust(script_pubkey) &amp;&amp; !script_pubkey.is_op_return() {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(CreateTxError::OutputBelowDustLimit(index));
             }
 
-            <span class="kw">if </span><span class="self">self</span>.is_mine(script_pubkey) {
-                received += Amount::from_sat(value);
+            <span class="kw">if </span><span class="self">self</span>.is_mine(script_pubkey.clone()) {
+                received += value;
             }
 
             <span class="kw">let </span>new_out = TxOut {
                 script_pubkey: script_pubkey.clone(),
-                value: Amount::from_sat(value),
+                value,
             };
 
             tx.output.push(new_out);
 
-            outgoing += Amount::from_sat(value);
+            outgoing += value;
         }
 
-        fee_amount += (fee_rate * tx.weight()).to_sat();
-
-        <span class="kw">if </span>params.change_policy != tx_builder::ChangeSpendPolicy::ChangeAllowed
-            &amp;&amp; internal_descriptor.is_none()
-        {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(CreateTxError::ChangePolicyDescriptor);
-        }
+        fee_amount += fee_rate * tx.weight();
 
         <span class="kw">let </span>(required_utxos, optional_utxos) =
             <span class="self">self</span>.preselect_utxos(<span class="kw-2">&amp;</span>params, <span class="prelude-val">Some</span>(current_height.to_consensus_u32()));
 
         <span class="comment">// get drain script
-        </span><span class="kw">let </span>drain_script = <span class="kw">match </span>params.drain_to {
+        </span><span class="kw">let </span><span class="kw-2">mut </span>drain_index = <span class="prelude-ty">Option</span>::&lt;(KeychainKind, u32)&gt;::None;
+        <span class="kw">let </span>drain_script = <span class="kw">match </span>params.drain_to {
             <span class="prelude-val">Some</span>(<span class="kw-2">ref </span>drain_recipient) =&gt; drain_recipient.clone(),
             <span class="prelude-val">None </span>=&gt; {
                 <span class="kw">let </span>change_keychain = <span class="self">self</span>.map_keychain(KeychainKind::Internal);
-                <span class="kw">let </span>((index, spk), index_changeset) = <span class="self">self
+                <span class="kw">let </span>(index, spk) = <span class="self">self
                     </span>.indexed_graph
                     .index
-                    .next_unused_spk(<span class="kw-2">&amp;</span>change_keychain)
-                    .expect(<span class="string">"Keychain exists (we called map_keychain)"</span>);
-                <span class="kw">let </span>spk = spk.into();
-                <span class="self">self</span>.indexed_graph.index.mark_used(change_keychain, index);
-                <span class="self">self</span>.persist
-                    .stage(ChangeSet::from(indexed_tx_graph::ChangeSet::from(
-                        index_changeset,
-                    )));
-                <span class="self">self</span>.persist.commit().map_err(CreateTxError::Persist)<span class="question-mark">?</span>;
+                    .unused_keychain_spks(change_keychain)
+                    .next()
+                    .unwrap_or_else(|| {
+                        <span class="kw">let </span>(next_index, <span class="kw">_</span>) = <span class="self">self
+                            </span>.indexed_graph
+                            .index
+                            .next_index(change_keychain)
+                            .expect(<span class="string">"keychain must exist"</span>);
+                        <span class="kw">let </span>spk = <span class="self">self
+                            </span>.peek_address(change_keychain, next_index)
+                            .script_pubkey();
+                        (next_index, spk)
+                    });
+                drain_index = <span class="prelude-val">Some</span>((change_keychain, index));
                 spk
             }
         };
@@ -4197,14 +4139,17 @@
         <span class="kw">let </span>(required_utxos, optional_utxos) =
             coin_selection::filter_duplicates(required_utxos, optional_utxos);
 
-        <span class="kw">let </span>coin_selection = coin_selection.coin_select(
-            required_utxos,
-            optional_utxos,
-            fee_rate,
-            outgoing.to_sat() + fee_amount,
-            <span class="kw-2">&amp;</span>drain_script,
-        )<span class="question-mark">?</span>;
-        fee_amount += coin_selection.fee_amount;
+        <span class="kw">let </span>coin_selection = coin_selection
+            .coin_select(
+                required_utxos.clone(),
+                optional_utxos.clone(),
+                fee_rate,
+                outgoing.to_sat() + fee_amount.to_sat(),
+                <span class="kw-2">&amp;</span>drain_script,
+                rng,
+            )
+            .map_err(CreateTxError::CoinSelection)<span class="question-mark">?</span>;
+        fee_amount += Amount::from_sat(coin_selection.fee_amount);
         <span class="kw">let </span>excess = <span class="kw-2">&amp;</span>coin_selection.excess;
 
         tx.input = coin_selection
@@ -4233,10 +4178,10 @@
                     change_fee,
                 } = excess
                 {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(CreateTxError::InsufficientFunds {
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(CreateTxError::CoinSelection(InsufficientFunds {
                         needed: <span class="kw-2">*</span>dust_threshold,
                         available: remaining_amount.saturating_sub(<span class="kw-2">*</span>change_fee),
-                    });
+                    }));
                 }
             } <span class="kw">else </span>{
                 <span class="kw">return </span><span class="prelude-val">Err</span>(CreateTxError::NoRecipients);
@@ -4246,12 +4191,12 @@
         <span class="kw">match </span>excess {
             NoChange {
                 remaining_amount, ..
-            } =&gt; fee_amount += remaining_amount,
+            } =&gt; fee_amount += Amount::from_sat(<span class="kw-2">*</span>remaining_amount),
             Change { amount, fee } =&gt; {
-                <span class="kw">if </span><span class="self">self</span>.is_mine(<span class="kw-2">&amp;</span>drain_script) {
+                <span class="kw">if </span><span class="self">self</span>.is_mine(drain_script.clone()) {
                     received += Amount::from_sat(<span class="kw-2">*</span>amount);
                 }
-                fee_amount += fee;
+                fee_amount += Amount::from_sat(<span class="kw-2">*</span>fee);
 
                 <span class="comment">// create drain output
                 </span><span class="kw">let </span>drain_output = TxOut {
@@ -4267,9 +4212,21 @@
         };
 
         <span class="comment">// sort input/outputs according to the chosen algorithm
-        </span>params.ordering.sort_tx(<span class="kw-2">&amp;mut </span>tx);
+        </span>params.ordering.sort_tx_with_aux_rand(<span class="kw-2">&amp;mut </span>tx, rng);
 
         <span class="kw">let </span>psbt = <span class="self">self</span>.complete_transaction(tx, coin_selection.selected, params)<span class="question-mark">?</span>;
+
+        <span class="comment">// recording changes to the change keychain
+        </span><span class="kw">if let </span>(Excess::Change { .. }, <span class="prelude-val">Some</span>((keychain, index))) = (excess, drain_index) {
+            <span class="kw">let </span>(<span class="kw">_</span>, index_changeset) = <span class="self">self
+                </span>.indexed_graph
+                .index
+                .reveal_to_target(keychain, index)
+                .expect(<span class="string">"must not be None"</span>);
+            <span class="self">self</span>.stage.merge(index_changeset.into());
+            <span class="self">self</span>.mark_used(keychain, index);
+        }
+
         <span class="prelude-val">Ok</span>(psbt)
     }
 
@@ -4286,9 +4243,8 @@
     /// # use std::str::FromStr;
     /// # use bitcoin::*;
     /// # use bdk_wallet::*;
-    /// # use bdk_wallet::wallet::ChangeSet;
-    /// # use bdk_wallet::wallet::error::CreateTxError;
-    /// # use bdk_persist::PersistBackend;
+    /// # use bdk_wallet::ChangeSet;
+    /// # use bdk_wallet::error::CreateTxError;
     /// # use anyhow::Error;
     /// # let descriptor = "wpkh(tpubD6NzVbkrYhZ4Xferm7Pz4VnjdcDPFyjVu5K4iZXQ4pVN8Cks4pHVowTBXBKRhX64pkRyJZJN5xAKj4UDNnLPb5p2sSKXhewoYx5GbTdUFWq/*)";
     /// # let mut wallet = doctest_wallet!();
@@ -4296,15 +4252,14 @@
     /// let mut psbt = {
     ///     let mut builder = wallet.build_tx();
     ///     builder
-    ///         .add_recipient(to_address.script_pubkey(), Amount::from_sat(50_000))
-    ///         .enable_rbf();
+    ///         .add_recipient(to_address.script_pubkey(), Amount::from_sat(50_000));
     ///     builder.finish()?
     /// };
     /// let _ = wallet.sign(&amp;mut psbt, SignOptions::default())?;
     /// let tx = psbt.clone().extract_tx().expect("tx");
     /// // broadcast tx but it's taking too long to confirm so we want to bump the fee
     /// let mut psbt =  {
-    ///     let mut builder = wallet.build_fee_bump(tx.txid())?;
+    ///     let mut builder = wallet.build_fee_bump(tx.compute_txid())?;
     ///     builder
     ///         .fee_rate(FeeRate::from_sat_per_vb(5).expect("valid feerate"));
     ///     builder.finish()?
@@ -4342,7 +4297,9 @@
             .iter()
             .any(|txin| txin.sequence.to_consensus_u32() &lt;= <span class="number">0xFFFFFFFD</span>)
         {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(BuildFeeBumpError::IrreplaceableTransaction(tx.txid()));
+            <span class="kw">return </span><span class="prelude-val">Err</span>(BuildFeeBumpError::IrreplaceableTransaction(
+                tx.compute_txid(),
+            ));
         }
 
         <span class="kw">let </span>fee = <span class="self">self
@@ -4362,16 +4319,15 @@
                     .ok_or(BuildFeeBumpError::UnknownUtxo(txin.previous_output))<span class="question-mark">?</span>;
                 <span class="kw">let </span>txout = <span class="kw-2">&amp;</span>prev_tx.output[txin.previous_output.vout <span class="kw">as </span>usize];
 
-                <span class="kw">let </span>confirmation_time: ConfirmationTime = graph
+                <span class="kw">let </span>chain_position = graph
                     .get_chain_position(<span class="kw-2">&amp;</span><span class="self">self</span>.chain, chain_tip, txin.previous_output.txid)
                     .ok_or(BuildFeeBumpError::UnknownUtxo(txin.previous_output))<span class="question-mark">?
-                    </span>.cloned()
-                    .into();
+                    </span>.cloned();
 
-                <span class="kw">let </span>weighted_utxo = <span class="kw">match </span>txout_index.index_of_spk(<span class="kw-2">&amp;</span>txout.script_pubkey) {
-                    <span class="prelude-val">Some</span>((keychain, derivation_index)) =&gt; {
+                <span class="kw">let </span>weighted_utxo = <span class="kw">match </span>txout_index.index_of_spk(txout.script_pubkey.clone()) {
+                    <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>(keychain, derivation_index)) =&gt; {
                         <span class="kw">let </span>satisfaction_weight = <span class="self">self
-                            </span>.get_descriptor_for_keychain(keychain)
+                            </span>.public_descriptor(keychain)
                             .max_weight_to_satisfy()
                             .unwrap();
                         WeightedUtxo {
@@ -4381,14 +4337,15 @@
                                 keychain,
                                 is_spent: <span class="bool-val">true</span>,
                                 derivation_index,
-                                confirmation_time,
+                                chain_position,
                             }),
                             satisfaction_weight,
                         }
                     }
                     <span class="prelude-val">None </span>=&gt; {
-                        <span class="kw">let </span>satisfaction_weight =
-                            serialize(<span class="kw-2">&amp;</span>txin.script_sig).len() * <span class="number">4 </span>+ serialize(<span class="kw-2">&amp;</span>txin.witness).len();
+                        <span class="kw">let </span>satisfaction_weight = Weight::from_wu_usize(
+                            serialize(<span class="kw-2">&amp;</span>txin.script_sig).len() * <span class="number">4 </span>+ serialize(<span class="kw-2">&amp;</span>txin.witness).len(),
+                        );
                         WeightedUtxo {
                             utxo: Utxo::Foreign {
                                 outpoint: txin.previous_output,
@@ -4411,9 +4368,11 @@
         <span class="kw">if </span>tx.output.len() &gt; <span class="number">1 </span>{
             <span class="kw">let </span><span class="kw-2">mut </span>change_index = <span class="prelude-val">None</span>;
             <span class="kw">for </span>(index, txout) <span class="kw">in </span>tx.output.iter().enumerate() {
-                <span class="kw">let </span>change_type = <span class="self">self</span>.map_keychain(KeychainKind::Internal);
-                <span class="kw">match </span>txout_index.index_of_spk(<span class="kw-2">&amp;</span>txout.script_pubkey) {
-                    <span class="prelude-val">Some</span>((keychain, <span class="kw">_</span>)) <span class="kw">if </span>keychain == change_type =&gt; change_index = <span class="prelude-val">Some</span>(index),
+                <span class="kw">let </span>change_keychain = KeychainKind::Internal;
+                <span class="kw">match </span>txout_index.index_of_spk(txout.script_pubkey.clone()) {
+                    <span class="prelude-val">Some</span>((keychain, <span class="kw">_</span>)) <span class="kw">if </span><span class="kw-2">*</span>keychain == change_keychain =&gt; {
+                        change_index = <span class="prelude-val">Some</span>(index)
+                    }
                     <span class="kw">_ </span>=&gt; {}
                 }
             }
@@ -4429,11 +4388,11 @@
             recipients: tx
                 .output
                 .into_iter()
-                .map(|txout| (txout.script_pubkey, txout.value.to_sat()))
+                .map(|txout| (txout.script_pubkey, txout.value))
                 .collect(),
             utxos: original_utxos,
             bumping_fee: <span class="prelude-val">Some</span>(tx_builder::PreviousFee {
-                absolute: fee.to_sat(),
+                absolute: fee,
                 rate: fee_rate,
             }),
             ..Default::default()
@@ -4460,9 +4419,8 @@
     /// # use std::str::FromStr;
     /// # use bitcoin::*;
     /// # use bdk_wallet::*;
-    /// # use bdk_wallet::wallet::ChangeSet;
-    /// # use bdk_wallet::wallet::error::CreateTxError;
-    /// # use bdk_persist::PersistBackend;
+    /// # use bdk_wallet::ChangeSet;
+    /// # use bdk_wallet::error::CreateTxError;
     /// # let descriptor = "wpkh(tpubD6NzVbkrYhZ4Xferm7Pz4VnjdcDPFyjVu5K4iZXQ4pVN8Cks4pHVowTBXBKRhX64pkRyJZJN5xAKj4UDNnLPb5p2sSKXhewoYx5GbTdUFWq/*)";
     /// # let mut wallet = doctest_wallet!();
     /// # let to_address = Address::from_str("2N4eQYCbKUHCCTUjBJeHcJp9ok6J2GZsTDt").unwrap().assume_checked();
@@ -4530,27 +4488,29 @@
             KeychainKind::Internal =&gt; <span class="kw-2">&amp;</span><span class="self">self</span>.change_signers,
         };
 
-        <span class="kw">match </span><span class="self">self</span>.public_descriptor(keychain) {
-            <span class="prelude-val">Some</span>(desc) =&gt; <span class="prelude-val">Ok</span>(desc.extract_policy(signers, BuildSatisfaction::None, <span class="kw-2">&amp;</span><span class="self">self</span>.secp)<span class="question-mark">?</span>),
-            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-        }
+        <span class="self">self</span>.public_descriptor(keychain).extract_policy(
+            signers,
+            BuildSatisfaction::None,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.secp,
+        )
     }
 
-    <span class="doccomment">/// Return the "public" version of the wallet's descriptor, meaning a new descriptor that has
-    /// the same structure but with every secret key removed
+    <span class="doccomment">/// Returns the descriptor used to create addresses for a particular `keychain`.
     ///
-    /// This can be used to build a watch-only version of a wallet
-    </span><span class="kw">pub fn </span>public_descriptor(<span class="kw-2">&amp;</span><span class="self">self</span>, keychain: KeychainKind) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>ExtendedDescriptor&gt; {
+    /// It's the "public" version of the wallet's descriptor, meaning a new descriptor that has
+    /// the same structure but with the all secret keys replaced by their corresponding public key.
+    /// This can be used to build a watch-only version of a wallet.
+    </span><span class="kw">pub fn </span>public_descriptor(<span class="kw-2">&amp;</span><span class="self">self</span>, keychain: KeychainKind) -&gt; <span class="kw-2">&amp;</span>ExtendedDescriptor {
         <span class="self">self</span>.indexed_graph
             .index
-            .keychains()
-            .find(|(k, <span class="kw">_</span>)| <span class="kw-2">*</span>k == <span class="kw-2">&amp;</span>keychain)
-            .map(|(<span class="kw">_</span>, d)| d)
+            .get_descriptor(<span class="self">self</span>.map_keychain(keychain))
+            .expect(<span class="string">"keychain must exist"</span>)
     }
 
     <span class="doccomment">/// Finalize a PSBT, i.e., for each input determine if sufficient data is available to pass
     /// validation and construct the respective `scriptSig` or `scriptWitness`. Please refer to
-    /// [BIP174](https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#Input_Finalizer)
+    /// [BIP174](https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#Input_Finalizer),
+    /// and [BIP371](https://github.com/bitcoin/bips/blob/master/bip-0371.mediawiki)
     /// for further information.
     ///
     /// Returns `true` if the PSBT could be finalized, and `false` otherwise.
@@ -4579,7 +4539,7 @@
                 .graph()
                 .get_chain_position(<span class="kw-2">&amp;</span><span class="self">self</span>.chain, chain_tip, input.previous_output.txid)
                 .map(|chain_position| <span class="kw">match </span>chain_position {
-                    ChainPosition::Confirmed(a) =&gt; a.confirmation_height,
+                    ChainPosition::Confirmed(a) =&gt; a.block_id.height,
                     ChainPosition::Unconfirmed(<span class="kw">_</span>) =&gt; u32::MAX,
                 });
             <span class="kw">let </span>current_height = sign_options
@@ -4613,20 +4573,17 @@
                         ),
                     ) {
                         <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
+                            <span class="comment">// Set the UTXO fields, final script_sig and witness
+                            // and clear everything else.
+                            </span><span class="kw">let </span>original = mem::take(<span class="kw-2">&amp;mut </span>psbt.inputs[n]);
                             <span class="kw">let </span>psbt_input = <span class="kw-2">&amp;mut </span>psbt.inputs[n];
-                            psbt_input.final_script_sig = <span class="prelude-val">Some</span>(tmp_input.script_sig);
-                            psbt_input.final_script_witness = <span class="prelude-val">Some</span>(tmp_input.witness);
-                            <span class="kw">if </span>sign_options.remove_partial_sigs {
-                                psbt_input.partial_sigs.clear();
+                            psbt_input.non_witness_utxo = original.non_witness_utxo;
+                            psbt_input.witness_utxo = original.witness_utxo;
+                            <span class="kw">if </span>!tmp_input.script_sig.is_empty() {
+                                psbt_input.final_script_sig = <span class="prelude-val">Some</span>(tmp_input.script_sig);
                             }
-                            <span class="kw">if </span>sign_options.remove_taproot_extras {
-                                <span class="comment">// We just constructed the final witness, clear these fields.
-                                </span>psbt_input.tap_key_sig = <span class="prelude-val">None</span>;
-                                psbt_input.tap_script_sigs.clear();
-                                psbt_input.tap_scripts.clear();
-                                psbt_input.tap_key_origins.clear();
-                                psbt_input.tap_internal_key = <span class="prelude-val">None</span>;
-                                psbt_input.tap_merkle_root = <span class="prelude-val">None</span>;
+                            <span class="kw">if </span>!tmp_input.witness.is_empty() {
+                                psbt_input.final_script_witness = <span class="prelude-val">Some</span>(tmp_input.witness);
                             }
                         }
                         <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; finished = <span class="bool-val">false</span>,
@@ -4636,8 +4593,10 @@
             }
         }
 
-        <span class="kw">if </span>finished &amp;&amp; sign_options.remove_taproot_extras {
+        <span class="comment">// Clear derivation paths from outputs
+        </span><span class="kw">if </span>finished {
             <span class="kw">for </span>output <span class="kw">in </span><span class="kw-2">&amp;mut </span>psbt.outputs {
+                output.bip32_derivation.clear();
                 output.tap_key_origins.clear();
             }
         }
@@ -4650,25 +4609,18 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.secp
     }
 
-    <span class="doccomment">/// Returns the descriptor used to create addresses for a particular `keychain`.
-    </span><span class="kw">pub fn </span>get_descriptor_for_keychain(<span class="kw-2">&amp;</span><span class="self">self</span>, keychain: KeychainKind) -&gt; <span class="kw-2">&amp;</span>ExtendedDescriptor {
-        <span class="self">self</span>.public_descriptor(<span class="self">self</span>.map_keychain(keychain))
-            .expect(<span class="string">"we mapped it to external if it doesn't exist"</span>)
-    }
-
     <span class="doccomment">/// The derivation index of this wallet. It will return `None` if it has not derived any addresses.
     /// Otherwise, it will return the index of the highest address it has derived.
     </span><span class="kw">pub fn </span>derivation_index(<span class="kw-2">&amp;</span><span class="self">self</span>, keychain: KeychainKind) -&gt; <span class="prelude-ty">Option</span>&lt;u32&gt; {
-        <span class="self">self</span>.indexed_graph.index.last_revealed_index(<span class="kw-2">&amp;</span>keychain)
+        <span class="self">self</span>.indexed_graph.index.last_revealed_index(keychain)
     }
 
     <span class="doccomment">/// The index of the next address that you would get if you were to ask the wallet for a new address
     </span><span class="kw">pub fn </span>next_derivation_index(<span class="kw-2">&amp;</span><span class="self">self</span>, keychain: KeychainKind) -&gt; u32 {
-        <span class="kw">let </span>keychain = <span class="self">self</span>.map_keychain(keychain);
         <span class="self">self</span>.indexed_graph
             .index
-            .next_index(<span class="kw-2">&amp;</span>keychain)
-            .expect(<span class="string">"Keychain must exist (we called map_keychain)"</span>)
+            .next_index(<span class="self">self</span>.map_keychain(keychain))
+            .expect(<span class="string">"keychain must exist"</span>)
             .<span class="number">0
     </span>}
 
@@ -4679,39 +4631,29 @@
     </span><span class="kw">pub fn </span>cancel_tx(<span class="kw-2">&amp;mut </span><span class="self">self</span>, tx: <span class="kw-2">&amp;</span>Transaction) {
         <span class="kw">let </span>txout_index = <span class="kw-2">&amp;mut </span><span class="self">self</span>.indexed_graph.index;
         <span class="kw">for </span>txout <span class="kw">in </span><span class="kw-2">&amp;</span>tx.output {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>((keychain, index)) = txout_index.index_of_spk(<span class="kw-2">&amp;</span>txout.script_pubkey) {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>((keychain, index)) = txout_index.index_of_spk(txout.script_pubkey.clone()) {
                 <span class="comment">// NOTE: unmark_used will **not** make something unused if it has actually been used
                 // by a tx in the tracker. It only removes the superficial marking.
-                </span>txout_index.unmark_used(keychain, index);
+                </span>txout_index.unmark_used(<span class="kw-2">*</span>keychain, <span class="kw-2">*</span>index);
             }
         }
     }
 
-    <span class="kw">fn </span>map_keychain(<span class="kw-2">&amp;</span><span class="self">self</span>, keychain: KeychainKind) -&gt; KeychainKind {
-        <span class="kw">if </span>keychain == KeychainKind::Internal
-            &amp;&amp; <span class="self">self</span>.public_descriptor(KeychainKind::Internal).is_none()
-        {
-            KeychainKind::External
-        } <span class="kw">else </span>{
-            keychain
-        }
-    }
-
     <span class="kw">fn </span>get_descriptor_for_txout(<span class="kw-2">&amp;</span><span class="self">self</span>, txout: <span class="kw-2">&amp;</span>TxOut) -&gt; <span class="prelude-ty">Option</span>&lt;DerivedDescriptor&gt; {
-        <span class="kw">let </span>(keychain, child) = <span class="self">self
+        <span class="kw">let </span><span class="kw-2">&amp;</span>(keychain, child) = <span class="self">self
             </span>.indexed_graph
             .index
-            .index_of_spk(<span class="kw-2">&amp;</span>txout.script_pubkey)<span class="question-mark">?</span>;
-        <span class="kw">let </span>descriptor = <span class="self">self</span>.get_descriptor_for_keychain(keychain);
+            .index_of_spk(txout.script_pubkey.clone())<span class="question-mark">?</span>;
+        <span class="kw">let </span>descriptor = <span class="self">self</span>.public_descriptor(keychain);
         descriptor.at_derivation_index(child).ok()
     }
 
-    <span class="kw">fn </span>get_available_utxos(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(LocalOutput, usize)&gt; {
+    <span class="kw">fn </span>get_available_utxos(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(LocalOutput, Weight)&gt; {
         <span class="self">self</span>.list_unspent()
             .map(|utxo| {
                 <span class="kw">let </span>keychain = utxo.keychain;
                 (utxo, {
-                    <span class="self">self</span>.get_descriptor_for_keychain(keychain)
+                    <span class="self">self</span>.public_descriptor(keychain)
                         .max_weight_to_satisfy()
                         .unwrap()
                 })
@@ -4767,33 +4709,33 @@
                     <span class="prelude-val">Some</span>(tx) =&gt; tx,
                     <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="bool-val">false</span>,
                 };
-                <span class="kw">let </span>confirmation_time: ConfirmationTime = <span class="kw">match </span><span class="self">self
-                    </span>.indexed_graph
-                    .graph()
-                    .get_chain_position(<span class="kw-2">&amp;</span><span class="self">self</span>.chain, chain_tip, txid)
-                {
-                    <span class="prelude-val">Some</span>(chain_position) =&gt; chain_position.cloned().into(),
+                <span class="kw">let </span>chain_position = <span class="kw">match </span><span class="self">self</span>.indexed_graph.graph().get_chain_position(
+                    <span class="kw-2">&amp;</span><span class="self">self</span>.chain,
+                    chain_tip,
+                    txid,
+                ) {
+                    <span class="prelude-val">Some</span>(chain_position) =&gt; chain_position.cloned(),
                     <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="bool-val">false</span>,
                 };
 
                 <span class="comment">// Whether the UTXO is mature and, if needed, confirmed
                 </span><span class="kw">let </span><span class="kw-2">mut </span>spendable = <span class="bool-val">true</span>;
-                <span class="kw">if </span>must_only_use_confirmed_tx &amp;&amp; !confirmation_time.is_confirmed() {
+                <span class="kw">if </span>must_only_use_confirmed_tx &amp;&amp; !chain_position.is_confirmed() {
                     <span class="kw">return </span><span class="bool-val">false</span>;
                 }
                 <span class="kw">if </span>tx.is_coinbase() {
                     <span class="macro">debug_assert!</span>(
-                        confirmation_time.is_confirmed(),
+                        chain_position.is_confirmed(),
                         <span class="string">"coinbase must always be confirmed"
                     </span>);
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(current_height) = current_height {
-                        <span class="kw">match </span>confirmation_time {
-                            ConfirmationTime::Confirmed { height, .. } =&gt; {
+                        <span class="kw">match </span>chain_position {
+                            ChainPosition::Confirmed(a) =&gt; {
                                 <span class="comment">// https://github.com/bitcoin/bitcoin/blob/c5e67be03bb06a5d7885c55db1f016fbf2333fe3/src/validation.cpp#L373-L375
-                                </span>spendable &amp;=
-                                    (current_height.saturating_sub(height)) &gt;= COINBASE_MATURITY;
+                                </span>spendable &amp;= (current_height.saturating_sub(a.block_id.height))
+                                    &gt;= COINBASE_MATURITY;
                             }
-                            ConfirmationTime::Unconfirmed { .. } =&gt; spendable = <span class="bool-val">false</span>,
+                            ChainPosition::Unconfirmed { .. } =&gt; spendable = <span class="bool-val">false</span>,
                         }
                     }
                 }
@@ -4803,7 +4745,7 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
         may_spend.retain(|u| {
-            <span class="kw">let </span>retain = change_policy.is_satisfied_by(<span class="kw-2">&amp;</span>u.<span class="number">0</span>)
+            <span class="kw">let </span>retain = (<span class="self">self</span>.keychains().count() == <span class="number">1 </span>|| change_policy.is_satisfied_by(<span class="kw-2">&amp;</span>u.<span class="number">0</span>))
                 &amp;&amp; !unspendable.contains(<span class="kw-2">&amp;</span>u.<span class="number">0</span>.outpoint)
                 &amp;&amp; satisfies_confirmed[i];
             i += <span class="number">1</span>;
@@ -4913,10 +4855,10 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;psbt::Input, CreateTxError&gt; {
         <span class="comment">// Try to find the prev_script in our db to figure out if this is internal or external,
         // and the derivation index
-        </span><span class="kw">let </span>(keychain, child) = <span class="self">self
+        </span><span class="kw">let </span><span class="kw-2">&amp;</span>(keychain, child) = <span class="self">self
             </span>.indexed_graph
             .index
-            .index_of_spk(<span class="kw-2">&amp;</span>utxo.txout.script_pubkey)
+            .index_of_spk(utxo.txout.script_pubkey)
             .ok_or(CreateTxError::UnknownUtxo)<span class="question-mark">?</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>psbt_input = psbt::Input {
@@ -4924,7 +4866,7 @@
             ..psbt::Input::default()
         };
 
-        <span class="kw">let </span>desc = <span class="self">self</span>.get_descriptor_for_keychain(keychain);
+        <span class="kw">let </span>desc = <span class="self">self</span>.public_descriptor(keychain);
         <span class="kw">let </span>derived_descriptor = desc
             .at_derivation_index(child)
             .expect(<span class="string">"child can't be hardened"</span>);
@@ -4961,10 +4903,10 @@
 
         <span class="comment">// Try to figure out the keychain and derivation for every input and output
         </span><span class="kw">for </span>(is_input, index, out) <span class="kw">in </span>utxos.into_iter() {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>((keychain, child)) =
-                <span class="self">self</span>.indexed_graph.index.index_of_spk(<span class="kw-2">&amp;</span>out.script_pubkey)
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>(keychain, child)) =
+                <span class="self">self</span>.indexed_graph.index.index_of_spk(out.script_pubkey)
             {
-                <span class="kw">let </span>desc = <span class="self">self</span>.get_descriptor_for_keychain(keychain);
+                <span class="kw">let </span>desc = <span class="self">self</span>.public_descriptor(keychain);
                 <span class="kw">let </span>desc = desc
                     .at_derivation_index(child)
                     .expect(<span class="string">"child can't be hardened"</span>);
@@ -4984,9 +4926,9 @@
 
     <span class="doccomment">/// Return the checksum of the public descriptor associated to `keychain`
     ///
-    /// Internally calls [`Self::get_descriptor_for_keychain`] to fetch the right descriptor
+    /// Internally calls [`Self::public_descriptor`] to fetch the right descriptor
     </span><span class="kw">pub fn </span>descriptor_checksum(<span class="kw-2">&amp;</span><span class="self">self</span>, keychain: KeychainKind) -&gt; String {
-        <span class="self">self</span>.get_descriptor_for_keychain(keychain)
+        <span class="self">self</span>.public_descriptor(keychain)
             .to_string()
             .split_once(<span class="string">'#'</span>)
             .unwrap()
@@ -4994,53 +4936,95 @@
             </span>.to_string()
     }
 
-    <span class="doccomment">/// Applies an update to the wallet and stages the changes (but does not [`commit`] them).
+    <span class="doccomment">/// Applies an update to the wallet and stages the changes (but does not persist them).
     ///
     /// Usually you create an `update` by interacting with some blockchain data source and inserting
     /// transactions related to your wallet into it.
     ///
-    /// [`commit`]: Self::commit
+    /// After applying updates you should persist the staged wallet changes. For an example of how
+    /// to persist staged wallet changes see [`Wallet::reveal_next_address`].
+    </span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+    #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"std"</span>)))]
     </span><span class="kw">pub fn </span>apply_update(<span class="kw-2">&amp;mut </span><span class="self">self</span>, update: <span class="kw">impl </span>Into&lt;Update&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), CannotConnectError&gt; {
+        <span class="kw">use </span>std::time::<span class="kw-2">*</span>;
+        <span class="kw">let </span>now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect(<span class="string">"time now must surpass epoch anchor"</span>);
+        <span class="self">self</span>.apply_update_at(update, <span class="prelude-val">Some</span>(now.as_secs()))
+    }
+
+    <span class="doccomment">/// Applies an `update` alongside an optional `seen_at` timestamp and stages the changes.
+    ///
+    /// `seen_at` represents when the update is seen (in unix seconds). It is used to determine the
+    /// `last_seen`s for all transactions in the update which have no corresponding anchor(s). The
+    /// `last_seen` value is used internally to determine precedence of conflicting unconfirmed
+    /// transactions (where the transaction with the lower `last_seen` value is omitted from the
+    /// canonical history).
+    ///
+    /// Not setting a `seen_at` value means unconfirmed transactions introduced by this update will
+    /// not be part of the canonical history of transactions.
+    ///
+    /// Use [`apply_update`](Wallet::apply_update) to have the `seen_at` value automatically set to
+    /// the current time.
+    </span><span class="kw">pub fn </span>apply_update_at(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        update: <span class="kw">impl </span>Into&lt;Update&gt;,
+        seen_at: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CannotConnectError&gt; {
         <span class="kw">let </span>update = update.into();
         <span class="kw">let </span><span class="kw-2">mut </span>changeset = <span class="kw">match </span>update.chain {
             <span class="prelude-val">Some</span>(chain_update) =&gt; ChangeSet::from(<span class="self">self</span>.chain.apply_update(chain_update)<span class="question-mark">?</span>),
             <span class="prelude-val">None </span>=&gt; ChangeSet::default(),
         };
 
-        <span class="kw">let </span>(<span class="kw">_</span>, index_changeset) = <span class="self">self
+        <span class="kw">let </span>index_changeset = <span class="self">self
             </span>.indexed_graph
             .index
             .reveal_to_target_multi(<span class="kw-2">&amp;</span>update.last_active_indices);
-        changeset.append(ChangeSet::from(indexed_tx_graph::ChangeSet::from(
-            index_changeset,
-        )));
-        changeset.append(ChangeSet::from(
-            <span class="self">self</span>.indexed_graph.apply_update(update.graph),
-        ));
-        <span class="self">self</span>.persist.stage(changeset);
+        changeset.merge(index_changeset.into());
+        changeset.merge(
+            <span class="self">self</span>.indexed_graph
+                .apply_update_at(update.tx_update, seen_at)
+                .into(),
+        );
+        <span class="self">self</span>.stage.merge(changeset);
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Commits all currently [`staged`] changed to the persistence backend returning and error when
-    /// this fails.
-    ///
-    /// This returns whether the `update` resulted in any changes.
-    ///
-    /// [`staged`]: Self::staged
-    </span><span class="kw">pub fn </span>commit(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; anyhow::Result&lt;bool&gt; {
-        <span class="self">self</span>.persist.commit().map(|c| c.is_some())
+    <span class="doccomment">/// Get a reference of the staged [`ChangeSet`] that is yet to be committed (if any).
+    </span><span class="kw">pub fn </span>staged(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>ChangeSet&gt; {
+        <span class="kw">if </span><span class="self">self</span>.stage.is_empty() {
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.stage)
+        }
     }
 
-    <span class="doccomment">/// Returns the changes that will be committed with the next call to [`commit`].
-    ///
-    /// [`commit`]: Self::commit
-    </span><span class="kw">pub fn </span>staged(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ChangeSet {
-        <span class="self">self</span>.persist.staged()
+    <span class="doccomment">/// Get a mutable reference of the staged [`ChangeSet`] that is yet to be committed (if any).
+    </span><span class="kw">pub fn </span>staged_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>ChangeSet&gt; {
+        <span class="kw">if </span><span class="self">self</span>.stage.is_empty() {
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;mut </span><span class="self">self</span>.stage)
+        }
+    }
+
+    <span class="doccomment">/// Take the staged [`ChangeSet`] to be persisted now (if any).
+    </span><span class="kw">pub fn </span>take_staged(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;ChangeSet&gt; {
+        <span class="self">self</span>.stage.take()
     }
 
     <span class="doccomment">/// Get a reference to the inner [`TxGraph`].
-    </span><span class="kw">pub fn </span>tx_graph(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TxGraph&lt;ConfirmationTimeHeightAnchor&gt; {
+    </span><span class="kw">pub fn </span>tx_graph(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TxGraph&lt;ConfirmationBlockTime&gt; {
         <span class="self">self</span>.indexed_graph.graph()
+    }
+
+    <span class="doccomment">/// Iterate over transactions in the wallet that are unseen and unanchored likely
+    /// because they haven't been broadcast.
+    </span><span class="kw">pub fn </span>unbroadcast_transactions(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = TxNode&lt;<span class="lifetime">'_</span>, Arc&lt;Transaction&gt;, ConfirmationBlockTime&gt;&gt; {
+        <span class="self">self</span>.tx_graph().txs_with_no_anchor_or_last_seen()
     }
 
     <span class="doccomment">/// Get a reference to the inner [`KeychainTxOutIndex`].
@@ -5086,6 +5070,10 @@
     /// The `connected_to` parameter informs the wallet how this block connects to the internal
     /// [`LocalChain`]. Relevant transactions are filtered from the `block` and inserted into the
     /// internal [`TxGraph`].
+    ///
+    /// **WARNING**: You must persist the changes resulting from one or more calls to this method
+    /// if you need the inserted block data to be reloaded after closing the wallet.
+    /// See [`Wallet::reveal_next_address`].
     </span><span class="kw">pub fn </span>apply_block_connected_to(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         block: <span class="kw-2">&amp;</span>Block,
@@ -5093,17 +5081,17 @@
         connected_to: BlockId,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), ApplyHeaderError&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>changeset = ChangeSet::default();
-        changeset.append(
+        changeset.merge(
             <span class="self">self</span>.chain
                 .apply_header_connected_to(<span class="kw-2">&amp;</span>block.header, height, connected_to)<span class="question-mark">?
                 </span>.into(),
         );
-        changeset.append(
+        changeset.merge(
             <span class="self">self</span>.indexed_graph
                 .apply_block_relevant(block, height)
                 .into(),
         );
-        <span class="self">self</span>.persist.stage(changeset);
+        <span class="self">self</span>.stage.merge(changeset);
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -5115,14 +5103,30 @@
     /// when the transaction was last seen in the mempool. This is used for conflict resolution
     /// when there is conflicting unconfirmed transactions. The transaction with the later
     /// `last_seen` is prioritized.
-    </span><span class="kw">pub fn </span>apply_unconfirmed_txs&lt;<span class="lifetime">'t</span>&gt;(
+    ///
+    /// **WARNING**: You must persist the changes resulting from one or more calls to this method
+    /// if you need the applied unconfirmed transactions to be reloaded after closing the wallet.
+    /// See [`Wallet::reveal_next_address`].
+    </span><span class="kw">pub fn </span>apply_unconfirmed_txs&lt;T: Into&lt;Arc&lt;Transaction&gt;&gt;&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        unconfirmed_txs: <span class="kw">impl </span>IntoIterator&lt;Item = (<span class="kw-2">&amp;</span><span class="lifetime">'t </span>Transaction, u64)&gt;,
+        unconfirmed_txs: <span class="kw">impl </span>IntoIterator&lt;Item = (T, u64)&gt;,
     ) {
         <span class="kw">let </span>indexed_graph_changeset = <span class="self">self
             </span>.indexed_graph
             .batch_insert_relevant_unconfirmed(unconfirmed_txs);
-        <span class="self">self</span>.persist.stage(ChangeSet::from(indexed_graph_changeset));
+        <span class="self">self</span>.stage.merge(indexed_graph_changeset.into());
+    }
+
+    <span class="doccomment">/// Used internally to ensure that all methods requiring a [`KeychainKind`] will use a
+    /// keychain with an associated descriptor. For example in case the wallet was created
+    /// with only one keychain, passing [`KeychainKind::Internal`] here will instead return
+    /// [`KeychainKind::External`].
+    </span><span class="kw">fn </span>map_keychain(<span class="kw-2">&amp;</span><span class="self">self</span>, keychain: KeychainKind) -&gt; KeychainKind {
+        <span class="kw">if </span><span class="self">self</span>.keychains().count() == <span class="number">1 </span>{
+            KeychainKind::External
+        } <span class="kw">else </span>{
+            keychain
+        }
     }
 }
 
@@ -5133,9 +5137,11 @@
     /// This is the first step when performing a spk-based wallet partial sync, the returned
     /// [`SyncRequest`] collects all revealed script pubkeys from the wallet keychain needed to
     /// start a blockchain sync with a spk based blockchain client.
-    </span><span class="kw">pub fn </span>start_sync_with_revealed_spks(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SyncRequest {
-        SyncRequest::from_chain_tip(<span class="self">self</span>.chain.tip())
-            .populate_with_revealed_spks(<span class="kw-2">&amp;</span><span class="self">self</span>.indexed_graph.index, ..)
+    </span><span class="kw">pub fn </span>start_sync_with_revealed_spks(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SyncRequestBuilder&lt;(KeychainKind, u32)&gt; {
+        <span class="kw">use </span>bdk_chain::keychain_txout::SyncRequestBuilderExt;
+        SyncRequest::builder()
+            .chain_tip(<span class="self">self</span>.chain.tip())
+            .revealed_spks_from_indexer(<span class="kw-2">&amp;</span><span class="self">self</span>.indexed_graph.index, ..)
     }
 
     <span class="doccomment">/// Create a [`FullScanRequest] for this wallet.
@@ -5146,13 +5152,16 @@
     ///
     /// This operation is generally only used when importing or restoring a previously used wallet
     /// in which the list of used scripts is not known.
-    </span><span class="kw">pub fn </span>start_full_scan(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FullScanRequest&lt;KeychainKind&gt; {
-        FullScanRequest::from_keychain_txout_index(<span class="self">self</span>.chain.tip(), <span class="kw-2">&amp;</span><span class="self">self</span>.indexed_graph.index)
+    </span><span class="kw">pub fn </span>start_full_scan(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FullScanRequestBuilder&lt;KeychainKind&gt; {
+        <span class="kw">use </span>bdk_chain::keychain_txout::FullScanRequestBuilderExt;
+        FullScanRequest::builder()
+            .chain_tip(<span class="self">self</span>.chain.tip())
+            .spks_from_indexer(<span class="kw-2">&amp;</span><span class="self">self</span>.indexed_graph.index)
     }
 }
 
-<span class="kw">impl </span>AsRef&lt;bdk_chain::tx_graph::TxGraph&lt;ConfirmationTimeHeightAnchor&gt;&gt; <span class="kw">for </span>Wallet {
-    <span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>bdk_chain::tx_graph::TxGraph&lt;ConfirmationTimeHeightAnchor&gt; {
+<span class="kw">impl </span>AsRef&lt;bdk_chain::tx_graph::TxGraph&lt;ConfirmationBlockTime&gt;&gt; <span class="kw">for </span>Wallet {
+    <span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>bdk_chain::tx_graph::TxGraph&lt;ConfirmationBlockTime&gt; {
         <span class="self">self</span>.indexed_graph.graph()
     }
 }
@@ -5174,15 +5183,13 @@
         .into_wallet_descriptor(secp, network)<span class="question-mark">?
         </span>.<span class="number">0
         </span>.to_string();
-    <span class="kw">let </span><span class="kw-2">mut </span>wallet_name = calc_checksum(<span class="kw-2">&amp;</span>descriptor[..descriptor.find(<span class="string">'#'</span>).unwrap()])<span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>wallet_name = descriptor.split_once(<span class="string">'#'</span>).unwrap().<span class="number">1</span>.to_string();
     <span class="kw">if let </span><span class="prelude-val">Some</span>(change_descriptor) = change_descriptor {
         <span class="kw">let </span>change_descriptor = change_descriptor
             .into_wallet_descriptor(secp, network)<span class="question-mark">?
             </span>.<span class="number">0
             </span>.to_string();
-        wallet_name.push_str(
-            calc_checksum(<span class="kw-2">&amp;</span>change_descriptor[..change_descriptor.find(<span class="string">'#'</span>).unwrap()])<span class="question-mark">?</span>.as_str(),
-        );
+        wallet_name.push_str(change_descriptor.split_once(<span class="string">'#'</span>).unwrap().<span class="number">1</span>);
     }
 
     <span class="prelude-val">Ok</span>(wallet_name)
@@ -5191,40 +5198,50 @@
 <span class="kw">fn </span>new_local_utxo(
     keychain: KeychainKind,
     derivation_index: u32,
-    full_txo: FullTxOut&lt;ConfirmationTimeHeightAnchor&gt;,
+    full_txo: FullTxOut&lt;ConfirmationBlockTime&gt;,
 ) -&gt; LocalOutput {
     LocalOutput {
         outpoint: full_txo.outpoint,
         txout: full_txo.txout,
         is_spent: full_txo.spent_by.is_some(),
-        confirmation_time: full_txo.chain_position.into(),
+        chain_position: full_txo.chain_position,
         keychain,
         derivation_index,
     }
 }
 
-<span class="kw">fn </span>create_signers&lt;E: IntoWalletDescriptor&gt;(
-    index: <span class="kw-2">&amp;mut </span>KeychainTxOutIndex&lt;KeychainKind&gt;,
-    secp: <span class="kw-2">&amp;</span>Secp256k1&lt;All&gt;,
-    descriptor: E,
-    change_descriptor: <span class="prelude-ty">Option</span>&lt;E&gt;,
-    network: Network,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(Arc&lt;SignersContainer&gt;, Arc&lt;SignersContainer&gt;), <span class="kw">crate</span>::descriptor::error::Error&gt; {
-    <span class="kw">let </span>(descriptor, keymap) = into_wallet_descriptor_checked(descriptor, secp, network)<span class="question-mark">?</span>;
-    <span class="kw">let </span>signers = Arc::new(SignersContainer::build(keymap, <span class="kw-2">&amp;</span>descriptor, secp));
-    <span class="kw">let _ </span>= index.insert_descriptor(KeychainKind::External, descriptor);
+<span class="kw">fn </span>create_indexer(
+    descriptor: ExtendedDescriptor,
+    change_descriptor: <span class="prelude-ty">Option</span>&lt;ExtendedDescriptor&gt;,
+    lookahead: u32,
+) -&gt; <span class="prelude-ty">Result</span>&lt;KeychainTxOutIndex&lt;KeychainKind&gt;, DescriptorError&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>indexer = KeychainTxOutIndex::&lt;KeychainKind&gt;::new(lookahead);
 
-    <span class="kw">let </span>change_signers = <span class="kw">match </span>change_descriptor {
-        <span class="prelude-val">Some</span>(descriptor) =&gt; {
-            <span class="kw">let </span>(descriptor, keymap) = into_wallet_descriptor_checked(descriptor, secp, network)<span class="question-mark">?</span>;
-            <span class="kw">let </span>signers = Arc::new(SignersContainer::build(keymap, <span class="kw-2">&amp;</span>descriptor, secp));
-            <span class="kw">let _ </span>= index.insert_descriptor(KeychainKind::Internal, descriptor);
-            signers
-        }
-        <span class="prelude-val">None </span>=&gt; Arc::new(SignersContainer::new()),
-    };
+    <span class="comment">// let (descriptor, keymap) = descriptor;
+    // let signers = Arc::new(SignersContainer::build(keymap, &amp;descriptor, secp));
+    </span><span class="macro">assert!</span>(indexer
+        .insert_descriptor(KeychainKind::External, descriptor)
+        .expect(<span class="string">"first descriptor introduced must succeed"</span>));
 
-    <span class="prelude-val">Ok</span>((signers, change_signers))
+    <span class="comment">// let (descriptor, keymap) = change_descriptor;
+    // let change_signers = Arc::new(SignersContainer::build(keymap, &amp;descriptor, secp));
+    </span><span class="kw">if let </span><span class="prelude-val">Some</span>(change_descriptor) = change_descriptor {
+        <span class="macro">assert!</span>(indexer
+            .insert_descriptor(KeychainKind::Internal, change_descriptor)
+            .map_err(|e| {
+                <span class="kw">use </span>bdk_chain::indexer::keychain_txout::InsertDescriptorError;
+                <span class="kw">match </span>e {
+                    InsertDescriptorError::DescriptorAlreadyAssigned { .. } =&gt; {
+                        <span class="kw">crate</span>::descriptor::error::Error::ExternalAndInternalAreTheSame
+                    }
+                    InsertDescriptorError::KeychainAlreadyAssigned { .. } =&gt; {
+                        <span class="macro">unreachable!</span>(<span class="string">"this is the first time we're assigning internal"</span>)
+                    }
+                }
+            })<span class="question-mark">?</span>);
+    }
+
+    <span class="prelude-val">Ok</span>(indexer)
 }
 
 <span class="doccomment">/// Transforms a [`FeeRate`] to `f64` with unit as sat/vb.
@@ -5232,7 +5249,7 @@
 #[doc(hidden)]
 </span><span class="macro">macro_rules!</span> floating_rate {
     (<span class="macro-nonterminal">$rate</span>:expr) =&gt; {{
-        <span class="kw">use </span><span class="macro-nonterminal">$crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR</span>;
+        <span class="kw">use </span><span class="macro-nonterminal">$crate::bitcoin::constants::WITNESS_SCALE_FACTOR</span>;
         <span class="comment">// sat_kwu / 250.0 -&gt; sat_vb
         </span><span class="macro-nonterminal">$rate</span>.to_sat_per_kwu() <span class="kw">as </span>f64 / ((<span class="number">1000 </span>/ WITNESS_SCALE_FACTOR) <span class="kw">as </span>f64)
     }};
@@ -5244,17 +5261,15 @@
 </span><span class="macro">macro_rules!</span> doctest_wallet {
     () =&gt; {{
         <span class="kw">use </span><span class="macro-nonterminal">$crate::bitcoin</span>::{BlockHash, Transaction, absolute, TxOut, Network, hashes::Hash};
-        <span class="kw">use </span><span class="macro-nonterminal">$crate::chain</span>::{ConfirmationTime, BlockId};
-        <span class="kw">use </span><span class="macro-nonterminal">$</span><span class="kw">crate</span>::{<span class="macro-nonterminal">KeychainKind</span>, wallet::Wallet};
+        <span class="kw">use </span><span class="macro-nonterminal">$crate::chain</span>::{ConfirmationBlockTime, BlockId, TxGraph, tx_graph};
+        <span class="kw">use </span><span class="macro-nonterminal">$</span><span class="kw">crate</span>::{<span class="macro-nonterminal">Update</span>, KeychainKind, Wallet};
         <span class="kw">let </span>descriptor = <span class="string">"tr([73c5da0a/86'/0'/0']tprv8fMn4hSKPRC1oaCPqxDb1JWtgkpeiQvZhsr8W2xuy3GEMkzoArcAWTfJxYb6Wj8XNNDWEjfYKK4wGQXh3ZUXhDF2NcnsALpWTeSwarJt7Vc/0/*)"</span>;
         <span class="kw">let </span>change_descriptor = <span class="string">"tr([73c5da0a/86'/0'/0']tprv8fMn4hSKPRC1oaCPqxDb1JWtgkpeiQvZhsr8W2xuy3GEMkzoArcAWTfJxYb6Wj8XNNDWEjfYKK4wGQXh3ZUXhDF2NcnsALpWTeSwarJt7Vc/1/*)"</span>;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>wallet = Wallet::new_no_persist(
-            descriptor,
-            <span class="prelude-val">Some</span>(change_descriptor),
-            Network::Regtest,
-        )
-        .unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>wallet = Wallet::create(descriptor, change_descriptor)
+            .network(Network::Regtest)
+            .create_wallet_no_persist()
+            .unwrap();
         <span class="kw">let </span>address = wallet.peek_address(KeychainKind::External, <span class="number">0</span>).address;
         <span class="kw">let </span>tx = Transaction {
             version: transaction::Version::ONE,
@@ -5265,12 +5280,23 @@
                 script_pubkey: address.script_pubkey(),
             }],
         };
+        <span class="kw">let </span>txid = tx.compute_txid();
+        <span class="kw">let </span>block_id = BlockId { height: <span class="number">500</span>, hash: BlockHash::all_zeros() };
+        <span class="kw">let _ </span>= wallet.insert_checkpoint(block_id);
         <span class="kw">let _ </span>= wallet.insert_checkpoint(BlockId { height: <span class="number">1_000</span>, hash: BlockHash::all_zeros() });
-        <span class="kw">let _ </span>= wallet.insert_tx(tx.clone(), ConfirmationTime::Confirmed {
-            height: <span class="number">500</span>,
-            time: <span class="number">50_000
-        </span>});
-
+        <span class="kw">let _ </span>= wallet.insert_tx(tx);
+        <span class="kw">let </span>anchor = ConfirmationBlockTime {
+            confirmation_time: <span class="number">50_000</span>,
+            block_id,
+        };
+        <span class="kw">let </span>update = Update {
+            tx_update: tx_graph::TxUpdate {
+                anchors: [(anchor, txid)].into_iter().collect(),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        wallet.apply_update(update).unwrap();
         wallet
     }}
 }

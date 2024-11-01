@@ -253,42 +253,6 @@
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
-<a href="#256" id="256">256</a>
-<a href="#257" id="257">257</a>
-<a href="#258" id="258">258</a>
-<a href="#259" id="259">259</a>
-<a href="#260" id="260">260</a>
-<a href="#261" id="261">261</a>
-<a href="#262" id="262">262</a>
-<a href="#263" id="263">263</a>
-<a href="#264" id="264">264</a>
-<a href="#265" id="265">265</a>
-<a href="#266" id="266">266</a>
-<a href="#267" id="267">267</a>
-<a href="#268" id="268">268</a>
-<a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
-<a href="#271" id="271">271</a>
-<a href="#272" id="272">272</a>
-<a href="#273" id="273">273</a>
-<a href="#274" id="274">274</a>
-<a href="#275" id="275">275</a>
-<a href="#276" id="276">276</a>
-<a href="#277" id="277">277</a>
-<a href="#278" id="278">278</a>
-<a href="#279" id="279">279</a>
-<a href="#280" id="280">280</a>
-<a href="#281" id="281">281</a>
-<a href="#282" id="282">282</a>
-<a href="#283" id="283">283</a>
-<a href="#284" id="284">284</a>
-<a href="#285" id="285">285</a>
-<a href="#286" id="286">286</a>
-<a href="#287" id="287">287</a>
-<a href="#288" id="288">288</a>
-<a href="#289" id="289">289</a>
-<a href="#290" id="290">290</a>
-<a href="#291" id="291">291</a>
 </pre></div><pre class="rust"><code><span class="comment">// Bitcoin Dev Kit
 // Written in 2020 by Alekos Filini &lt;alekos.filini@gmail.com&gt;
 //
@@ -341,8 +305,6 @@
 </span><span class="kw">pub enum </span>CreateTxError {
     <span class="doccomment">/// There was a problem with the descriptors passed in
     </span>Descriptor(DescriptorError),
-    <span class="doccomment">/// We were unable to load wallet data from or write wallet data to the persistence backend
-    </span>Persist(anyhow::Error),
     <span class="doccomment">/// There was a problem while extracting and manipulating policies
     </span>Policy(PolicyError),
     <span class="doccomment">/// Spending policy is not compatible with this [`KeychainKind`]
@@ -358,12 +320,10 @@
         <span class="doccomment">/// Required `LockTime`
         </span>required: absolute::LockTime,
     },
-    <span class="doccomment">/// Cannot enable RBF with a `Sequence` &gt;= 0xFFFFFFFE
-    </span>RbfSequence,
     <span class="doccomment">/// Cannot enable RBF with `Sequence` given a required OP_CSV
     </span>RbfSequenceCsv {
         <span class="doccomment">/// Given RBF `Sequence`
-        </span>rbf: Sequence,
+        </span>sequence: Sequence,
         <span class="doccomment">/// Required OP_CSV `Sequence`
         </span>csv: Sequence,
     },
@@ -381,17 +341,8 @@
     </span>NoUtxosSelected,
     <span class="doccomment">/// Output created is under the dust limit, 546 satoshis
     </span>OutputBelowDustLimit(usize),
-    <span class="doccomment">/// The `change_policy` was set but the wallet does not have a change_descriptor
-    </span>ChangePolicyDescriptor,
     <span class="doccomment">/// There was an error with coin selection
-    </span>CoinSelection(coin_selection::Error),
-    <span class="doccomment">/// Wallet's UTXO set is not enough to cover recipient's requested plus fee
-    </span>InsufficientFunds {
-        <span class="doccomment">/// Sats needed for some transaction
-        </span>needed: u64,
-        <span class="doccomment">/// Sats available for spending
-        </span>available: u64,
-    },
+    </span>CoinSelection(coin_selection::InsufficientFunds),
     <span class="doccomment">/// Cannot build a tx without recipients
     </span>NoRecipients,
     <span class="doccomment">/// Partially signed bitcoin transaction error
@@ -414,13 +365,6 @@
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Descriptor(e) =&gt; e.fmt(f),
-            <span class="self">Self</span>::Persist(e) =&gt; {
-                <span class="macro">write!</span>(
-                    f,
-                    <span class="string">"failed to load wallet data from or write wallet data to persistence backend: {}"</span>,
-                    e
-                )
-            }
             <span class="self">Self</span>::Policy(e) =&gt; e.fmt(f),
             CreateTxError::SpendingPolicyRequired(keychain_kind) =&gt; {
                 <span class="macro">write!</span>(f, <span class="string">"Spending policy required: {:?}"</span>, keychain_kind)
@@ -440,14 +384,11 @@
             } =&gt; {
                 <span class="macro">write!</span>(f, <span class="string">"TxBuilder requested timelock of `{:?}`, but at least `{:?}` is required to spend from this script"</span>, required, requested)
             }
-            CreateTxError::RbfSequence =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">"Cannot enable RBF with a nSequence &gt;= 0xFFFFFFFE"</span>)
-            }
-            CreateTxError::RbfSequenceCsv { rbf, csv } =&gt; {
+            CreateTxError::RbfSequenceCsv { sequence, csv } =&gt; {
                 <span class="macro">write!</span>(
                     f,
                     <span class="string">"Cannot enable RBF with nSequence `{:?}` given a required OP_CSV of `{:?}`"</span>,
-                    rbf, csv
+                    sequence, csv
                 )
             }
             CreateTxError::FeeTooLow { required } =&gt; {
@@ -468,20 +409,7 @@
             CreateTxError::OutputBelowDustLimit(limit) =&gt; {
                 <span class="macro">write!</span>(f, <span class="string">"Output below the dust limit: {}"</span>, limit)
             }
-            CreateTxError::ChangePolicyDescriptor =&gt; {
-                <span class="macro">write!</span>(
-                    f,
-                    <span class="string">"The `change_policy` can be set only if the wallet has a change_descriptor"
-                </span>)
-            }
             CreateTxError::CoinSelection(e) =&gt; e.fmt(f),
-            CreateTxError::InsufficientFunds { needed, available } =&gt; {
-                <span class="macro">write!</span>(
-                    f,
-                    <span class="string">"Insufficient funds: {} sat available of {} sat needed"</span>,
-                    available, needed
-                )
-            }
             CreateTxError::NoRecipients =&gt; {
                 <span class="macro">write!</span>(f, <span class="string">"Cannot build tx without recipients"</span>)
             }
@@ -526,8 +454,8 @@
     }
 }
 
-<span class="kw">impl </span>From&lt;coin_selection::Error&gt; <span class="kw">for </span>CreateTxError {
-    <span class="kw">fn </span>from(err: coin_selection::Error) -&gt; <span class="self">Self </span>{
+<span class="kw">impl </span>From&lt;coin_selection::InsufficientFunds&gt; <span class="kw">for </span>CreateTxError {
+    <span class="kw">fn </span>from(err: coin_selection::InsufficientFunds) -&gt; <span class="self">Self </span>{
         CreateTxError::CoinSelection(err)
     }
 }

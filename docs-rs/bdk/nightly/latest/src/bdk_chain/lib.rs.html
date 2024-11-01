@@ -95,6 +95,38 @@
 <a href="#95" id="95">95</a>
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This crate is a collection of core structures for [Bitcoin Dev Kit].
 //!
 //! The goal of this crate is to give wallets the mechanisms needed to:
@@ -114,21 +146,29 @@
 //!
 //! [Bitcoin Dev Kit]: https://bitcoindevkit.org/
 
-</span><span class="attr">#![no_std]
+</span><span class="comment">// only enables the `doc_cfg` feature when the `docsrs` configuration attribute is defined
+</span><span class="attr">#![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(
+    docsrs,
+    doc(html_logo_url = <span class="string">"https://github.com/bitcoindevkit/bdk/raw/master/static/bdk.png"</span>)
+)]
+#![no_std]
 #![warn(missing_docs)]
 
 </span><span class="kw">pub use </span>bitcoin;
-<span class="kw">mod </span>spk_txout_index;
-<span class="kw">pub use </span>spk_txout_index::<span class="kw-2">*</span>;
+<span class="kw">mod </span>balance;
+<span class="kw">pub use </span>balance::<span class="kw-2">*</span>;
 <span class="kw">mod </span>chain_data;
 <span class="kw">pub use </span>chain_data::<span class="kw-2">*</span>;
 <span class="kw">pub mod </span>indexed_tx_graph;
 <span class="kw">pub use </span>indexed_tx_graph::IndexedTxGraph;
-<span class="kw">pub mod </span>keychain;
+<span class="kw">pub mod </span>indexer;
+<span class="kw">pub use </span>indexer::spk_txout;
+<span class="kw">pub use </span>indexer::Indexer;
 <span class="kw">pub mod </span>local_chain;
 <span class="kw">mod </span>tx_data_traits;
-<span class="kw">pub mod </span>tx_graph;
 <span class="kw">pub use </span>tx_data_traits::<span class="kw-2">*</span>;
+<span class="kw">pub mod </span>tx_graph;
 <span class="kw">pub use </span>tx_graph::TxGraph;
 <span class="kw">mod </span>chain_oracle;
 <span class="kw">pub use </span>chain_oracle::<span class="kw-2">*</span>;
@@ -145,51 +185,75 @@
 <span class="attr">#[cfg(feature = <span class="string">"miniscript"</span>)]
 </span><span class="kw">mod </span>spk_iter;
 <span class="attr">#[cfg(feature = <span class="string">"miniscript"</span>)]
+</span><span class="kw">pub use </span>indexer::keychain_txout;
+<span class="attr">#[cfg(feature = <span class="string">"miniscript"</span>)]
 </span><span class="kw">pub use </span>spk_iter::<span class="kw-2">*</span>;
-<span class="kw">pub mod </span>spk_client;
+<span class="attr">#[cfg(feature = <span class="string">"rusqlite"</span>)]
+</span><span class="kw">pub mod </span>rusqlite_impl;
+
+<span class="kw">pub extern crate </span>bdk_core;
+<span class="kw">pub use </span>bdk_core::<span class="kw-2">*</span>;
 
 <span class="attr">#[allow(unused_imports)]
 #[macro_use]
 </span><span class="kw">extern crate </span>alloc;
-
+<span class="attr">#[cfg(feature = <span class="string">"rusqlite"</span>)]
+</span><span class="kw">pub extern crate </span>rusqlite;
 <span class="attr">#[cfg(feature = <span class="string">"serde"</span>)]
-</span><span class="kw">pub extern crate </span>serde_crate <span class="kw">as </span>serde;
+</span><span class="kw">pub extern crate </span>serde;
 
 <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 #[macro_use]
 </span><span class="kw">extern crate </span>std;
 
-<span class="attr">#[cfg(all(not(feature = <span class="string">"std"</span>), feature = <span class="string">"hashbrown"</span>))]
-</span><span class="kw">extern crate </span>hashbrown;
-
-<span class="comment">// When no-std use `alloc`'s Hash collections. This is activated by default
-</span><span class="attr">#[cfg(all(not(feature = <span class="string">"std"</span>), not(feature = <span class="string">"hashbrown"</span>)))]
-#[doc(hidden)]
-</span><span class="kw">pub mod </span>collections {
-    <span class="attr">#![allow(dead_code)]
-    </span><span class="kw">pub type </span>HashSet&lt;K&gt; = alloc::collections::BTreeSet&lt;K&gt;;
-    <span class="kw">pub type </span>HashMap&lt;K, V&gt; = alloc::collections::BTreeMap&lt;K, V&gt;;
-    <span class="kw">pub use </span>alloc::collections::{btree_map <span class="kw">as </span>hash_map, <span class="kw-2">*</span>};
-}
-
-<span class="comment">// When we have std, use `std`'s all collections
-</span><span class="attr">#[cfg(all(feature = <span class="string">"std"</span>, not(feature = <span class="string">"hashbrown"</span>)))]
-#[doc(hidden)]
-</span><span class="kw">pub mod </span>collections {
-    <span class="kw">pub use </span>std::collections::{hash_map, <span class="kw-2">*</span>};
-}
-
-<span class="comment">// With this special feature `hashbrown`, use `hashbrown`'s hash collections, and else from `alloc`.
-</span><span class="attr">#[cfg(feature = <span class="string">"hashbrown"</span>)]
-#[doc(hidden)]
-</span><span class="kw">pub mod </span>collections {
-    <span class="attr">#![allow(dead_code)]
-    </span><span class="kw">pub type </span>HashSet&lt;K&gt; = hashbrown::HashSet&lt;K&gt;;
-    <span class="kw">pub type </span>HashMap&lt;K, V&gt; = hashbrown::HashMap&lt;K, V&gt;;
-    <span class="kw">pub use </span>alloc::collections::<span class="kw-2">*</span>;
-    <span class="kw">pub use </span>hashbrown::hash_map;
-}
-
 <span class="doccomment">/// How many confirmations are needed f or a coinbase output to be spent.
 </span><span class="kw">pub const </span>COINBASE_MATURITY: u32 = <span class="number">100</span>;
+
+<span class="doccomment">/// A wrapper that we use to impl remote traits for types in our crate or dependency crates.
+</span><span class="kw">pub struct </span>Impl&lt;T&gt;(<span class="kw">pub </span>T);
+
+<span class="kw">impl</span>&lt;T&gt; Impl&lt;T&gt; {
+    <span class="doccomment">/// Returns the inner `T`.
+    </span><span class="kw">pub fn </span>into_inner(<span class="self">self</span>) -&gt; T {
+        <span class="self">self</span>.<span class="number">0
+    </span>}
+}
+
+<span class="kw">impl</span>&lt;T&gt; From&lt;T&gt; <span class="kw">for </span>Impl&lt;T&gt; {
+    <span class="kw">fn </span>from(value: T) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(value)
+    }
+}
+
+<span class="kw">impl</span>&lt;T&gt; core::ops::Deref <span class="kw">for </span>Impl&lt;T&gt; {
+    <span class="kw">type </span>Target = T;
+
+    <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Target {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0
+    </span>}
+}
+
+<span class="doccomment">/// A wrapper that we use to impl remote traits for types in our crate or dependency crates that impl [`Anchor`].
+</span><span class="kw">pub struct </span>AnchorImpl&lt;T&gt;(<span class="kw">pub </span>T);
+
+<span class="kw">impl</span>&lt;T&gt; AnchorImpl&lt;T&gt; {
+    <span class="doccomment">/// Returns the inner `T`.
+    </span><span class="kw">pub fn </span>into_inner(<span class="self">self</span>) -&gt; T {
+        <span class="self">self</span>.<span class="number">0
+    </span>}
+}
+
+<span class="kw">impl</span>&lt;T&gt; From&lt;T&gt; <span class="kw">for </span>AnchorImpl&lt;T&gt; {
+    <span class="kw">fn </span>from(value: T) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(value)
+    }
+}
+
+<span class="kw">impl</span>&lt;T&gt; core::ops::Deref <span class="kw">for </span>AnchorImpl&lt;T&gt; {
+    <span class="kw">type </span>Target = T;
+
+    <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Target {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0
+    </span>}
+}
 </code></pre></div></section></main></body></html>

@@ -1553,24 +1553,6 @@
 <a href="#1553" id="1553">1553</a>
 <a href="#1554" id="1554">1554</a>
 <a href="#1555" id="1555">1555</a>
-<a href="#1556" id="1556">1556</a>
-<a href="#1557" id="1557">1557</a>
-<a href="#1558" id="1558">1558</a>
-<a href="#1559" id="1559">1559</a>
-<a href="#1560" id="1560">1560</a>
-<a href="#1561" id="1561">1561</a>
-<a href="#1562" id="1562">1562</a>
-<a href="#1563" id="1563">1563</a>
-<a href="#1564" id="1564">1564</a>
-<a href="#1565" id="1565">1565</a>
-<a href="#1566" id="1566">1566</a>
-<a href="#1567" id="1567">1567</a>
-<a href="#1568" id="1568">1568</a>
-<a href="#1569" id="1569">1569</a>
-<a href="#1570" id="1570">1570</a>
-<a href="#1571" id="1571">1571</a>
-<a href="#1572" id="1572">1572</a>
-<a href="#1573" id="1573">1573</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Module for structures that store and traverse transactions.
 //!
 //! [`TxGraph`] contains transactions and indexes them so you can easily traverse the graph of
@@ -1642,14 +1624,18 @@
 //! A [`TxGraph`] can also be updated with another [`TxGraph`] which merges them together.
 //!
 //! ```
-//! # use bdk_chain::{Append, BlockId};
-//! # use bdk_chain::tx_graph::TxGraph;
+//! # use bdk_chain::{Merge, BlockId};
+//! # use bdk_chain::tx_graph::{self, TxGraph};
 //! # use bdk_chain::example_utils::*;
 //! # use bitcoin::Transaction;
+//! # use std::sync::Arc;
 //! # let tx_a = tx_from_hex(RAW_TX_1);
 //! # let tx_b = tx_from_hex(RAW_TX_2);
 //! let mut graph: TxGraph = TxGraph::default();
-//! let update = TxGraph::new(vec![tx_a, tx_b]);
+//!
+//! let mut update = tx_graph::TxUpdate::default();
+//! update.txs.push(Arc::new(tx_a));
+//! update.txs.push(Arc::new(tx_b));
 //!
 //! // apply the update graph
 //! let changeset = graph.apply_update(update.clone());
@@ -1661,19 +1647,41 @@
 //! [`try_get_chain_position`]: TxGraph::try_get_chain_position
 //! [`insert_txout`]: TxGraph::insert_txout
 
-</span><span class="kw">use crate</span>::{
-    collections::<span class="kw-2">*</span>, keychain::Balance, Anchor, Append, BlockId, ChainOracle, ChainPosition,
-    FullTxOut,
-};
+</span><span class="kw">use </span><span class="kw">crate</span>::collections::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="kw">crate</span>::BlockId;
+<span class="kw">use crate</span>::{Anchor, Balance, ChainOracle, ChainPosition, FullTxOut, Merge};
 <span class="kw">use </span>alloc::collections::vec_deque::VecDeque;
 <span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>alloc::vec::Vec;
-<span class="kw">use </span>bitcoin::{Amount, OutPoint, Script, SignedAmount, Transaction, TxOut, Txid};
+<span class="kw">pub use </span>bdk_core::TxUpdate;
+<span class="kw">use </span>bitcoin::{Amount, OutPoint, ScriptBuf, SignedAmount, Transaction, TxOut, Txid};
 <span class="kw">use </span>core::fmt::{<span class="self">self</span>, Formatter};
 <span class="kw">use </span>core::{
     convert::Infallible,
     ops::{Deref, RangeInclusive},
 };
+
+<span class="kw">impl</span>&lt;A&gt; From&lt;TxGraph&lt;A&gt;&gt; <span class="kw">for </span>TxUpdate&lt;A&gt; {
+    <span class="kw">fn </span>from(graph: TxGraph&lt;A&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            txs: graph.full_txs().map(|tx_node| tx_node.tx).collect(),
+            txouts: graph
+                .floating_txouts()
+                .map(|(op, txo)| (op, txo.clone()))
+                .collect(),
+            anchors: graph.anchors,
+            seen_ats: graph.last_seen.into_iter().collect(),
+        }
+    }
+}
+
+<span class="kw">impl</span>&lt;A: Ord + Clone&gt; From&lt;TxUpdate&lt;A&gt;&gt; <span class="kw">for </span>TxGraph&lt;A&gt; {
+    <span class="kw">fn </span>from(update: TxUpdate&lt;A&gt;) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>graph = TxGraph::&lt;A&gt;::default();
+        <span class="kw">let _ </span>= graph.apply_update_at(update, <span class="prelude-val">None</span>);
+        graph
+    }
+}
 
 <span class="doccomment">/// A graph of transactions and spends.
 ///
@@ -1682,10 +1690,11 @@
 /// [module-level documentation]: crate::tx_graph
 </span><span class="attr">#[derive(Clone, Debug, PartialEq)]
 </span><span class="kw">pub struct </span>TxGraph&lt;A = ()&gt; {
-    <span class="comment">// all transactions that the graph is aware of in format: `(tx_node, tx_anchors, tx_last_seen)`
-    </span>txs: HashMap&lt;Txid, (TxNodeInternal, BTreeSet&lt;A&gt;, u64)&gt;,
+    <span class="comment">// all transactions that the graph is aware of in format: `(tx_node, tx_anchors)`
+    </span>txs: HashMap&lt;Txid, (TxNodeInternal, BTreeSet&lt;A&gt;)&gt;,
     spends: BTreeMap&lt;OutPoint, HashSet&lt;Txid&gt;&gt;,
     anchors: BTreeSet&lt;(A, Txid)&gt;,
+    last_seen: HashMap&lt;Txid, u64&gt;,
 
     <span class="comment">// This atrocity exists so that `TxGraph::outspends()` can return a reference.
     // FIXME: This can be removed once `HashSet::new` is a const fn.
@@ -1698,6 +1707,7 @@
             txs: Default::default(),
             spends: Default::default(),
             anchors: Default::default(),
+            last_seen: Default::default(),
             empty_outspends: Default::default(),
         }
     }
@@ -1713,7 +1723,7 @@
     <span class="doccomment">/// The blocks that the transaction is "anchored" in.
     </span><span class="kw">pub </span>anchors: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>BTreeSet&lt;A&gt;,
     <span class="doccomment">/// The last-seen unix timestamp of the transaction as unconfirmed.
-    </span><span class="kw">pub </span>last_seen_unconfirmed: u64,
+    </span><span class="kw">pub </span>last_seen_unconfirmed: <span class="prelude-ty">Option</span>&lt;u64&gt;,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T, A&gt; Deref <span class="kw">for </span>TxNode&lt;<span class="lifetime">'a</span>, T, A&gt; {
@@ -1783,7 +1793,7 @@
     ///
     /// This includes txouts of both full transactions as well as floating transactions.
     </span><span class="kw">pub fn </span>all_txouts(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (OutPoint, <span class="kw-2">&amp;</span>TxOut)&gt; {
-        <span class="self">self</span>.txs.iter().flat_map(|(txid, (tx, <span class="kw">_</span>, <span class="kw">_</span>))| <span class="kw">match </span>tx {
+        <span class="self">self</span>.txs.iter().flat_map(|(txid, (tx, <span class="kw">_</span>))| <span class="kw">match </span>tx {
             TxNodeInternal::Whole(tx) =&gt; tx
                 .as_ref()
                 .output
@@ -1805,7 +1815,7 @@
     </span><span class="kw">pub fn </span>floating_txouts(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (OutPoint, <span class="kw-2">&amp;</span>TxOut)&gt; {
         <span class="self">self</span>.txs
             .iter()
-            .filter_map(|(txid, (tx_node, <span class="kw">_</span>, <span class="kw">_</span>))| <span class="kw">match </span>tx_node {
+            .filter_map(|(txid, (tx_node, <span class="kw">_</span>))| <span class="kw">match </span>tx_node {
                 TxNodeInternal::Whole(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
                 TxNodeInternal::Partial(txouts) =&gt; <span class="prelude-val">Some</span>(
                     txouts
@@ -1820,15 +1830,28 @@
     </span><span class="kw">pub fn </span>full_txs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = TxNode&lt;<span class="lifetime">'_</span>, Arc&lt;Transaction&gt;, A&gt;&gt; {
         <span class="self">self</span>.txs
             .iter()
-            .filter_map(|(<span class="kw-2">&amp;</span>txid, (tx, anchors, last_seen))| <span class="kw">match </span>tx {
+            .filter_map(|(<span class="kw-2">&amp;</span>txid, (tx, anchors))| <span class="kw">match </span>tx {
                 TxNodeInternal::Whole(tx) =&gt; <span class="prelude-val">Some</span>(TxNode {
                     txid,
                     tx: tx.clone(),
                     anchors,
-                    last_seen_unconfirmed: <span class="kw-2">*</span>last_seen,
+                    last_seen_unconfirmed: <span class="self">self</span>.last_seen.get(<span class="kw-2">&amp;</span>txid).copied(),
                 }),
                 TxNodeInternal::Partial(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
             })
+    }
+
+    <span class="doccomment">/// Iterate over graph transactions with no anchors or last-seen.
+    </span><span class="kw">pub fn </span>txs_with_no_anchor_or_last_seen(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = TxNode&lt;<span class="lifetime">'_</span>, Arc&lt;Transaction&gt;, A&gt;&gt; {
+        <span class="self">self</span>.full_txs().filter_map(|tx| {
+            <span class="kw">if </span>tx.anchors.is_empty() &amp;&amp; tx.last_seen_unconfirmed.is_none() {
+                <span class="prelude-val">Some</span>(tx)
+            } <span class="kw">else </span>{
+                <span class="prelude-val">None
+            </span>}
+        })
     }
 
     <span class="doccomment">/// Get a transaction by txid. This only returns `Some` for full transactions.
@@ -1843,11 +1866,11 @@
     <span class="doccomment">/// Get a transaction node by txid. This only returns `Some` for full transactions.
     </span><span class="kw">pub fn </span>get_tx_node(<span class="kw-2">&amp;</span><span class="self">self</span>, txid: Txid) -&gt; <span class="prelude-ty">Option</span>&lt;TxNode&lt;<span class="lifetime">'_</span>, Arc&lt;Transaction&gt;, A&gt;&gt; {
         <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.txs.get(<span class="kw-2">&amp;</span>txid)<span class="question-mark">? </span>{
-            (TxNodeInternal::Whole(tx), anchors, last_seen) =&gt; <span class="prelude-val">Some</span>(TxNode {
+            (TxNodeInternal::Whole(tx), anchors) =&gt; <span class="prelude-val">Some</span>(TxNode {
                 txid,
                 tx: tx.clone(),
                 anchors,
-                last_seen_unconfirmed: <span class="kw-2">*</span>last_seen,
+                last_seen_unconfirmed: <span class="self">self</span>.last_seen.get(<span class="kw-2">&amp;</span>txid).copied(),
             }),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         }
@@ -2018,7 +2041,7 @@
         <span class="kw-2">&amp;</span><span class="lifetime">'g </span><span class="self">self</span>,
         tx: <span class="kw-2">&amp;</span><span class="lifetime">'g </span>Transaction,
     ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (usize, Txid)&gt; + <span class="lifetime">'_ </span>{
-        <span class="kw">let </span>txid = tx.txid();
+        <span class="kw">let </span>txid = tx.compute_txid();
         tx.input
             .iter()
             .enumerate()
@@ -2071,28 +2094,66 @@
     ///
     /// [`apply_changeset`]: Self::apply_changeset
     </span><span class="kw">pub fn </span>insert_txout(<span class="kw-2">&amp;mut </span><span class="self">self</span>, outpoint: OutPoint, txout: TxOut) -&gt; ChangeSet&lt;A&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>update = <span class="self">Self</span>::default();
-        update.txs.insert(
-            outpoint.txid,
-            (
-                TxNodeInternal::Partial([(outpoint.vout, txout)].into()),
-                BTreeSet::new(),
-                <span class="number">0</span>,
-            ),
-        );
-        <span class="self">self</span>.apply_update(update)
+        <span class="kw">let </span><span class="kw-2">mut </span>changeset = ChangeSet::&lt;A&gt;::default();
+        <span class="kw">let </span>(tx_node, <span class="kw">_</span>) = <span class="self">self</span>.txs.entry(outpoint.txid).or_default();
+        <span class="kw">match </span>tx_node {
+            TxNodeInternal::Whole(<span class="kw">_</span>) =&gt; {
+                <span class="comment">// ignore this txout we have the full one already.
+                // NOTE: You might think putting a debug_assert! here to check the output being
+                // replaced was actually correct is a good idea but the tests have already been
+                // written assuming this never panics.
+            </span>}
+            TxNodeInternal::Partial(partial_tx) =&gt; {
+                <span class="kw">match </span>partial_tx.insert(outpoint.vout, txout.clone()) {
+                    <span class="prelude-val">Some</span>(old_txout) =&gt; {
+                        <span class="macro">debug_assert_eq!</span>(
+                            txout, old_txout,
+                            <span class="string">"txout of the same outpoint should never change"
+                        </span>);
+                    }
+                    <span class="prelude-val">None </span>=&gt; {
+                        changeset.txouts.insert(outpoint, txout);
+                    }
+                }
+            }
+        }
+        changeset
     }
 
     <span class="doccomment">/// Inserts the given transaction into [`TxGraph`].
     ///
     /// The [`ChangeSet`] returned will be empty if `tx` already exists.
     </span><span class="kw">pub fn </span>insert_tx&lt;T: Into&lt;Arc&lt;Transaction&gt;&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, tx: T) -&gt; ChangeSet&lt;A&gt; {
-        <span class="kw">let </span>tx = tx.into();
-        <span class="kw">let </span><span class="kw-2">mut </span>update = <span class="self">Self</span>::default();
-        update
-            .txs
-            .insert(tx.txid(), (TxNodeInternal::Whole(tx), BTreeSet::new(), <span class="number">0</span>));
-        <span class="self">self</span>.apply_update(update)
+        <span class="kw">let </span>tx: Arc&lt;Transaction&gt; = tx.into();
+        <span class="kw">let </span>txid = tx.compute_txid();
+        <span class="kw">let </span><span class="kw-2">mut </span>changeset = ChangeSet::&lt;A&gt;::default();
+
+        <span class="kw">let </span>(tx_node, <span class="kw">_</span>) = <span class="self">self</span>.txs.entry(txid).or_default();
+        <span class="kw">match </span>tx_node {
+            TxNodeInternal::Whole(existing_tx) =&gt; {
+                <span class="macro">debug_assert_eq!</span>(
+                    existing_tx.as_ref(),
+                    tx.as_ref(),
+                    <span class="string">"tx of same txid should never change"
+                </span>);
+            }
+            partial_tx =&gt; {
+                <span class="kw">for </span>txin <span class="kw">in </span><span class="kw-2">&amp;</span>tx.input {
+                    <span class="comment">// this means the tx is coinbase so there is no previous output
+                    </span><span class="kw">if </span>txin.previous_output.is_null() {
+                        <span class="kw">continue</span>;
+                    }
+                    <span class="self">self</span>.spends
+                        .entry(txin.previous_output)
+                        .or_default()
+                        .insert(txid);
+                }
+                <span class="kw-2">*</span>partial_tx = TxNodeInternal::Whole(tx.clone());
+                changeset.txs.insert(tx);
+            }
+        }
+
+        changeset
     }
 
     <span class="doccomment">/// Batch insert unconfirmed transactions.
@@ -2100,14 +2161,15 @@
     /// Items of `txs` are tuples containing the transaction and a *last seen* timestamp. The
     /// *last seen* communicates when the transaction is last seen in mempool which is used for
     /// conflict-resolution (refer to [`TxGraph::insert_seen_at`] for details).
-    </span><span class="kw">pub fn </span>batch_insert_unconfirmed(
+    </span><span class="kw">pub fn </span>batch_insert_unconfirmed&lt;T: Into&lt;Arc&lt;Transaction&gt;&gt;&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        txs: <span class="kw">impl </span>IntoIterator&lt;Item = (Transaction, u64)&gt;,
+        txs: <span class="kw">impl </span>IntoIterator&lt;Item = (T, u64)&gt;,
     ) -&gt; ChangeSet&lt;A&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>changeset = ChangeSet::&lt;A&gt;::default();
         <span class="kw">for </span>(tx, seen_at) <span class="kw">in </span>txs {
-            changeset.append(<span class="self">self</span>.insert_seen_at(tx.txid(), seen_at));
-            changeset.append(<span class="self">self</span>.insert_tx(tx));
+            <span class="kw">let </span>tx: Arc&lt;Transaction&gt; = tx.into();
+            changeset.merge(<span class="self">self</span>.insert_seen_at(tx.compute_txid(), seen_at));
+            changeset.merge(<span class="self">self</span>.insert_tx(tx));
         }
         changeset
     }
@@ -2117,214 +2179,112 @@
     /// The [`ChangeSet`] returned will be empty if graph already knows that `txid` exists in
     /// `anchor`.
     </span><span class="kw">pub fn </span>insert_anchor(<span class="kw-2">&amp;mut </span><span class="self">self</span>, txid: Txid, anchor: A) -&gt; ChangeSet&lt;A&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>update = <span class="self">Self</span>::default();
-        update.anchors.insert((anchor, txid));
-        <span class="self">self</span>.apply_update(update)
-    }
-
-    <span class="doccomment">/// Inserts the given `seen_at` for `txid` into [`TxGraph`].
-    ///
-    /// Note that [`TxGraph`] only keeps track of the latest `seen_at`. To batch
-    /// update all unconfirmed transactions with the latest `seen_at`, see
-    /// [`update_last_seen_unconfirmed`].
-    ///
-    /// [`update_last_seen_unconfirmed`]: Self::update_last_seen_unconfirmed
-    </span><span class="kw">pub fn </span>insert_seen_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, txid: Txid, seen_at: u64) -&gt; ChangeSet&lt;A&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>update = <span class="self">Self</span>::default();
-        <span class="kw">let </span>(<span class="kw">_</span>, <span class="kw">_</span>, update_last_seen) = update.txs.entry(txid).or_default();
-        <span class="kw-2">*</span>update_last_seen = seen_at;
-        <span class="self">self</span>.apply_update(update)
-    }
-
-    <span class="doccomment">/// Update the last seen time for all unconfirmed transactions.
-    ///
-    /// This method updates the last seen unconfirmed time for this [`TxGraph`] by inserting
-    /// the given `seen_at` for every transaction not yet anchored to a confirmed block,
-    /// and returns the [`ChangeSet`] after applying all updates to `self`.
-    ///
-    /// This is useful for keeping track of the latest time a transaction was seen
-    /// unconfirmed, which is important for evaluating transaction conflicts in the same
-    /// [`TxGraph`]. For details of how [`TxGraph`] resolves conflicts, see the docs for
-    /// [`try_get_chain_position`].
-    ///
-    /// A normal use of this method is to call it with the current system time. Although
-    /// block headers contain a timestamp, using the header time would be less effective
-    /// at tracking mempool transactions, because it can drift from actual clock time, plus
-    /// we may want to update a transaction's last seen time repeatedly between blocks.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # use bdk_chain::example_utils::*;
-    /// # use std::time::UNIX_EPOCH;
-    /// # let tx = tx_from_hex(RAW_TX_1);
-    /// # let mut tx_graph = bdk_chain::TxGraph::&lt;()&gt;::new([tx]);
-    /// let now = std::time::SystemTime::now()
-    ///     .duration_since(UNIX_EPOCH)
-    ///     .expect("valid duration")
-    ///     .as_secs();
-    /// let changeset = tx_graph.update_last_seen_unconfirmed(now);
-    /// assert!(!changeset.last_seen.is_empty());
-    /// ```
-    ///
-    /// Note that [`TxGraph`] only keeps track of the latest `seen_at`, so the given time must
-    /// by strictly greater than what is currently stored for a transaction to have an effect.
-    /// To insert a last seen time for a single txid, see [`insert_seen_at`].
-    ///
-    /// [`insert_seen_at`]: Self::insert_seen_at
-    /// [`try_get_chain_position`]: Self::try_get_chain_position
-    </span><span class="kw">pub fn </span>update_last_seen_unconfirmed(<span class="kw-2">&amp;mut </span><span class="self">self</span>, seen_at: u64) -&gt; ChangeSet&lt;A&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>changeset = ChangeSet::default();
-        <span class="kw">let </span>unanchored_txs: Vec&lt;Txid&gt; = <span class="self">self
-            </span>.txs
-            .iter()
-            .filter_map(
-                |(<span class="kw-2">&amp;</span>txid, (<span class="kw">_</span>, anchors, <span class="kw">_</span>))| {
-                    <span class="kw">if </span>anchors.is_empty() {
-                        <span class="prelude-val">Some</span>(txid)
-                    } <span class="kw">else </span>{
-                        <span class="prelude-val">None
-                    </span>}
-                },
-            )
-            .collect();
-
-        <span class="kw">for </span>txid <span class="kw">in </span>unanchored_txs {
-            changeset.append(<span class="self">self</span>.insert_seen_at(txid, seen_at));
+        <span class="kw">let </span><span class="kw-2">mut </span>changeset = ChangeSet::&lt;A&gt;::default();
+        <span class="kw">if </span><span class="self">self</span>.anchors.insert((anchor.clone(), txid)) {
+            <span class="kw">let </span>(_tx_node, anchors) = <span class="self">self</span>.txs.entry(txid).or_default();
+            <span class="kw">let </span>_inserted = anchors.insert(anchor.clone());
+            <span class="macro">debug_assert!</span>(
+                _inserted,
+                <span class="string">"anchors in `.anchors` and `.txs` should be consistent"
+            </span>);
+            changeset.anchors.insert((anchor, txid));
         }
         changeset
     }
 
-    <span class="doccomment">/// Extends this graph with another so that `self` becomes the union of the two sets of
-    /// transactions.
+    <span class="doccomment">/// Inserts the given `seen_at` for `txid` into [`TxGraph`].
+    ///
+    /// Note that [`TxGraph`] only keeps track of the latest `seen_at`.
+    </span><span class="kw">pub fn </span>insert_seen_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, txid: Txid, seen_at: u64) -&gt; ChangeSet&lt;A&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>changeset = ChangeSet::&lt;A&gt;::default();
+        <span class="kw">let </span>last_seen = <span class="self">self</span>.last_seen.entry(txid).or_default();
+        <span class="kw">if </span>seen_at &gt; <span class="kw-2">*</span>last_seen {
+            <span class="kw-2">*</span>last_seen = seen_at;
+            changeset.last_seen.insert(txid, seen_at);
+        }
+        changeset
+    }
+
+    <span class="doccomment">/// Extends this graph with the given `update`.
     ///
     /// The returned [`ChangeSet`] is the set difference between `update` and `self` (transactions that
     /// exist in `update` but not in `self`).
-    </span><span class="kw">pub fn </span>apply_update(<span class="kw-2">&amp;mut </span><span class="self">self</span>, update: TxGraph&lt;A&gt;) -&gt; ChangeSet&lt;A&gt; {
-        <span class="kw">let </span>changeset = <span class="self">self</span>.determine_changeset(update);
-        <span class="self">self</span>.apply_changeset(changeset.clone());
+    </span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+    #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"std"</span>)))]
+    </span><span class="kw">pub fn </span>apply_update(<span class="kw-2">&amp;mut </span><span class="self">self</span>, update: TxUpdate&lt;A&gt;) -&gt; ChangeSet&lt;A&gt; {
+        <span class="kw">use </span>std::time::<span class="kw-2">*</span>;
+        <span class="kw">let </span>now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect(<span class="string">"current time must be greater than epoch anchor"</span>);
+        <span class="self">self</span>.apply_update_at(update, <span class="prelude-val">Some</span>(now.as_secs()))
+    }
+
+    <span class="doccomment">/// Extends this graph with the given `update` alongside an optional `seen_at` timestamp.
+    ///
+    /// `seen_at` represents when the update is seen (in unix seconds). It is used to determine the
+    /// `last_seen`s for all transactions in the update which have no corresponding anchor(s). The
+    /// `last_seen` value is used internally to determine precedence of conflicting unconfirmed
+    /// transactions (where the transaction with the lower `last_seen` value is omitted from the
+    /// canonical history).
+    ///
+    /// Not setting a `seen_at` value means unconfirmed transactions introduced by this update will
+    /// not be part of the canonical history of transactions.
+    ///
+    /// Use [`apply_update`](TxGraph::apply_update) to have the `seen_at` value automatically set
+    /// to the current time.
+    </span><span class="kw">pub fn </span>apply_update_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, update: TxUpdate&lt;A&gt;, seen_at: <span class="prelude-ty">Option</span>&lt;u64&gt;) -&gt; ChangeSet&lt;A&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>changeset = ChangeSet::&lt;A&gt;::default();
+        <span class="kw">let </span><span class="kw-2">mut </span>unanchored_txs = HashSet::&lt;Txid&gt;::new();
+        <span class="kw">for </span>tx <span class="kw">in </span>update.txs {
+            <span class="kw">if </span>unanchored_txs.insert(tx.compute_txid()) {
+                changeset.merge(<span class="self">self</span>.insert_tx(tx));
+            }
+        }
+        <span class="kw">for </span>(outpoint, txout) <span class="kw">in </span>update.txouts {
+            changeset.merge(<span class="self">self</span>.insert_txout(outpoint, txout));
+        }
+        <span class="kw">for </span>(anchor, txid) <span class="kw">in </span>update.anchors {
+            unanchored_txs.remove(<span class="kw-2">&amp;</span>txid);
+            changeset.merge(<span class="self">self</span>.insert_anchor(txid, anchor));
+        }
+        <span class="kw">for </span>(txid, seen_at) <span class="kw">in </span>update.seen_ats {
+            changeset.merge(<span class="self">self</span>.insert_seen_at(txid, seen_at));
+        }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(seen_at) = seen_at {
+            <span class="kw">for </span>txid <span class="kw">in </span>unanchored_txs {
+                changeset.merge(<span class="self">self</span>.insert_seen_at(txid, seen_at));
+            }
+        }
         changeset
     }
 
     <span class="doccomment">/// Determines the [`ChangeSet`] between `self` and an empty [`TxGraph`].
     </span><span class="kw">pub fn </span>initial_changeset(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ChangeSet&lt;A&gt; {
-        <span class="self">Self</span>::default().determine_changeset(<span class="self">self</span>.clone())
+        ChangeSet {
+            txs: <span class="self">self</span>.full_txs().map(|tx_node| tx_node.tx).collect(),
+            txouts: <span class="self">self
+                </span>.floating_txouts()
+                .map(|(op, txout)| (op, txout.clone()))
+                .collect(),
+            anchors: <span class="self">self</span>.anchors.clone(),
+            last_seen: <span class="self">self</span>.last_seen.iter().map(|(<span class="kw-2">&amp;</span>k, <span class="kw-2">&amp;</span>v)| (k, v)).collect(),
+        }
     }
 
     <span class="doccomment">/// Applies [`ChangeSet`] to [`TxGraph`].
     </span><span class="kw">pub fn </span>apply_changeset(<span class="kw-2">&amp;mut </span><span class="self">self</span>, changeset: ChangeSet&lt;A&gt;) {
-        <span class="kw">for </span>wrapped_tx <span class="kw">in </span>changeset.txs {
-            <span class="kw">let </span>tx = wrapped_tx.as_ref();
-            <span class="kw">let </span>txid = tx.txid();
-
-            tx.input
-                .iter()
-                .map(|txin| txin.previous_output)
-                <span class="comment">// coinbase spends are not to be counted
-                </span>.filter(|outpoint| !outpoint.is_null())
-                <span class="comment">// record spend as this tx has spent this outpoint
-                </span>.for_each(|outpoint| {
-                    <span class="self">self</span>.spends.entry(outpoint).or_default().insert(txid);
-                });
-
-            <span class="kw">match </span><span class="self">self</span>.txs.get_mut(<span class="kw-2">&amp;</span>txid) {
-                <span class="prelude-val">Some</span>((tx_node @ TxNodeInternal::Partial(<span class="kw">_</span>), <span class="kw">_</span>, <span class="kw">_</span>)) =&gt; {
-                    <span class="kw-2">*</span>tx_node = TxNodeInternal::Whole(wrapped_tx.clone());
-                }
-                <span class="prelude-val">Some</span>((TxNodeInternal::Whole(tx), <span class="kw">_</span>, <span class="kw">_</span>)) =&gt; {
-                    <span class="macro">debug_assert_eq!</span>(
-                        tx.as_ref().txid(),
-                        txid,
-                        <span class="string">"tx should produce txid that is same as key"
-                    </span>);
-                }
-                <span class="prelude-val">None </span>=&gt; {
-                    <span class="self">self</span>.txs.insert(
-                        txid,
-                        (TxNodeInternal::Whole(wrapped_tx), BTreeSet::new(), <span class="number">0</span>),
-                    );
-                }
-            }
+        <span class="kw">for </span>tx <span class="kw">in </span>changeset.txs {
+            <span class="kw">let _ </span>= <span class="self">self</span>.insert_tx(tx);
         }
-
         <span class="kw">for </span>(outpoint, txout) <span class="kw">in </span>changeset.txouts {
-            <span class="kw">let </span>tx_entry = <span class="self">self</span>.txs.entry(outpoint.txid).or_default();
-
-            <span class="kw">match </span>tx_entry {
-                (TxNodeInternal::Whole(<span class="kw">_</span>), <span class="kw">_</span>, <span class="kw">_</span>) =&gt; { <span class="comment">/* do nothing since we already have full tx */
-                </span>}
-                (TxNodeInternal::Partial(txouts), <span class="kw">_</span>, <span class="kw">_</span>) =&gt; {
-                    txouts.insert(outpoint.vout, txout);
-                }
-            }
+            <span class="kw">let _ </span>= <span class="self">self</span>.insert_txout(outpoint, txout);
         }
-
         <span class="kw">for </span>(anchor, txid) <span class="kw">in </span>changeset.anchors {
-            <span class="kw">if </span><span class="self">self</span>.anchors.insert((anchor.clone(), txid)) {
-                <span class="kw">let </span>(<span class="kw">_</span>, anchors, <span class="kw">_</span>) = <span class="self">self</span>.txs.entry(txid).or_default();
-                anchors.insert(anchor);
-            }
+            <span class="kw">let _ </span>= <span class="self">self</span>.insert_anchor(txid, anchor);
         }
-
-        <span class="kw">for </span>(txid, new_last_seen) <span class="kw">in </span>changeset.last_seen {
-            <span class="kw">let </span>(<span class="kw">_</span>, <span class="kw">_</span>, last_seen) = <span class="self">self</span>.txs.entry(txid).or_default();
-            <span class="kw">if </span>new_last_seen &gt; <span class="kw-2">*</span>last_seen {
-                <span class="kw-2">*</span>last_seen = new_last_seen;
-            }
+        <span class="kw">for </span>(txid, seen_at) <span class="kw">in </span>changeset.last_seen {
+            <span class="kw">let _ </span>= <span class="self">self</span>.insert_seen_at(txid, seen_at);
         }
-    }
-
-    <span class="doccomment">/// Previews the resultant [`ChangeSet`] when [`Self`] is updated against the `update` graph.
-    ///
-    /// The [`ChangeSet`] would be the set difference between `update` and `self` (transactions that
-    /// exist in `update` but not in `self`).
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>determine_changeset(<span class="kw-2">&amp;</span><span class="self">self</span>, update: TxGraph&lt;A&gt;) -&gt; ChangeSet&lt;A&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>changeset = ChangeSet::&lt;A&gt;::default();
-
-        <span class="kw">for </span>(<span class="kw-2">&amp;</span>txid, (update_tx_node, <span class="kw">_</span>, update_last_seen)) <span class="kw">in </span><span class="kw-2">&amp;</span>update.txs {
-            <span class="kw">let </span>prev_last_seen: u64 = <span class="kw">match </span>(<span class="self">self</span>.txs.get(<span class="kw-2">&amp;</span>txid), update_tx_node) {
-                (<span class="prelude-val">None</span>, TxNodeInternal::Whole(update_tx)) =&gt; {
-                    changeset.txs.insert(update_tx.clone());
-                    <span class="number">0
-                </span>}
-                (<span class="prelude-val">None</span>, TxNodeInternal::Partial(update_txos)) =&gt; {
-                    changeset.txouts.extend(
-                        update_txos
-                            .iter()
-                            .map(|(<span class="kw-2">&amp;</span>vout, txo)| (OutPoint::new(txid, vout), txo.clone())),
-                    );
-                    <span class="number">0
-                </span>}
-                (<span class="prelude-val">Some</span>((TxNodeInternal::Whole(<span class="kw">_</span>), <span class="kw">_</span>, last_seen)), <span class="kw">_</span>) =&gt; <span class="kw-2">*</span>last_seen,
-                (
-                    <span class="prelude-val">Some</span>((TxNodeInternal::Partial(<span class="kw">_</span>), <span class="kw">_</span>, last_seen)),
-                    TxNodeInternal::Whole(update_tx),
-                ) =&gt; {
-                    changeset.txs.insert(update_tx.clone());
-                    <span class="kw-2">*</span>last_seen
-                }
-                (
-                    <span class="prelude-val">Some</span>((TxNodeInternal::Partial(txos), <span class="kw">_</span>, last_seen)),
-                    TxNodeInternal::Partial(update_txos),
-                ) =&gt; {
-                    changeset.txouts.extend(
-                        update_txos
-                            .iter()
-                            .filter(|(vout, <span class="kw">_</span>)| !txos.contains_key(<span class="kw-2">*</span>vout))
-                            .map(|(<span class="kw-2">&amp;</span>vout, txo)| (OutPoint::new(txid, vout), txo.clone())),
-                    );
-                    <span class="kw-2">*</span>last_seen
-                }
-            };
-
-            <span class="kw">if </span><span class="kw-2">*</span>update_last_seen &gt; prev_last_seen {
-                changeset.last_seen.insert(txid, <span class="kw-2">*</span>update_last_seen);
-            }
-        }
-
-        changeset.anchors = update.anchors.difference(<span class="kw-2">&amp;</span><span class="self">self</span>.anchors).cloned().collect();
-
-        changeset
     }
 }
 
@@ -2358,7 +2318,7 @@
         chain_tip: BlockId,
         txid: Txid,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ChainPosition&lt;<span class="kw-2">&amp;</span>A&gt;&gt;, C::Error&gt; {
-        <span class="kw">let </span>(tx_node, anchors, last_seen) = <span class="kw">match </span><span class="self">self</span>.txs.get(<span class="kw-2">&amp;</span>txid) {
+        <span class="kw">let </span>(tx_node, anchors) = <span class="kw">match </span><span class="self">self</span>.txs.get(<span class="kw-2">&amp;</span>txid) {
             <span class="prelude-val">Some</span>(v) =&gt; v,
             <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         };
@@ -2369,6 +2329,13 @@
                 <span class="kw">_ </span>=&gt; <span class="kw">continue</span>,
             }
         }
+
+        <span class="comment">// If no anchors are in best chain and we don't have a last_seen, we can return
+        // early because by definition the tx doesn't have a chain position.
+        </span><span class="kw">let </span>last_seen = <span class="kw">match </span><span class="self">self</span>.last_seen.get(<span class="kw-2">&amp;</span>txid) {
+            <span class="prelude-val">Some</span>(t) =&gt; <span class="kw-2">*</span>t,
+            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+        };
 
         <span class="comment">// The tx is not anchored to a block in the best chain, which means that it
         // might be in mempool, or it might have been dropped already.
@@ -2398,7 +2365,7 @@
         // resulting array will also include `tx`
         </span><span class="kw">let </span>unconfirmed_ancestor_txs =
             TxAncestors::new_include_root(<span class="self">self</span>, tx.clone(), |<span class="kw">_</span>, ancestor_tx: Arc&lt;Transaction&gt;| {
-                <span class="kw">let </span>tx_node = <span class="self">self</span>.get_tx_node(ancestor_tx.as_ref().txid())<span class="question-mark">?</span>;
+                <span class="kw">let </span>tx_node = <span class="self">self</span>.get_tx_node(ancestor_tx.as_ref().compute_txid())<span class="question-mark">?</span>;
                 <span class="comment">// We're filtering the ancestors to keep only the unconfirmed ones (= no anchors in
                 // the best chain)
                 </span><span class="kw">for </span>block <span class="kw">in </span>tx_node.anchors {
@@ -2416,7 +2383,7 @@
         // and our unconf descendants' last seen.
         </span><span class="kw">let </span>unconfirmed_descendants_txs = TxDescendants::new_include_root(
             <span class="self">self</span>,
-            tx.as_ref().txid(),
+            tx.as_ref().compute_txid(),
             |<span class="kw">_</span>, descendant_txid: Txid| {
                 <span class="kw">let </span>tx_node = <span class="self">self</span>.get_tx_node(descendant_txid)<span class="question-mark">?</span>;
                 <span class="comment">// We're filtering the ancestors to keep only the unconfirmed ones (= no anchors in
@@ -2456,8 +2423,8 @@
                 <span class="kw">if </span>conflicting_tx.last_seen_unconfirmed &gt; tx_last_seen {
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
                 }
-                <span class="kw">if </span>conflicting_tx.last_seen_unconfirmed == <span class="kw-2">*</span>last_seen
-                    &amp;&amp; conflicting_tx.as_ref().txid() &gt; tx.as_ref().txid()
+                <span class="kw">if </span>conflicting_tx.last_seen_unconfirmed == <span class="prelude-val">Some</span>(last_seen)
+                    &amp;&amp; conflicting_tx.as_ref().compute_txid() &gt; tx.as_ref().compute_txid()
                 {
                     <span class="comment">// Conflicting tx has priority if txid of conflicting tx &gt; txid of original tx
                     </span><span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
@@ -2465,7 +2432,7 @@
             }
         }
 
-        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(ChainPosition::Unconfirmed(<span class="kw-2">*</span>last_seen)))
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(ChainPosition::Unconfirmed(last_seen)))
     }
 
     <span class="doccomment">/// Get the position of the transaction in `chain` with tip `chain_tip`.
@@ -2543,10 +2510,10 @@
     /// If the [`ChainOracle`] implementation (`chain`) fails, an error will be returned with the
     /// returned item.
     ///
-    /// If the [`ChainOracle`] is infallible, [`list_chain_txs`] can be used instead.
+    /// If the [`ChainOracle`] is infallible, [`list_canonical_txs`] can be used instead.
     ///
-    /// [`list_chain_txs`]: Self::list_chain_txs
-    </span><span class="kw">pub fn </span>try_list_chain_txs&lt;<span class="lifetime">'a</span>, C: ChainOracle + <span class="lifetime">'a</span>&gt;(
+    /// [`list_canonical_txs`]: Self::list_canonical_txs
+    </span><span class="kw">pub fn </span>try_list_canonical_txs&lt;<span class="lifetime">'a</span>, C: ChainOracle + <span class="lifetime">'a</span>&gt;(
         <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
         chain: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>C,
         chain_tip: BlockId,
@@ -2565,15 +2532,15 @@
 
     <span class="doccomment">/// List graph transactions that are in `chain` with `chain_tip`.
     ///
-    /// This is the infallible version of [`try_list_chain_txs`].
+    /// This is the infallible version of [`try_list_canonical_txs`].
     ///
-    /// [`try_list_chain_txs`]: Self::try_list_chain_txs
-    </span><span class="kw">pub fn </span>list_chain_txs&lt;<span class="lifetime">'a</span>, C: ChainOracle + <span class="lifetime">'a</span>&gt;(
+    /// [`try_list_canonical_txs`]: Self::try_list_canonical_txs
+    </span><span class="kw">pub fn </span>list_canonical_txs&lt;<span class="lifetime">'a</span>, C: ChainOracle + <span class="lifetime">'a</span>&gt;(
         <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
         chain: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>C,
         chain_tip: BlockId,
     ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = CanonicalTx&lt;<span class="lifetime">'a</span>, Arc&lt;Transaction&gt;, A&gt;&gt; {
-        <span class="self">self</span>.try_list_chain_txs(chain, chain_tip)
+        <span class="self">self</span>.try_list_canonical_txs(chain, chain_tip)
             .map(|r| r.expect(<span class="string">"oracle is infallible"</span>))
     }
 
@@ -2723,7 +2690,7 @@
         chain: <span class="kw-2">&amp;</span>C,
         chain_tip: BlockId,
         outpoints: <span class="kw">impl </span>IntoIterator&lt;Item = (OI, OutPoint)&gt;,
-        <span class="kw-2">mut </span>trust_predicate: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>OI, <span class="kw-2">&amp;</span>Script) -&gt; bool,
+        <span class="kw-2">mut </span>trust_predicate: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>OI, ScriptBuf) -&gt; bool,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Balance, C::Error&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>immature = Amount::ZERO;
         <span class="kw">let </span><span class="kw-2">mut </span>trusted_pending = Amount::ZERO;
@@ -2742,7 +2709,7 @@
                     }
                 }
                 ChainPosition::Unconfirmed(<span class="kw">_</span>) =&gt; {
-                    <span class="kw">if </span>trust_predicate(<span class="kw-2">&amp;</span>spk_i, <span class="kw-2">&amp;</span>txout.txout.script_pubkey) {
+                    <span class="kw">if </span>trust_predicate(<span class="kw-2">&amp;</span>spk_i, txout.txout.script_pubkey) {
                         trusted_pending += txout.txout.value;
                     } <span class="kw">else </span>{
                         untrusted_pending += txout.txout.value;
@@ -2769,7 +2736,7 @@
         chain: <span class="kw-2">&amp;</span>C,
         chain_tip: BlockId,
         outpoints: <span class="kw">impl </span>IntoIterator&lt;Item = (OI, OutPoint)&gt;,
-        trust_predicate: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>OI, <span class="kw-2">&amp;</span>Script) -&gt; bool,
+        trust_predicate: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>OI, ScriptBuf) -&gt; bool,
     ) -&gt; Balance {
         <span class="self">self</span>.try_balance(chain, chain_tip, outpoints, trust_predicate)
             .expect(<span class="string">"oracle is infallible"</span>)
@@ -2788,13 +2755,10 @@
 #[cfg_attr(
     feature = <span class="string">"serde"</span>,
     derive(serde::Deserialize, serde::Serialize),
-    serde(
-        <span class="kw">crate </span>= <span class="string">"serde_crate"</span>,
-        bound(
-            deserialize = <span class="string">"A: Ord + serde::Deserialize&lt;'de&gt;"</span>,
-            serialize = <span class="string">"A: Ord + serde::Serialize"</span>,
-        )
-    )
+    serde(bound(
+        deserialize = <span class="string">"A: Ord + serde::Deserialize&lt;'de&gt;"</span>,
+        serialize = <span class="string">"A: Ord + serde::Serialize"</span>,
+    ))
 )]
 #[must_use]
 </span><span class="kw">pub struct </span>ChangeSet&lt;A = ()&gt; {
@@ -2828,7 +2792,7 @@
                 tx.output
                     .iter()
                     .enumerate()
-                    .map(<span class="kw">move </span>|(vout, txout)| (OutPoint::new(tx.txid(), vout <span class="kw">as _</span>), txout))
+                    .map(<span class="kw">move </span>|(vout, txout)| (OutPoint::new(tx.compute_txid(), vout <span class="kw">as _</span>), txout))
             })
             .chain(<span class="self">self</span>.txouts.iter().map(|(op, txout)| (<span class="kw-2">*</span>op, txout)))
     }
@@ -2853,8 +2817,8 @@
     }
 }
 
-<span class="kw">impl</span>&lt;A: Ord&gt; Append <span class="kw">for </span>ChangeSet&lt;A&gt; {
-    <span class="kw">fn </span>append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="self">Self</span>) {
+<span class="kw">impl</span>&lt;A: Ord&gt; Merge <span class="kw">for </span>ChangeSet&lt;A&gt; {
+    <span class="kw">fn </span>merge(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="self">Self</span>) {
         <span class="comment">// We use `extend` instead of `BTreeMap::append` due to performance issues with `append`.
         // Refer to https://github.com/rust-lang/rust/issues/34666#issuecomment-675658420
         </span><span class="self">self</span>.txs.extend(other.txs);

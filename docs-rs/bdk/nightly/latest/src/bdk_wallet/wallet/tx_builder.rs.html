@@ -998,6 +998,89 @@
 <a href="#998" id="998">998</a>
 <a href="#999" id="999">999</a>
 <a href="#1000" id="1000">1000</a>
+<a href="#1001" id="1001">1001</a>
+<a href="#1002" id="1002">1002</a>
+<a href="#1003" id="1003">1003</a>
+<a href="#1004" id="1004">1004</a>
+<a href="#1005" id="1005">1005</a>
+<a href="#1006" id="1006">1006</a>
+<a href="#1007" id="1007">1007</a>
+<a href="#1008" id="1008">1008</a>
+<a href="#1009" id="1009">1009</a>
+<a href="#1010" id="1010">1010</a>
+<a href="#1011" id="1011">1011</a>
+<a href="#1012" id="1012">1012</a>
+<a href="#1013" id="1013">1013</a>
+<a href="#1014" id="1014">1014</a>
+<a href="#1015" id="1015">1015</a>
+<a href="#1016" id="1016">1016</a>
+<a href="#1017" id="1017">1017</a>
+<a href="#1018" id="1018">1018</a>
+<a href="#1019" id="1019">1019</a>
+<a href="#1020" id="1020">1020</a>
+<a href="#1021" id="1021">1021</a>
+<a href="#1022" id="1022">1022</a>
+<a href="#1023" id="1023">1023</a>
+<a href="#1024" id="1024">1024</a>
+<a href="#1025" id="1025">1025</a>
+<a href="#1026" id="1026">1026</a>
+<a href="#1027" id="1027">1027</a>
+<a href="#1028" id="1028">1028</a>
+<a href="#1029" id="1029">1029</a>
+<a href="#1030" id="1030">1030</a>
+<a href="#1031" id="1031">1031</a>
+<a href="#1032" id="1032">1032</a>
+<a href="#1033" id="1033">1033</a>
+<a href="#1034" id="1034">1034</a>
+<a href="#1035" id="1035">1035</a>
+<a href="#1036" id="1036">1036</a>
+<a href="#1037" id="1037">1037</a>
+<a href="#1038" id="1038">1038</a>
+<a href="#1039" id="1039">1039</a>
+<a href="#1040" id="1040">1040</a>
+<a href="#1041" id="1041">1041</a>
+<a href="#1042" id="1042">1042</a>
+<a href="#1043" id="1043">1043</a>
+<a href="#1044" id="1044">1044</a>
+<a href="#1045" id="1045">1045</a>
+<a href="#1046" id="1046">1046</a>
+<a href="#1047" id="1047">1047</a>
+<a href="#1048" id="1048">1048</a>
+<a href="#1049" id="1049">1049</a>
+<a href="#1050" id="1050">1050</a>
+<a href="#1051" id="1051">1051</a>
+<a href="#1052" id="1052">1052</a>
+<a href="#1053" id="1053">1053</a>
+<a href="#1054" id="1054">1054</a>
+<a href="#1055" id="1055">1055</a>
+<a href="#1056" id="1056">1056</a>
+<a href="#1057" id="1057">1057</a>
+<a href="#1058" id="1058">1058</a>
+<a href="#1059" id="1059">1059</a>
+<a href="#1060" id="1060">1060</a>
+<a href="#1061" id="1061">1061</a>
+<a href="#1062" id="1062">1062</a>
+<a href="#1063" id="1063">1063</a>
+<a href="#1064" id="1064">1064</a>
+<a href="#1065" id="1065">1065</a>
+<a href="#1066" id="1066">1066</a>
+<a href="#1067" id="1067">1067</a>
+<a href="#1068" id="1068">1068</a>
+<a href="#1069" id="1069">1069</a>
+<a href="#1070" id="1070">1070</a>
+<a href="#1071" id="1071">1071</a>
+<a href="#1072" id="1072">1072</a>
+<a href="#1073" id="1073">1073</a>
+<a href="#1074" id="1074">1074</a>
+<a href="#1075" id="1075">1075</a>
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
 </pre></div><pre class="rust"><code><span class="comment">// Bitcoin Dev Kit
 // Written in 2020 by Alekos Filini &lt;alekos.filini@gmail.com&gt;
 //
@@ -1017,9 +1100,8 @@
 //! # use std::str::FromStr;
 //! # use bitcoin::*;
 //! # use bdk_wallet::*;
-//! # use bdk_wallet::wallet::ChangeSet;
-//! # use bdk_wallet::wallet::error::CreateTxError;
-//! # use bdk_persist::PersistBackend;
+//! # use bdk_wallet::ChangeSet;
+//! # use bdk_wallet::error::CreateTxError;
 //! # use anyhow::Error;
 //! # let to_address = Address::from_str("2N4eQYCbKUHCCTUjBJeHcJp9ok6J2GZsTDt").unwrap().assume_checked();
 //! # let mut wallet = doctest_wallet!();
@@ -1032,9 +1114,7 @@
 //!     // With a custom fee rate of 5.0 satoshi/vbyte
 //!     .fee_rate(FeeRate::from_sat_per_vb(5).expect("valid feerate"))
 //!     // Only spend non-change outputs
-//!     .do_not_spend_change()
-//!     // Turn on RBF signaling
-//!     .enable_rbf();
+//!     .do_not_spend_change();
 //! let psbt = tx_builder.finish()?;
 //! # Ok::&lt;(), anyhow::Error&gt;(())
 //! ```
@@ -1043,11 +1123,18 @@
 <span class="kw">use </span>core::cell::RefCell;
 <span class="kw">use </span>core::fmt;
 
+<span class="kw">use </span>alloc::sync::Arc;
+
 <span class="kw">use </span>bitcoin::psbt::{<span class="self">self</span>, Psbt};
 <span class="kw">use </span>bitcoin::script::PushBytes;
-<span class="kw">use </span>bitcoin::{absolute, Amount, FeeRate, OutPoint, ScriptBuf, Sequence, Transaction, Txid};
+<span class="kw">use </span>bitcoin::{
+    absolute, Amount, FeeRate, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid,
+    Weight,
+};
+<span class="kw">use </span>rand_core::RngCore;
 
 <span class="kw">use </span><span class="kw">super</span>::coin_selection::CoinSelectionAlgorithm;
+<span class="kw">use </span><span class="kw">super</span>::utils::shuffle_slice;
 <span class="kw">use super</span>::{CreateTxError, Wallet};
 <span class="kw">use </span><span class="kw">crate</span>::collections::{BTreeMap, HashSet};
 <span class="kw">use crate</span>::{KeychainKind, LocalOutput, Utxo, WeightedUtxo};
@@ -1063,12 +1150,11 @@
 ///
 /// ```
 /// # use bdk_wallet::*;
-/// # use bdk_wallet::wallet::tx_builder::*;
+/// # use bdk_wallet::tx_builder::*;
 /// # use bitcoin::*;
 /// # use core::str::FromStr;
-/// # use bdk_wallet::wallet::ChangeSet;
-/// # use bdk_wallet::wallet::error::CreateTxError;
-/// # use bdk_persist::PersistBackend;
+/// # use bdk_wallet::ChangeSet;
+/// # use bdk_wallet::error::CreateTxError;
 /// # use anyhow::Error;
 /// # let mut wallet = doctest_wallet!();
 /// # let addr1 = Address::from_str("2N4eQYCbKUHCCTUjBJeHcJp9ok6J2GZsTDt").unwrap().assume_checked();
@@ -1117,7 +1203,7 @@
 </span><span class="comment">//TODO: TxParams should eventually be exposed publicly.
 </span><span class="attr">#[derive(Default, Debug, Clone)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>TxParams {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) recipients: Vec&lt;(ScriptBuf, u64)&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) recipients: Vec&lt;(ScriptBuf, Amount)&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) drain_wallet: bool,
     <span class="kw">pub</span>(<span class="kw">crate</span>) drain_to: <span class="prelude-ty">Option</span>&lt;ScriptBuf&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) fee_policy: <span class="prelude-ty">Option</span>&lt;FeePolicy&gt;,
@@ -1129,7 +1215,7 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) sighash: <span class="prelude-ty">Option</span>&lt;psbt::PsbtSighashType&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) ordering: TxOrdering,
     <span class="kw">pub</span>(<span class="kw">crate</span>) locktime: <span class="prelude-ty">Option</span>&lt;absolute::LockTime&gt;,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) rbf: <span class="prelude-ty">Option</span>&lt;RbfValue&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) sequence: <span class="prelude-ty">Option</span>&lt;Sequence&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) version: <span class="prelude-ty">Option</span>&lt;Version&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) change_policy: ChangeSpendPolicy,
     <span class="kw">pub</span>(<span class="kw">crate</span>) only_witness_utxo: bool,
@@ -1142,14 +1228,14 @@
 
 <span class="attr">#[derive(Clone, Copy, Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>PreviousFee {
-    <span class="kw">pub </span>absolute: u64,
+    <span class="kw">pub </span>absolute: Amount,
     <span class="kw">pub </span>rate: FeeRate,
 }
 
 <span class="attr">#[derive(Debug, Clone, Copy)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>FeePolicy {
     FeeRate(FeeRate),
-    FeeAmount(u64),
+    FeeAmount(Amount),
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>FeePolicy {
@@ -1195,7 +1281,7 @@
     /// overshoot it slightly since adding a change output to drain the remaining
     /// excess might not be viable.
     </span><span class="kw">pub fn </span>fee_absolute(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fee_amount: Amount) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="self">self</span>.params.fee_policy = <span class="prelude-val">Some</span>(FeePolicy::FeeAmount(fee_amount.to_sat()));
+        <span class="self">self</span>.params.fee_policy = <span class="prelude-val">Some</span>(FeePolicy::FeeAmount(fee_amount));
         <span class="self">self
     </span>}
 
@@ -1294,7 +1380,7 @@
                 .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>;
 
             <span class="kw">for </span>utxo <span class="kw">in </span>utxos {
-                <span class="kw">let </span>descriptor = wallet.get_descriptor_for_keychain(utxo.keychain);
+                <span class="kw">let </span>descriptor = wallet.public_descriptor(utxo.keychain);
                 <span class="kw">let </span>satisfaction_weight = descriptor.max_weight_to_satisfy().unwrap();
                 <span class="self">self</span>.params.utxos.push(WeightedUtxo {
                     satisfaction_weight,
@@ -1364,7 +1450,7 @@
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         outpoint: OutPoint,
         psbt_input: psbt::Input,
-        satisfaction_weight: usize,
+        satisfaction_weight: Weight,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>, AddForeignUtxoError&gt; {
         <span class="self">self</span>.add_foreign_utxo_with_sequence(
             outpoint,
@@ -1379,15 +1465,15 @@
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         outpoint: OutPoint,
         psbt_input: psbt::Input,
-        satisfaction_weight: usize,
+        satisfaction_weight: Weight,
         sequence: Sequence,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>, AddForeignUtxoError&gt; {
         <span class="kw">if </span>psbt_input.witness_utxo.is_none() {
             <span class="kw">match </span>psbt_input.non_witness_utxo.as_ref() {
                 <span class="prelude-val">Some</span>(tx) =&gt; {
-                    <span class="kw">if </span>tx.txid() != outpoint.txid {
+                    <span class="kw">if </span>tx.compute_txid() != outpoint.txid {
                         <span class="kw">return </span><span class="prelude-val">Err</span>(AddForeignUtxoError::InvalidTxid {
-                            input_txid: tx.txid(),
+                            input_txid: tx.compute_txid(),
                             foreign_utxo: outpoint,
                         });
                     }
@@ -1476,7 +1562,8 @@
     <span class="doccomment">/// Do not spend change outputs
     ///
     /// This effectively adds all the change outputs to the "unspendable" list. See
-    /// [`TxBuilder::unspendable`].
+    /// [`TxBuilder::unspendable`]. This method assumes the presence of an internal
+    /// keychain, otherwise it has no effect.
     </span><span class="kw">pub fn </span>do_not_spend_change(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="self">self</span>.params.change_policy = ChangeSpendPolicy::ChangeForbidden;
         <span class="self">self
@@ -1485,14 +1572,16 @@
     <span class="doccomment">/// Only spend change outputs
     ///
     /// This effectively adds all the non-change outputs to the "unspendable" list. See
-    /// [`TxBuilder::unspendable`].
+    /// [`TxBuilder::unspendable`]. This method assumes the presence of an internal
+    /// keychain, otherwise it has no effect.
     </span><span class="kw">pub fn </span>only_spend_change(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="self">self</span>.params.change_policy = ChangeSpendPolicy::OnlyChange;
         <span class="self">self
     </span>}
 
     <span class="doccomment">/// Set a specific [`ChangeSpendPolicy`]. See [`TxBuilder::do_not_spend_change`] and
-    /// [`TxBuilder::only_spend_change`] for some shortcuts.
+    /// [`TxBuilder::only_spend_change`] for some shortcuts. This method assumes the presence
+    /// of an internal keychain, otherwise it has no effect.
     </span><span class="kw">pub fn </span>change_policy(<span class="kw-2">&amp;mut </span><span class="self">self</span>, change_policy: ChangeSpendPolicy) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="self">self</span>.params.change_policy = change_policy;
         <span class="self">self
@@ -1546,23 +1635,12 @@
         }
     }
 
-    <span class="doccomment">/// Enable signaling RBF
+    <span class="doccomment">/// Set an exact nSequence value
     ///
-    /// This will use the default nSequence value of `0xFFFFFFFD`.
-    </span><span class="kw">pub fn </span>enable_rbf(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="self">self</span>.params.rbf = <span class="prelude-val">Some</span>(RbfValue::Default);
-        <span class="self">self
-    </span>}
-
-    <span class="doccomment">/// Enable signaling RBF with a specific nSequence value
-    ///
-    /// This can cause conflicts if the wallet's descriptors contain an "older" (OP_CSV) operator
-    /// and the given `nsequence` is lower than the CSV value.
-    ///
-    /// If the `nsequence` is higher than `0xFFFFFFFD` an error will be thrown, since it would not
-    /// be a valid nSequence to signal RBF.
-    </span><span class="kw">pub fn </span>enable_rbf_with_sequence(<span class="kw-2">&amp;mut </span><span class="self">self</span>, nsequence: Sequence) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="self">self</span>.params.rbf = <span class="prelude-val">Some</span>(RbfValue::Value(nsequence));
+    /// This can cause conflicts if the wallet's descriptors contain an
+    /// "older" (OP_CSV) operator and the given `nsequence` is lower than the CSV value.
+    </span><span class="kw">pub fn </span>set_exact_sequence(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n_sequence: Sequence) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
+        <span class="self">self</span>.params.sequence = <span class="prelude-val">Some</span>(n_sequence);
         <span class="self">self
     </span>}
 
@@ -1570,7 +1648,7 @@
     ///
     /// This will be used to:
     /// 1. Set the nLockTime for preventing fee sniping.
-    /// **Note**: This will be ignored if you manually specify a nlocktime using [`TxBuilder::nlocktime`].
+    ///    **Note**: This will be ignored if you manually specify a nlocktime using [`TxBuilder::nlocktime`].
     /// 2. Decide whether coinbase outputs are mature or not. If the coinbase outputs are not
     ///    mature at `current_height`, we ignore them in the coin selection.
     ///    If you want to create a transaction that spends immature coinbase inputs, manually
@@ -1593,18 +1671,13 @@
 
     <span class="doccomment">/// Replace the recipients already added with a new list
     </span><span class="kw">pub fn </span>set_recipients(<span class="kw-2">&amp;mut </span><span class="self">self</span>, recipients: Vec&lt;(ScriptBuf, Amount)&gt;) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="self">self</span>.params.recipients = recipients
-            .into_iter()
-            .map(|(script, amount)| (script, amount.to_sat()))
-            .collect();
+        <span class="self">self</span>.params.recipients = recipients;
         <span class="self">self
     </span>}
 
     <span class="doccomment">/// Add a recipient to the internal list
     </span><span class="kw">pub fn </span>add_recipient(<span class="kw-2">&amp;mut </span><span class="self">self</span>, script_pubkey: ScriptBuf, amount: Amount) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="self">self</span>.params
-            .recipients
-            .push((script_pubkey, amount.to_sat()));
+        <span class="self">self</span>.params.recipients.push((script_pubkey, amount));
         <span class="self">self
     </span>}
 
@@ -1636,9 +1709,8 @@
     /// # use std::str::FromStr;
     /// # use bitcoin::*;
     /// # use bdk_wallet::*;
-    /// # use bdk_wallet::wallet::ChangeSet;
-    /// # use bdk_wallet::wallet::error::CreateTxError;
-    /// # use bdk_persist::PersistBackend;
+    /// # use bdk_wallet::ChangeSet;
+    /// # use bdk_wallet::error::CreateTxError;
     /// # use anyhow::Error;
     /// # let to_address =
     /// Address::from_str("2N4eQYCbKUHCCTUjBJeHcJp9ok6J2GZsTDt")
@@ -1652,8 +1724,7 @@
     ///     .drain_wallet()
     ///     // Send the excess (which is all the coins minus the fee) to this address.
     ///     .drain_to(to_address.script_pubkey())
-    ///     .fee_rate(FeeRate::from_sat_per_vb(5).expect("valid feerate"))
-    ///     .enable_rbf();
+    ///     .fee_rate(FeeRate::from_sat_per_vb(5).expect("valid feerate"));
     /// let psbt = tx_builder.finish()?;
     /// # Ok::&lt;(), anyhow::Error&gt;(())
     /// ```
@@ -1670,13 +1741,33 @@
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, Cs: CoinSelectionAlgorithm&gt; TxBuilder&lt;<span class="lifetime">'a</span>, Cs&gt; {
     <span class="doccomment">/// Finish building the transaction.
     ///
+    /// Uses the thread-local random number generator (rng).
+    ///
     /// Returns a new [`Psbt`] per [`BIP174`].
     ///
     /// [`BIP174`]: https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki
+    ///
+    /// **WARNING**: To avoid change address reuse you must persist the changes resulting from one
+    /// or more calls to this method before closing the wallet. See [`Wallet::reveal_next_address`].
+    </span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
     </span><span class="kw">pub fn </span>finish(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Psbt, CreateTxError&gt; {
+        <span class="self">self</span>.finish_with_aux_rand(<span class="kw-2">&amp;mut </span>bitcoin::key::rand::thread_rng())
+    }
+
+    <span class="doccomment">/// Finish building the transaction.
+    ///
+    /// Uses a provided random number generator (rng).
+    ///
+    /// Returns a new [`Psbt`] per [`BIP174`].
+    ///
+    /// [`BIP174`]: https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki
+    ///
+    /// **WARNING**: To avoid change address reuse you must persist the changes resulting from one
+    /// or more calls to this method before closing the wallet. See [`Wallet::reveal_next_address`].
+    </span><span class="kw">pub fn </span>finish_with_aux_rand(<span class="self">self</span>, rng: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>RngCore) -&gt; <span class="prelude-ty">Result</span>&lt;Psbt, CreateTxError&gt; {
         <span class="self">self</span>.wallet
             .borrow_mut()
-            .create_tx(<span class="self">self</span>.coin_selection, <span class="self">self</span>.params)
+            .create_tx(<span class="self">self</span>.coin_selection, <span class="self">self</span>.params, rng)
     }
 }
 
@@ -1742,35 +1833,60 @@
 <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>AddForeignUtxoError {}
 
+<span class="kw">type </span>TxSort&lt;T&gt; = <span class="kw">dyn </span>Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; core::cmp::Ordering;
+
 <span class="doccomment">/// Ordering of the transaction's inputs and outputs
-</span><span class="attr">#[derive(Default, Debug, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Copy)]
+</span><span class="attr">#[derive(Clone, Default)]
 </span><span class="kw">pub enum </span>TxOrdering {
     <span class="doccomment">/// Randomized (default)
     </span><span class="attr">#[default]
     </span>Shuffle,
     <span class="doccomment">/// Unchanged
     </span>Untouched,
-    <span class="doccomment">/// BIP69 / Lexicographic
-    </span>Bip69Lexicographic,
+    <span class="doccomment">/// Provide custom comparison functions for sorting
+    </span>Custom {
+        <span class="doccomment">/// Transaction inputs sort function
+        </span>input_sort: Arc&lt;TxSort&lt;TxIn&gt;&gt;,
+        <span class="doccomment">/// Transaction outputs sort function
+        </span>output_sort: Arc&lt;TxSort&lt;TxOut&gt;&gt;,
+    },
+}
+
+<span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>TxOrdering {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
+        <span class="kw">match </span><span class="self">self </span>{
+            TxOrdering::Shuffle =&gt; <span class="macro">write!</span>(f, <span class="string">"Shuffle"</span>),
+            TxOrdering::Untouched =&gt; <span class="macro">write!</span>(f, <span class="string">"Untouched"</span>),
+            TxOrdering::Custom { .. } =&gt; <span class="macro">write!</span>(f, <span class="string">"Custom"</span>),
+        }
+    }
 }
 
 <span class="kw">impl </span>TxOrdering {
-    <span class="doccomment">/// Sort transaction inputs and outputs by [`TxOrdering`] variant
+    <span class="doccomment">/// Sort transaction inputs and outputs by [`TxOrdering`] variant.
+    ///
+    /// Uses the thread-local random number generator (rng).
+    </span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
     </span><span class="kw">pub fn </span>sort_tx(<span class="kw-2">&amp;</span><span class="self">self</span>, tx: <span class="kw-2">&amp;mut </span>Transaction) {
+        <span class="self">self</span>.sort_tx_with_aux_rand(tx, <span class="kw-2">&amp;mut </span>bitcoin::key::rand::thread_rng())
+    }
+
+    <span class="doccomment">/// Sort transaction inputs and outputs by [`TxOrdering`] variant.
+    ///
+    /// Uses a provided random number generator (rng).
+    </span><span class="kw">pub fn </span>sort_tx_with_aux_rand(<span class="kw-2">&amp;</span><span class="self">self</span>, tx: <span class="kw-2">&amp;mut </span>Transaction, rng: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>RngCore) {
         <span class="kw">match </span><span class="self">self </span>{
             TxOrdering::Untouched =&gt; {}
             TxOrdering::Shuffle =&gt; {
-                <span class="kw">use </span>rand::seq::SliceRandom;
-                <span class="kw">let </span><span class="kw-2">mut </span>rng = rand::thread_rng();
-                tx.input.shuffle(<span class="kw-2">&amp;mut </span>rng);
-                tx.output.shuffle(<span class="kw-2">&amp;mut </span>rng);
+                shuffle_slice(<span class="kw-2">&amp;mut </span>tx.input, rng);
+                shuffle_slice(<span class="kw-2">&amp;mut </span>tx.output, rng);
             }
-            TxOrdering::Bip69Lexicographic =&gt; {
-                tx.input.sort_unstable_by_key(|txin| {
-                    (txin.previous_output.txid, txin.previous_output.vout)
-                });
-                tx.output
-                    .sort_unstable_by_key(|txout| (txout.value, txout.script_pubkey.clone()));
+            TxOrdering::Custom {
+                input_sort,
+                output_sort,
+            } =&gt; {
+                tx.input.sort_unstable_by(|a, b| input_sort(a, b));
+                tx.output.sort_unstable_by(|a, b| output_sort(a, b));
             }
         }
     }
@@ -1785,24 +1901,6 @@
 <span class="kw">impl </span>Default <span class="kw">for </span>Version {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         Version(<span class="number">1</span>)
-    }
-}
-
-<span class="doccomment">/// RBF nSequence value
-///
-/// Has a default value of `0xFFFFFFFD`
-</span><span class="attr">#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Copy)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>RbfValue {
-    Default,
-    Value(Sequence),
-}
-
-<span class="kw">impl </span>RbfValue {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get_value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Sequence {
-        <span class="kw">match </span><span class="self">self </span>{
-            RbfValue::Default =&gt; Sequence::ENABLE_RBF_NO_LOCKTIME,
-            RbfValue::Value(v) =&gt; <span class="kw-2">*</span>v,
-        }
     }
 }
 
@@ -1843,18 +1941,11 @@
         };
     }
 
-    <span class="kw">use </span>bdk_chain::ConfirmationTime;
     <span class="kw">use </span>bitcoin::consensus::deserialize;
     <span class="kw">use </span>bitcoin::hex::FromHex;
     <span class="kw">use </span>bitcoin::TxOut;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_output_ordering_default_shuffle() {
-        <span class="macro">assert_eq!</span>(TxOrdering::default(), TxOrdering::Shuffle);
-    }
-
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_output_ordering_untouched() {
         <span class="kw">let </span>original_tx = <span class="macro">ordering_test_tx!</span>();
@@ -1887,13 +1978,28 @@
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_output_ordering_bip69() {
+    </span><span class="kw">fn </span>test_output_ordering_custom_but_bip69() {
         <span class="kw">use </span>core::str::FromStr;
 
         <span class="kw">let </span>original_tx = <span class="macro">ordering_test_tx!</span>();
         <span class="kw">let </span><span class="kw-2">mut </span>tx = original_tx;
 
-        TxOrdering::Bip69Lexicographic.sort_tx(<span class="kw-2">&amp;mut </span>tx);
+        <span class="kw">let </span>bip69_txin_cmp = |tx_a: <span class="kw-2">&amp;</span>TxIn, tx_b: <span class="kw-2">&amp;</span>TxIn| {
+            <span class="kw">let </span>project_outpoint = |t: <span class="kw-2">&amp;</span>TxIn| (t.previous_output.txid, t.previous_output.vout);
+            project_outpoint(tx_a).cmp(<span class="kw-2">&amp;</span>project_outpoint(tx_b))
+        };
+
+        <span class="kw">let </span>bip69_txout_cmp = |tx_a: <span class="kw-2">&amp;</span>TxOut, tx_b: <span class="kw-2">&amp;</span>TxOut| {
+            <span class="kw">let </span>project_utxo = |t: <span class="kw-2">&amp;</span>TxOut| (t.value, t.script_pubkey.clone());
+            project_utxo(tx_a).cmp(<span class="kw-2">&amp;</span>project_utxo(tx_b))
+        };
+
+        <span class="kw">let </span>custom_bip69_ordering = TxOrdering::Custom {
+            input_sort: Arc::new(bip69_txin_cmp),
+            output_sort: Arc::new(bip69_txout_cmp),
+        };
+
+        custom_bip69_ordering.sort_tx(<span class="kw-2">&amp;mut </span>tx);
 
         <span class="macro">assert_eq!</span>(
             tx.input[<span class="number">0</span>].previous_output,
@@ -1925,6 +2031,63 @@
         );
     }
 
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_output_ordering_custom_with_sha256() {
+        <span class="kw">use </span>bitcoin::hashes::{sha256, Hash};
+
+        <span class="kw">let </span>original_tx = <span class="macro">ordering_test_tx!</span>();
+        <span class="kw">let </span><span class="kw-2">mut </span>tx_1 = original_tx.clone();
+        <span class="kw">let </span><span class="kw-2">mut </span>tx_2 = original_tx.clone();
+        <span class="kw">let </span>shared_secret = <span class="string">"secret_tweak"</span>;
+
+        <span class="kw">let </span>hash_txin_with_shared_secret_seed = Arc::new(|tx_a: <span class="kw-2">&amp;</span>TxIn, tx_b: <span class="kw-2">&amp;</span>TxIn| {
+            <span class="kw">let </span>secret_digest_from_txin = |txin: <span class="kw-2">&amp;</span>TxIn| {
+                sha256::Hash::hash(
+                    <span class="kw-2">&amp;</span>[
+                        <span class="kw-2">&amp;</span>txin.previous_output.txid.to_raw_hash()[..],
+                        <span class="kw-2">&amp;</span>txin.previous_output.vout.to_be_bytes(),
+                        shared_secret.as_bytes(),
+                    ]
+                    .concat(),
+                )
+            };
+            secret_digest_from_txin(tx_a).cmp(<span class="kw-2">&amp;</span>secret_digest_from_txin(tx_b))
+        });
+
+        <span class="kw">let </span>hash_txout_with_shared_secret_seed = Arc::new(|tx_a: <span class="kw-2">&amp;</span>TxOut, tx_b: <span class="kw-2">&amp;</span>TxOut| {
+            <span class="kw">let </span>secret_digest_from_txout = |txin: <span class="kw-2">&amp;</span>TxOut| {
+                sha256::Hash::hash(
+                    <span class="kw-2">&amp;</span>[
+                        <span class="kw-2">&amp;</span>txin.value.to_sat().to_be_bytes(),
+                        <span class="kw-2">&amp;</span>txin.script_pubkey.clone().into_bytes()[..],
+                        shared_secret.as_bytes(),
+                    ]
+                    .concat(),
+                )
+            };
+            secret_digest_from_txout(tx_a).cmp(<span class="kw-2">&amp;</span>secret_digest_from_txout(tx_b))
+        });
+
+        <span class="kw">let </span>custom_ordering_from_salted_sha256_1 = TxOrdering::Custom {
+            input_sort: hash_txin_with_shared_secret_seed.clone(),
+            output_sort: hash_txout_with_shared_secret_seed.clone(),
+        };
+
+        <span class="kw">let </span>custom_ordering_from_salted_sha256_2 = TxOrdering::Custom {
+            input_sort: hash_txin_with_shared_secret_seed,
+            output_sort: hash_txout_with_shared_secret_seed,
+        };
+
+        custom_ordering_from_salted_sha256_1.sort_tx(<span class="kw-2">&amp;mut </span>tx_1);
+        custom_ordering_from_salted_sha256_2.sort_tx(<span class="kw-2">&amp;mut </span>tx_2);
+
+        <span class="comment">// Check the ordering is consistent between calls
+        </span><span class="macro">assert_eq!</span>(tx_1, tx_2);
+        <span class="comment">// Check transaction order has changed
+        </span><span class="macro">assert_ne!</span>(tx_1, original_tx);
+        <span class="macro">assert_ne!</span>(tx_2, original_tx);
+    }
+
     <span class="kw">fn </span>get_test_utxos() -&gt; Vec&lt;LocalOutput&gt; {
         <span class="kw">use </span>bitcoin::hashes::Hash;
 
@@ -1937,7 +2100,7 @@
                 txout: TxOut::NULL,
                 keychain: KeychainKind::External,
                 is_spent: <span class="bool-val">false</span>,
-                confirmation_time: ConfirmationTime::Unconfirmed { last_seen: <span class="number">0 </span>},
+                chain_position: chain::ChainPosition::Unconfirmed(<span class="number">0</span>),
                 derivation_index: <span class="number">0</span>,
             },
             LocalOutput {
@@ -1948,10 +2111,13 @@
                 txout: TxOut::NULL,
                 keychain: KeychainKind::Internal,
                 is_spent: <span class="bool-val">false</span>,
-                confirmation_time: ConfirmationTime::Confirmed {
-                    height: <span class="number">32</span>,
-                    time: <span class="number">42</span>,
-                },
+                chain_position: chain::ChainPosition::Confirmed(chain::ConfirmationBlockTime {
+                    block_id: chain::BlockId {
+                        height: <span class="number">32</span>,
+                        hash: bitcoin::BlockHash::all_zeros(),
+                    },
+                    confirmation_time: <span class="number">42</span>,
+                }),
                 derivation_index: <span class="number">1</span>,
             },
         ]

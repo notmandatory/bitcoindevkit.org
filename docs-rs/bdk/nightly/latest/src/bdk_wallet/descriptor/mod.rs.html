@@ -898,6 +898,21 @@
 <a href="#898" id="898">898</a>
 <a href="#899" id="899">899</a>
 <a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
 </pre></div><pre class="rust"><code><span class="comment">// Bitcoin Dev Kit
 // Written in 2020 by Alekos Filini &lt;alekos.filini@gmail.com&gt;
 //
@@ -942,7 +957,6 @@
 <span class="kw">pub mod </span>template;
 
 <span class="kw">pub use </span><span class="self">self</span>::checksum::calc_checksum;
-<span class="kw">use </span><span class="self">self</span>::checksum::calc_checksum_bytes;
 <span class="kw">pub use </span><span class="self">self</span>::error::Error <span class="kw">as </span>DescriptorError;
 <span class="kw">pub use </span><span class="self">self</span>::policy::Policy;
 <span class="kw">use </span><span class="self">self</span>::template::DescriptorTemplateOut;
@@ -988,8 +1002,8 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(ExtendedDescriptor, KeyMap), DescriptorError&gt; {
         <span class="kw">let </span>descriptor = <span class="kw">match </span><span class="self">self</span>.split_once(<span class="string">'#'</span>) {
             <span class="prelude-val">Some</span>((desc, original_checksum)) =&gt; {
-                <span class="kw">let </span>checksum = calc_checksum_bytes(desc)<span class="question-mark">?</span>;
-                <span class="kw">if </span>original_checksum.as_bytes() != checksum {
+                <span class="kw">let </span>checksum = calc_checksum(desc)<span class="question-mark">?</span>;
+                <span class="kw">if </span>original_checksum != checksum {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(DescriptorError::InvalidDescriptorChecksum);
                 }
                 desc
@@ -1003,6 +1017,16 @@
 }
 
 <span class="kw">impl </span>IntoWalletDescriptor <span class="kw">for </span><span class="kw-2">&amp;</span>String {
+    <span class="kw">fn </span>into_wallet_descriptor(
+        <span class="self">self</span>,
+        secp: <span class="kw-2">&amp;</span>SecpCtx,
+        network: Network,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(ExtendedDescriptor, KeyMap), DescriptorError&gt; {
+        <span class="self">self</span>.as_str().into_wallet_descriptor(secp, network)
+    }
+}
+
+<span class="kw">impl </span>IntoWalletDescriptor <span class="kw">for </span>String {
     <span class="kw">fn </span>into_wallet_descriptor(
         <span class="self">self</span>,
         secp: <span class="kw-2">&amp;</span>SecpCtx,
@@ -1129,7 +1153,7 @@
                 </span><span class="kw">let </span>pk = <span class="kw">match </span>pk {
                     DescriptorPublicKey::XPub(<span class="kw-2">ref </span>xpub) =&gt; {
                         <span class="kw">let </span><span class="kw-2">mut </span>xpub = xpub.clone();
-                        xpub.xkey.network = <span class="self">self</span>.network;
+                        xpub.xkey.network = <span class="self">self</span>.network.into();
 
                         DescriptorPublicKey::XPub(xpub)
                     }
@@ -1164,11 +1188,11 @@
             .map(|(<span class="kw-2">mut </span>k, <span class="kw-2">mut </span>v)| {
                 <span class="kw">match </span>(<span class="kw-2">&amp;mut </span>k, <span class="kw-2">&amp;mut </span>v) {
                     (DescriptorPublicKey::XPub(xpub), DescriptorSecretKey::XPrv(xprv)) =&gt; {
-                        xpub.xkey.network = network;
-                        xprv.xkey.network = network;
+                        xpub.xkey.network = network.into();
+                        xprv.xkey.network = network.into();
                     }
                     (<span class="kw">_</span>, DescriptorSecretKey::Single(key)) =&gt; {
-                        key.key.network = network;
+                        key.key.network = network.into();
                     }
                     <span class="kw">_ </span>=&gt; {}
                 }
@@ -1181,15 +1205,10 @@
     }
 }
 
-<span class="doccomment">/// Wrapper for `IntoWalletDescriptor` that performs additional checks on the keys contained in the
-/// descriptor
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>into_wallet_descriptor_checked&lt;T: IntoWalletDescriptor&gt;(
-    inner: T,
-    secp: <span class="kw-2">&amp;</span>SecpCtx,
-    network: Network,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(ExtendedDescriptor, KeyMap), DescriptorError&gt; {
-    <span class="kw">let </span>(descriptor, keymap) = inner.into_wallet_descriptor(secp, network)<span class="question-mark">?</span>;
-
+<span class="doccomment">/// Extra checks for [`ExtendedDescriptor`].
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>check_wallet_descriptor(
+    descriptor: <span class="kw-2">&amp;</span>Descriptor&lt;DescriptorPublicKey&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), DescriptorError&gt; {
     <span class="comment">// Ensure the keys don't contain any hardened derivation steps or hardened wildcards
     </span><span class="kw">let </span>descriptor_contains_hardened_steps = descriptor.for_any_key(|k| {
         <span class="kw">if let </span>DescriptorPublicKey::XPub(DescriptorXKey {
@@ -1216,7 +1235,7 @@
     // issues
     </span>descriptor.sanity_check()<span class="question-mark">?</span>;
 
-    <span class="prelude-val">Ok</span>((descriptor, keymap))
+    <span class="prelude-val">Ok</span>(())
 }
 
 <span class="attr">#[doc(hidden)]
@@ -1506,8 +1525,8 @@
     <span class="kw">use </span>assert_matches::assert_matches;
     <span class="kw">use </span>bitcoin::hex::FromHex;
     <span class="kw">use </span>bitcoin::secp256k1::Secp256k1;
-    <span class="kw">use </span>bitcoin::ScriptBuf;
     <span class="kw">use </span>bitcoin::{bip32, Psbt};
+    <span class="kw">use </span>bitcoin::{NetworkKind, ScriptBuf};
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::psbt::PsbtUtils;
@@ -1643,7 +1662,7 @@
             .unwrap();
 
         <span class="kw">let </span><span class="kw-2">mut </span>xprv_testnet = xprv;
-        xprv_testnet.network = Network::Testnet;
+        xprv_testnet.network = NetworkKind::Test;
 
         <span class="kw">let </span>xpub_testnet = bip32::Xpub::from_priv(<span class="kw-2">&amp;</span>secp, <span class="kw-2">&amp;</span>xprv_testnet);
         <span class="kw">let </span>desc_pubkey = DescriptorPublicKey::XPub(DescriptorXKey {
@@ -1755,22 +1774,31 @@
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_into_wallet_descriptor_checked() {
+    </span><span class="kw">fn </span>test_check_wallet_descriptor() {
         <span class="kw">let </span>secp = Secp256k1::new();
 
         <span class="kw">let </span>descriptor = <span class="string">"wpkh(tpubD6NzVbkrYhZ4XHndKkuB8FifXm8r5FQHwrN6oZuWCz13qb93rtgKvD4PQsqC4HP4yhV3tA2fqr2RbY5mNXfM7RxXUoeABoDtsFUq2zJq6YK/0'/1/2/*)"</span>;
-        <span class="kw">let </span>result = into_wallet_descriptor_checked(descriptor, <span class="kw-2">&amp;</span>secp, Network::Testnet);
+        <span class="kw">let </span>(descriptor, <span class="kw">_</span>) = descriptor
+            .into_wallet_descriptor(<span class="kw-2">&amp;</span>secp, Network::Testnet)
+            .expect(<span class="string">"must parse"</span>);
+        <span class="kw">let </span>result = check_wallet_descriptor(<span class="kw-2">&amp;</span>descriptor);
 
         <span class="macro">assert_matches!</span>(result, <span class="prelude-val">Err</span>(DescriptorError::HardenedDerivationXpub));
 
         <span class="kw">let </span>descriptor = <span class="string">"wpkh(tpubD6NzVbkrYhZ4XHndKkuB8FifXm8r5FQHwrN6oZuWCz13qb93rtgKvD4PQsqC4HP4yhV3tA2fqr2RbY5mNXfM7RxXUoeABoDtsFUq2zJq6YK/&lt;0;1&gt;/*)"</span>;
-        <span class="kw">let </span>result = into_wallet_descriptor_checked(descriptor, <span class="kw-2">&amp;</span>secp, Network::Testnet);
+        <span class="kw">let </span>(descriptor, <span class="kw">_</span>) = descriptor
+            .into_wallet_descriptor(<span class="kw-2">&amp;</span>secp, Network::Testnet)
+            .expect(<span class="string">"must parse"</span>);
+        <span class="kw">let </span>result = check_wallet_descriptor(<span class="kw-2">&amp;</span>descriptor);
 
         <span class="macro">assert_matches!</span>(result, <span class="prelude-val">Err</span>(DescriptorError::MultiPath));
 
         <span class="comment">// repeated pubkeys
         </span><span class="kw">let </span>descriptor = <span class="string">"wsh(multi(2,tpubD6NzVbkrYhZ4XHndKkuB8FifXm8r5FQHwrN6oZuWCz13qb93rtgKvD4PQsqC4HP4yhV3tA2fqr2RbY5mNXfM7RxXUoeABoDtsFUq2zJq6YK/0/*,tpubD6NzVbkrYhZ4XHndKkuB8FifXm8r5FQHwrN6oZuWCz13qb93rtgKvD4PQsqC4HP4yhV3tA2fqr2RbY5mNXfM7RxXUoeABoDtsFUq2zJq6YK/0/*))"</span>;
-        <span class="kw">let </span>result = into_wallet_descriptor_checked(descriptor, <span class="kw-2">&amp;</span>secp, Network::Testnet);
+        <span class="kw">let </span>(descriptor, <span class="kw">_</span>) = descriptor
+            .into_wallet_descriptor(<span class="kw-2">&amp;</span>secp, Network::Testnet)
+            .expect(<span class="string">"must parse"</span>);
+        <span class="kw">let </span>result = check_wallet_descriptor(<span class="kw-2">&amp;</span>descriptor);
 
         <span class="macro">assert!</span>(result.is_err());
     }
@@ -1782,8 +1810,10 @@
         <span class="kw">let </span>secp = Secp256k1::new();
 
         <span class="kw">let </span>descriptor = <span class="string">"sh(wsh(sortedmulti(3,tpubDEsqS36T4DVsKJd9UH8pAKzrkGBYPLEt9jZMwpKtzh1G6mgYehfHt9WCgk7MJG5QGSFWf176KaBNoXbcuFcuadAFKxDpUdMDKGBha7bY3QM/0/*,tpubDF3cpwfs7fMvXXuoQbohXtLjNM6ehwYT287LWtmLsd4r77YLg6MZg4vTETx5MSJ2zkfigbYWu31VA2Z2Vc1cZugCYXgS7FQu6pE8V6TriEH/0/*,tpubDE1SKfcW76Tb2AASv5bQWMuScYNAdoqLHoexw13sNDXwmUhQDBbCD3QAedKGLhxMrWQdMDKENzYtnXPDRvexQPNuDrLj52wAjHhNEm8sJ4p/0/*,tpubDFLc6oXwJmhm3FGGzXkfJNTh2KitoY3WhmmQvuAjMhD8YbyWn5mAqckbxXfm2etM3p5J6JoTpSrMqRSTfMLtNW46poDaEZJ1kjd3csRSjwH/0/*,tpubDEWD9NBeWP59xXmdqSNt4VYdtTGwbpyP8WS962BuqpQeMZmX9Pur14dhXdZT5a7wR1pK6dPtZ9fP5WR493hPzemnBvkfLLYxnUjAKj1JCQV/0/*,tpubDEHyZkkwd7gZWCTgQuYQ9C4myF2hMEmyHsBCCmLssGqoqUxeT3gzohF5uEVURkf9TtmeepJgkSUmteac38FwZqirjApzNX59XSHLcwaTZCH/0/*,tpubDEqLouCekwnMUWN486kxGzD44qVgeyuqHyxUypNEiQt5RnUZNJe386TKPK99fqRV1vRkZjYAjtXGTECz98MCsdLcnkM67U6KdYRzVubeCgZ/0/*)))"</span>;
-        <span class="kw">let </span>(descriptor, <span class="kw">_</span>) =
-            into_wallet_descriptor_checked(descriptor, <span class="kw-2">&amp;</span>secp, Network::Testnet).unwrap();
+        <span class="kw">let </span>(descriptor, <span class="kw">_</span>) = descriptor
+            .into_wallet_descriptor(<span class="kw-2">&amp;</span>secp, Network::Testnet)
+            .unwrap();
+        check_wallet_descriptor(<span class="kw-2">&amp;</span>descriptor).expect(<span class="string">"descriptor"</span>);
 
         <span class="kw">let </span>descriptor = descriptor.at_derivation_index(<span class="number">0</span>).unwrap();
 

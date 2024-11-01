@@ -126,67 +126,7 @@
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
-<a href="#129" id="129">129</a>
-<a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
-<a href="#158" id="158">158</a>
-<a href="#159" id="159">159</a>
-<a href="#160" id="160">160</a>
-<a href="#161" id="161">161</a>
-<a href="#162" id="162">162</a>
-<a href="#163" id="163">163</a>
-<a href="#164" id="164">164</a>
-<a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
-<a href="#171" id="171">171</a>
-<a href="#172" id="172">172</a>
-<a href="#173" id="173">173</a>
-<a href="#174" id="174">174</a>
-<a href="#175" id="175">175</a>
-<a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::collections::BTreeMap;
-<span class="kw">use </span><span class="kw">crate</span>::collections::BTreeSet;
-<span class="kw">use </span><span class="kw">crate</span>::BlockId;
-<span class="kw">use </span>alloc::vec::Vec;
+</pre></div><pre class="rust"><code><span class="kw">use crate</span>::{BlockId, ConfirmationBlockTime};
 
 <span class="doccomment">/// Trait that "anchors" blockchain data to a specific block of height and hash.
 ///
@@ -205,8 +145,7 @@
 /// # use bdk_chain::local_chain::LocalChain;
 /// # use bdk_chain::tx_graph::TxGraph;
 /// # use bdk_chain::BlockId;
-/// # use bdk_chain::ConfirmationHeightAnchor;
-/// # use bdk_chain::ConfirmationTimeHeightAnchor;
+/// # use bdk_chain::ConfirmationBlockTime;
 /// # use bdk_chain::example_utils::*;
 /// # use bitcoin::hashes::Hash;
 /// // Initialize the local chain with two blocks.
@@ -228,46 +167,26 @@
 /// let mut graph_a = TxGraph::&lt;BlockId&gt;::default();
 /// let _ = graph_a.insert_tx(tx.clone());
 /// graph_a.insert_anchor(
-///     tx.txid(),
+///     tx.compute_txid(),
 ///     BlockId {
 ///         height: 1,
 ///         hash: Hash::hash("first".as_bytes()),
 ///     },
 /// );
 ///
-/// // Insert `tx` into a `TxGraph` that uses `ConfirmationHeightAnchor` as the anchor type.
-/// // This anchor records the anchor block and the confirmation height of the transaction.
-/// // When a transaction is anchored with `ConfirmationHeightAnchor`, the anchor block and
-/// // confirmation block can be different. However, the confirmation block cannot be higher than
-/// // the anchor block and both blocks must be in the same chain for the anchor to be valid.
-/// let mut graph_b = TxGraph::&lt;ConfirmationHeightAnchor&gt;::default();
-/// let _ = graph_b.insert_tx(tx.clone());
-/// graph_b.insert_anchor(
-///     tx.txid(),
-///     ConfirmationHeightAnchor {
-///         anchor_block: BlockId {
-///             height: 2,
-///             hash: Hash::hash("second".as_bytes()),
-///         },
-///         confirmation_height: 1,
-///     },
-/// );
-///
-/// // Insert `tx` into a `TxGraph` that uses `ConfirmationTimeHeightAnchor` as the anchor type.
-/// // This anchor records the anchor block, the confirmation height and time of the transaction.
-/// // When a transaction is anchored with `ConfirmationTimeHeightAnchor`, the anchor block and
-/// // confirmation block can be different. However, the confirmation block cannot be higher than
-/// // the anchor block and both blocks must be in the same chain for the anchor to be valid.
-/// let mut graph_c = TxGraph::&lt;ConfirmationTimeHeightAnchor&gt;::default();
+/// // Insert `tx` into a `TxGraph` that uses `ConfirmationBlockTime` as the anchor type.
+/// // This anchor records the anchor block and the confirmation time of the transaction. When a
+/// // transaction is anchored with `ConfirmationBlockTime`, the anchor block and confirmation block
+/// // of the transaction is the same block.
+/// let mut graph_c = TxGraph::&lt;ConfirmationBlockTime&gt;::default();
 /// let _ = graph_c.insert_tx(tx.clone());
 /// graph_c.insert_anchor(
-///     tx.txid(),
-///     ConfirmationTimeHeightAnchor {
-///         anchor_block: BlockId {
+///     tx.compute_txid(),
+///     ConfirmationBlockTime {
+///         block_id: BlockId {
 ///             height: 2,
 ///             hash: Hash::hash("third".as_bytes()),
 ///         },
-///         confirmation_height: 1,
 ///         confirmation_time: 123,
 ///     },
 /// );
@@ -291,81 +210,48 @@
     }
 }
 
-<span class="doccomment">/// An [`Anchor`] that can be constructed from a given block, block height and transaction position
-/// within the block.
-</span><span class="kw">pub trait </span>AnchorFromBlockPosition: Anchor {
-    <span class="doccomment">/// Construct the anchor from a given `block`, block height and `tx_pos` within the block.
-    </span><span class="kw">fn </span>from_block_position(block: <span class="kw-2">&amp;</span>bitcoin::Block, block_id: BlockId, tx_pos: usize) -&gt; <span class="self">Self</span>;
+<span class="kw">impl </span>Anchor <span class="kw">for </span>BlockId {
+    <span class="kw">fn </span>anchor_block(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="kw-2">*</span><span class="self">self
+    </span>}
 }
 
-<span class="doccomment">/// Trait that makes an object appendable.
-</span><span class="kw">pub trait </span>Append {
-    <span class="doccomment">/// Append another object of the same type onto `self`.
-    </span><span class="kw">fn </span>append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="self">Self</span>);
-
-    <span class="doccomment">/// Returns whether the structure is considered empty.
-    </span><span class="kw">fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool;
-}
-
-<span class="kw">impl</span>&lt;K: Ord, V&gt; Append <span class="kw">for </span>BTreeMap&lt;K, V&gt; {
-    <span class="kw">fn </span>append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="self">Self</span>) {
-        <span class="comment">// We use `extend` instead of `BTreeMap::append` due to performance issues with `append`.
-        // Refer to https://github.com/rust-lang/rust/issues/34666#issuecomment-675658420
-        </span>BTreeMap::extend(<span class="self">self</span>, other)
+<span class="kw">impl </span>Anchor <span class="kw">for </span>ConfirmationBlockTime {
+    <span class="kw">fn </span>anchor_block(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BlockId {
+        <span class="self">self</span>.block_id
     }
 
-    <span class="kw">fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        BTreeMap::is_empty(<span class="self">self</span>)
+    <span class="kw">fn </span>confirmation_height_upper_bound(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
+        <span class="self">self</span>.block_id.height
     }
 }
 
-<span class="kw">impl</span>&lt;T: Ord&gt; Append <span class="kw">for </span>BTreeSet&lt;T&gt; {
-    <span class="kw">fn </span>append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="self">Self</span>) {
-        <span class="comment">// We use `extend` instead of `BTreeMap::append` due to performance issues with `append`.
-        // Refer to https://github.com/rust-lang/rust/issues/34666#issuecomment-675658420
-        </span>BTreeSet::extend(<span class="self">self</span>, other)
-    }
+<span class="doccomment">/// Set of parameters sufficient to construct an [`Anchor`].
+///
+/// Typically used as an additional constraint on anchor:
+/// `for&lt;'b&gt; A: Anchor + From&lt;TxPosInBlock&lt;'b&gt;&gt;`.
+</span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>TxPosInBlock&lt;<span class="lifetime">'b</span>&gt; {
+    <span class="doccomment">/// Block in which the transaction appeared.
+    </span><span class="kw">pub </span>block: <span class="kw-2">&amp;</span><span class="lifetime">'b </span>bitcoin::Block,
+    <span class="doccomment">/// Block's [`BlockId`].
+    </span><span class="kw">pub </span>block_id: BlockId,
+    <span class="doccomment">/// Position in the block on which the transaction appeared.
+    </span><span class="kw">pub </span>tx_pos: usize,
+}
 
-    <span class="kw">fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        BTreeSet::is_empty(<span class="self">self</span>)
+<span class="kw">impl</span>&lt;<span class="lifetime">'b</span>&gt; From&lt;TxPosInBlock&lt;<span class="lifetime">'b</span>&gt;&gt; <span class="kw">for </span>BlockId {
+    <span class="kw">fn </span>from(pos: TxPosInBlock) -&gt; <span class="self">Self </span>{
+        pos.block_id
     }
 }
 
-<span class="kw">impl</span>&lt;T&gt; Append <span class="kw">for </span>Vec&lt;T&gt; {
-    <span class="kw">fn </span>append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>other: <span class="self">Self</span>) {
-        Vec::append(<span class="self">self</span>, <span class="kw-2">&amp;mut </span>other)
-    }
-
-    <span class="kw">fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        Vec::is_empty(<span class="self">self</span>)
-    }
-}
-
-<span class="macro">macro_rules!</span> impl_append_for_tuple {
-    ($(<span class="macro-nonterminal">$a</span>:ident <span class="macro-nonterminal">$b</span>:tt)<span class="kw-2">*</span>) =&gt; {
-        <span class="kw">impl</span>&lt;$(<span class="macro-nonterminal">$a</span>),<span class="kw-2">*</span>&gt; Append <span class="kw">for </span>($(<span class="macro-nonterminal">$a</span>,)<span class="kw-2">*</span>) <span class="kw">where </span>$(<span class="macro-nonterminal">$a</span>: Append),* {
-
-            <span class="kw">fn </span>append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _other: <span class="self">Self</span>) {
-                $(Append::append(<span class="kw-2">&amp;mut </span><span class="self">self</span>.<span class="macro-nonterminal">$b</span>, _other.<span class="macro-nonterminal">$b</span>) );*
-            }
-
-            <span class="kw">fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-                $(Append::is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="macro-nonterminal">$b</span>) &amp;&amp; )* <span class="bool-val">true
-            </span>}
+<span class="kw">impl</span>&lt;<span class="lifetime">'b</span>&gt; From&lt;TxPosInBlock&lt;<span class="lifetime">'b</span>&gt;&gt; <span class="kw">for </span>ConfirmationBlockTime {
+    <span class="kw">fn </span>from(pos: TxPosInBlock) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            block_id: pos.block_id,
+            confirmation_time: pos.block.header.time <span class="kw">as _</span>,
         }
     }
 }
-
-<span class="macro">impl_append_for_tuple!</span>();
-<span class="macro">impl_append_for_tuple!</span>(T0 <span class="number">0</span>);
-<span class="macro">impl_append_for_tuple!</span>(T0 <span class="number">0 </span>T1 <span class="number">1</span>);
-<span class="macro">impl_append_for_tuple!</span>(T0 <span class="number">0 </span>T1 <span class="number">1 </span>T2 <span class="number">2</span>);
-<span class="macro">impl_append_for_tuple!</span>(T0 <span class="number">0 </span>T1 <span class="number">1 </span>T2 <span class="number">2 </span>T3 <span class="number">3</span>);
-<span class="macro">impl_append_for_tuple!</span>(T0 <span class="number">0 </span>T1 <span class="number">1 </span>T2 <span class="number">2 </span>T3 <span class="number">3 </span>T4 <span class="number">4</span>);
-<span class="macro">impl_append_for_tuple!</span>(T0 <span class="number">0 </span>T1 <span class="number">1 </span>T2 <span class="number">2 </span>T3 <span class="number">3 </span>T4 <span class="number">4 </span>T5 <span class="number">5</span>);
-<span class="macro">impl_append_for_tuple!</span>(T0 <span class="number">0 </span>T1 <span class="number">1 </span>T2 <span class="number">2 </span>T3 <span class="number">3 </span>T4 <span class="number">4 </span>T5 <span class="number">5 </span>T6 <span class="number">6</span>);
-<span class="macro">impl_append_for_tuple!</span>(T0 <span class="number">0 </span>T1 <span class="number">1 </span>T2 <span class="number">2 </span>T3 <span class="number">3 </span>T4 <span class="number">4 </span>T5 <span class="number">5 </span>T6 <span class="number">6 </span>T7 <span class="number">7</span>);
-<span class="macro">impl_append_for_tuple!</span>(T0 <span class="number">0 </span>T1 <span class="number">1 </span>T2 <span class="number">2 </span>T3 <span class="number">3 </span>T4 <span class="number">4 </span>T5 <span class="number">5 </span>T6 <span class="number">6 </span>T7 <span class="number">7 </span>T8 <span class="number">8</span>);
-<span class="macro">impl_append_for_tuple!</span>(T0 <span class="number">0 </span>T1 <span class="number">1 </span>T2 <span class="number">2 </span>T3 <span class="number">3 </span>T4 <span class="number">4 </span>T5 <span class="number">5 </span>T6 <span class="number">6 </span>T7 <span class="number">7 </span>T8 <span class="number">8 </span>T9 <span class="number">9</span>);
-<span class="macro">impl_append_for_tuple!</span>(T0 <span class="number">0 </span>T1 <span class="number">1 </span>T2 <span class="number">2 </span>T3 <span class="number">3 </span>T4 <span class="number">4 </span>T5 <span class="number">5 </span>T6 <span class="number">6 </span>T7 <span class="number">7 </span>T8 <span class="number">8 </span>T9 <span class="number">9 </span>T10 <span class="number">10</span>);
 </code></pre></div></section></main></body></html>
