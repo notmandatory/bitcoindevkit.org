@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/wallet/src/wallet/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="bdk_wallet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (78a775127 2024-05-11)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/wallet/src/wallet/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e7950ecc.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="bdk_wallet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (f85c6de55 2025-01-26)" data-channel="nightly" data-search-js="search-ccb196c1.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bdk_wallet/wallet/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -2597,7 +2598,13 @@
 <a href="#2597" id="2597">2597</a>
 <a href="#2598" id="2598">2598</a>
 <a href="#2599" id="2599">2599</a>
-</pre></div><pre class="rust"><code><span class="comment">// Bitcoin Dev Kit
+<a href="#2600" id="2600">2600</a>
+<a href="#2601" id="2601">2601</a>
+<a href="#2602" id="2602">2602</a>
+<a href="#2603" id="2603">2603</a>
+<a href="#2604" id="2604">2604</a>
+<a href="#2605" id="2605">2605</a>
+<a href="#2606" id="2606">2606</a></pre></div><pre class="rust"><code><span class="comment">// Bitcoin Dev Kit
 // Written in 2020 by Alekos Filini &lt;alekos.filini@gmail.com&gt;
 //
 // Copyright (c) 2020-2021 Bitcoin Dev Kit Developers
@@ -2630,7 +2637,7 @@
     },
     tx_graph::{CalculateFeeError, CanonicalTx, TxGraph, TxUpdate},
     BlockId, ChainPosition, ConfirmationBlockTime, DescriptorExt, FullTxOut, Indexed,
-    IndexedTxGraph, Merge,
+    IndexedTxGraph, Indexer, Merge,
 };
 <span class="kw">use </span>bitcoin::{
     absolute,
@@ -2658,7 +2665,7 @@
 <span class="kw">pub mod </span>tx_builder;
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>utils;
 
-<span class="kw">use </span><span class="kw">crate</span>::collections::{BTreeMap, HashMap};
+<span class="kw">use </span><span class="kw">crate</span>::collections::{BTreeMap, HashMap, HashSet};
 <span class="kw">use </span><span class="kw">crate</span>::descriptor::{
     check_wallet_descriptor, error::Error <span class="kw">as </span>DescriptorError, policy::BuildSatisfaction,
     DerivedDescriptor, DescriptorMeta, ExtendedDescriptor, ExtractPolicy, IntoWalletDescriptor,
@@ -2667,11 +2674,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::psbt::PsbtUtils;
 <span class="kw">use </span><span class="kw">crate</span>::types::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::wallet::{
-    coin_selection::{
-        DefaultCoinSelectionAlgorithm,
-        Excess::{<span class="self">self</span>, Change, NoChange},
-        InsufficientFunds,
-    },
+    coin_selection::{DefaultCoinSelectionAlgorithm, Excess, InsufficientFunds},
     error::{BuildFeeBumpError, CreateTxError, MiniscriptPsbtError},
     signer::{SignOptions, SignerError, SignerOrdering, SignersContainer, TransactionSigner},
     tx_builder::{FeePolicy, TxBuilder, TxParams},
@@ -3335,10 +3338,10 @@
     }
 
     <span class="doccomment">/// Get the next unused address for the given `keychain`, i.e. the address with the lowest
-    /// derivation index that hasn't been used.
+    /// derivation index that hasn't been used in a transaction.
     ///
-    /// This will attempt to derive and reveal a new address if no newly revealed addresses
-    /// are available. See also [`reveal_next_address`](Self::reveal_next_address).
+    /// This will attempt to reveal a new address if all previously revealed addresses have
+    /// been used, in which case the returned address will be the same as calling [`Wallet::reveal_next_address`].
     ///
     /// **WARNING**: To avoid address reuse you must persist the changes resulting from one or more
     /// calls to this method before closing the wallet. See [`Wallet::reveal_next_address`].
@@ -3660,25 +3663,35 @@
     /// [`Anchor`]: bdk_chain::Anchor
     </span><span class="kw">pub fn </span>get_tx(<span class="kw-2">&amp;</span><span class="self">self</span>, txid: Txid) -&gt; <span class="prelude-ty">Option</span>&lt;WalletTx&gt; {
         <span class="kw">let </span>graph = <span class="self">self</span>.indexed_graph.graph();
-
-        <span class="prelude-val">Some</span>(WalletTx {
-            chain_position: graph.get_chain_position(
-                <span class="kw-2">&amp;</span><span class="self">self</span>.chain,
-                <span class="self">self</span>.chain.tip().block_id(),
-                txid,
-            )<span class="question-mark">?</span>,
-            tx_node: graph.get_tx_node(txid)<span class="question-mark">?</span>,
-        })
-    }
-
-    <span class="doccomment">/// Iterate over the transactions in the wallet.
-    </span><span class="kw">pub fn </span>transactions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = WalletTx&gt; + <span class="lifetime">'_ </span>{
-        <span class="self">self</span>.indexed_graph
-            .graph()
+        graph
             .list_canonical_txs(<span class="kw-2">&amp;</span><span class="self">self</span>.chain, <span class="self">self</span>.chain.tip().block_id())
+            .find(|tx| tx.tx_node.txid == txid)
     }
 
-    <span class="doccomment">/// Array of transactions in the wallet sorted with a comparator function.
+    <span class="doccomment">/// Iterate over relevant and canonical transactions in the wallet.
+    ///
+    /// A transaction is relevant when it spends from or spends to at least one tracked output. A
+    /// transaction is canonical when it is confirmed in the best chain, or does not conflict
+    /// with any transaction confirmed in the best chain.
+    ///
+    /// To iterate over all transactions, including those that are irrelevant and not canonical, use
+    /// [`TxGraph::full_txs`].
+    ///
+    /// To iterate over all canonical transactions, including those that are irrelevant, use
+    /// [`TxGraph::list_canonical_txs`].
+    </span><span class="kw">pub fn </span>transactions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = WalletTx&gt; + <span class="lifetime">'_ </span>{
+        <span class="kw">let </span>tx_graph = <span class="self">self</span>.indexed_graph.graph();
+        <span class="kw">let </span>tx_index = <span class="kw-2">&amp;</span><span class="self">self</span>.indexed_graph.index;
+        tx_graph
+            .list_canonical_txs(<span class="kw-2">&amp;</span><span class="self">self</span>.chain, <span class="self">self</span>.chain.tip().block_id())
+            .filter(|c_tx| tx_index.is_tx_relevant(<span class="kw-2">&amp;</span>c_tx.tx_node.tx))
+    }
+
+    <span class="doccomment">/// Array of relevant and canonical transactions in the wallet sorted with a comparator
+    /// function.
+    ///
+    /// This is a helper method equivalent to collecting the result of [`Wallet::transactions`]
+    /// into a [`Vec`] and then sorting it.
     ///
     /// # Example
     ///
@@ -3804,7 +3817,7 @@
     /// [`TxBuilder`]: crate::TxBuilder
     </span><span class="kw">pub fn </span>build_tx(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; TxBuilder&lt;<span class="lifetime">'_</span>, DefaultCoinSelectionAlgorithm&gt; {
         TxBuilder {
-            wallet: alloc::rc::Rc::new(core::cell::RefCell::new(<span class="self">self</span>)),
+            wallet: <span class="self">self</span>,
             params: TxParams::default(),
             coin_selection: DefaultCoinSelectionAlgorithm::default(),
         }
@@ -3877,13 +3890,12 @@
             external_requirements.merge(<span class="kw-2">&amp;</span>internal_requirements.unwrap_or_default())<span class="question-mark">?</span>;
 
         <span class="kw">let </span>version = <span class="kw">match </span>params.version {
-            <span class="prelude-val">Some</span>(tx_builder::Version(<span class="number">0</span>)) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(CreateTxError::Version0),
-            <span class="prelude-val">Some</span>(tx_builder::Version(<span class="number">1</span>)) <span class="kw">if </span>requirements.csv.is_some() =&gt; {
+            <span class="prelude-val">Some</span>(transaction::Version(<span class="number">0</span>)) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(CreateTxError::Version0),
+            <span class="prelude-val">Some</span>(transaction::Version::ONE) <span class="kw">if </span>requirements.csv.is_some() =&gt; {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(CreateTxError::Version1Csv)
             }
-            <span class="prelude-val">Some</span>(tx_builder::Version(x)) =&gt; x,
-            <span class="prelude-val">None </span><span class="kw">if </span>requirements.csv.is_some() =&gt; <span class="number">2</span>,
-            <span class="prelude-val">None </span>=&gt; <span class="number">1</span>,
+            <span class="prelude-val">Some</span>(v) =&gt; v,
+            <span class="prelude-val">None </span>=&gt; transaction::Version::TWO,
         };
 
         <span class="comment">// We use a match here instead of a unwrap_or_else as it's way more readable :)
@@ -3981,7 +3993,7 @@
         };
 
         <span class="kw">let </span><span class="kw-2">mut </span>tx = Transaction {
-            version: transaction::Version::non_standard(version),
+            version,
             lock_time,
             input: <span class="macro">vec!</span>[],
             output: <span class="macro">vec!</span>[],
@@ -3992,17 +4004,11 @@
         }
 
         <span class="kw">let </span><span class="kw-2">mut </span>outgoing = Amount::ZERO;
-        <span class="kw">let </span><span class="kw-2">mut </span>received = Amount::ZERO;
-
         <span class="kw">let </span>recipients = params.recipients.iter().map(|(r, v)| (r, <span class="kw-2">*</span>v));
 
         <span class="kw">for </span>(index, (script_pubkey, value)) <span class="kw">in </span>recipients.enumerate() {
             <span class="kw">if </span>!params.allow_dust &amp;&amp; value.is_dust(script_pubkey) &amp;&amp; !script_pubkey.is_op_return() {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(CreateTxError::OutputBelowDustLimit(index));
-            }
-
-            <span class="kw">if </span><span class="self">self</span>.is_mine(script_pubkey.clone()) {
-                received += value;
             }
 
             <span class="kw">let </span>new_out = TxOut {
@@ -4052,17 +4058,16 @@
 
         <span class="kw">let </span>coin_selection = coin_selection
             .coin_select(
-                required_utxos.clone(),
-                optional_utxos.clone(),
+                required_utxos,
+                optional_utxos,
                 fee_rate,
-                outgoing.to_sat() + fee_amount.to_sat(),
+                outgoing + fee_amount,
                 <span class="kw-2">&amp;</span>drain_script,
                 rng,
             )
             .map_err(CreateTxError::CoinSelection)<span class="question-mark">?</span>;
-        fee_amount += Amount::from_sat(coin_selection.fee_amount);
-        <span class="kw">let </span>excess = <span class="kw-2">&amp;</span>coin_selection.excess;
 
+        <span class="kw">let </span>excess = <span class="kw-2">&amp;</span>coin_selection.excess;
         tx.input = coin_selection
             .selected
             .iter()
@@ -4083,7 +4088,7 @@
             // Otherwise, we don't know who we should send the funds to, and how much
             // we should send!
             </span><span class="kw">if </span>params.drain_to.is_some() &amp;&amp; (params.drain_wallet || !params.utxos.is_empty()) {
-                <span class="kw">if let </span>NoChange {
+                <span class="kw">if let </span>Excess::NoChange {
                     dust_threshold,
                     remaining_amount,
                     change_fee,
@@ -4091,7 +4096,9 @@
                 {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(CreateTxError::CoinSelection(InsufficientFunds {
                         needed: <span class="kw-2">*</span>dust_threshold,
-                        available: remaining_amount.saturating_sub(<span class="kw-2">*</span>change_fee),
+                        available: remaining_amount
+                            .checked_sub(<span class="kw-2">*</span>change_fee)
+                            .unwrap_or_default(),
                     }));
                 }
             } <span class="kw">else </span>{
@@ -4099,28 +4106,19 @@
             }
         }
 
-        <span class="kw">match </span>excess {
-            NoChange {
-                remaining_amount, ..
-            } =&gt; fee_amount += Amount::from_sat(<span class="kw-2">*</span>remaining_amount),
-            Change { amount, fee } =&gt; {
-                <span class="kw">if </span><span class="self">self</span>.is_mine(drain_script.clone()) {
-                    received += Amount::from_sat(<span class="kw-2">*</span>amount);
-                }
-                fee_amount += Amount::from_sat(<span class="kw-2">*</span>fee);
+        <span class="comment">// if there's change, create and add a change output
+        </span><span class="kw">if let </span>Excess::Change { amount, .. } = excess {
+            <span class="comment">// create drain output
+            </span><span class="kw">let </span>drain_output = TxOut {
+                value: <span class="kw-2">*</span>amount,
+                script_pubkey: drain_script,
+            };
 
-                <span class="comment">// create drain output
-                </span><span class="kw">let </span>drain_output = TxOut {
-                    value: Amount::from_sat(<span class="kw-2">*</span>amount),
-                    script_pubkey: drain_script,
-                };
-
-                <span class="comment">// TODO: We should pay attention when adding a new output: this might increase
-                // the length of the "number of vouts" parameter by 2 bytes, potentially making
-                // our feerate too low
-                </span>tx.output.push(drain_output);
-            }
-        };
+            <span class="comment">// TODO: We should pay attention when adding a new output: this might increase
+            // the length of the "number of vouts" parameter by 2 bytes, potentially making
+            // our feerate too low
+            </span>tx.output.push(drain_output);
+        }
 
         <span class="comment">// sort input/outputs according to the chosen algorithm
         </span>params.ordering.sort_tx_with_aux_rand(<span class="kw-2">&amp;mut </span>tx, rng);
@@ -4189,6 +4187,10 @@
         <span class="kw">let </span>graph = <span class="self">self</span>.indexed_graph.graph();
         <span class="kw">let </span>txout_index = <span class="kw-2">&amp;</span><span class="self">self</span>.indexed_graph.index;
         <span class="kw">let </span>chain_tip = <span class="self">self</span>.chain.tip().block_id();
+        <span class="kw">let </span>chain_positions = graph
+            .list_canonical_txs(<span class="kw-2">&amp;</span><span class="self">self</span>.chain, chain_tip)
+            .map(|canon_tx| (canon_tx.tx_node.txid, canon_tx.chain_position))
+            .collect::&lt;HashMap&lt;Txid, <span class="kw">_</span>&gt;&gt;();
 
         <span class="kw">let </span><span class="kw-2">mut </span>tx = graph
             .get_tx(txid)
@@ -4196,10 +4198,11 @@
             </span>.as_ref()
             .clone();
 
-        <span class="kw">let </span>pos = graph
-            .get_chain_position(<span class="kw-2">&amp;</span><span class="self">self</span>.chain, chain_tip, txid)
-            .ok_or(BuildFeeBumpError::TransactionNotFound(txid))<span class="question-mark">?</span>;
-        <span class="kw">if </span>pos.is_confirmed() {
+        <span class="kw">if </span>chain_positions
+            .get(<span class="kw-2">&amp;</span>txid)
+            .ok_or(BuildFeeBumpError::TransactionNotFound(txid))<span class="question-mark">?
+            </span>.is_confirmed()
+        {
             <span class="kw">return </span><span class="prelude-val">Err</span>(BuildFeeBumpError::TransactionConfirmed(txid));
         }
 
@@ -4230,10 +4233,10 @@
                     .ok_or(BuildFeeBumpError::UnknownUtxo(txin.previous_output))<span class="question-mark">?</span>;
                 <span class="kw">let </span>txout = <span class="kw-2">&amp;</span>prev_tx.output[txin.previous_output.vout <span class="kw">as </span>usize];
 
-                <span class="kw">let </span>chain_position = graph
-                    .get_chain_position(<span class="kw-2">&amp;</span><span class="self">self</span>.chain, chain_tip, txin.previous_output.txid)
-                    .ok_or(BuildFeeBumpError::UnknownUtxo(txin.previous_output))<span class="question-mark">?
-                    </span>.cloned();
+                <span class="kw">let </span>chain_position = chain_positions
+                    .get(<span class="kw-2">&amp;</span>txin.previous_output.txid)
+                    .cloned()
+                    .ok_or(BuildFeeBumpError::UnknownUtxo(txin.previous_output))<span class="question-mark">?</span>;
 
                 <span class="kw">let </span>weighted_utxo = <span class="kw">match </span>txout_index.index_of_spk(txout.script_pubkey.clone()) {
                     <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>(keychain, derivation_index)) =&gt; {
@@ -4279,7 +4282,7 @@
         <span class="kw">if </span>tx.output.len() &gt; <span class="number">1 </span>{
             <span class="kw">let </span><span class="kw-2">mut </span>change_index = <span class="prelude-val">None</span>;
             <span class="kw">for </span>(index, txout) <span class="kw">in </span>tx.output.iter().enumerate() {
-                <span class="kw">let </span>change_keychain = KeychainKind::Internal;
+                <span class="kw">let </span>change_keychain = <span class="self">self</span>.map_keychain(KeychainKind::Internal);
                 <span class="kw">match </span>txout_index.index_of_spk(txout.script_pubkey.clone()) {
                     <span class="prelude-val">Some</span>((keychain, <span class="kw">_</span>)) <span class="kw">if </span><span class="kw-2">*</span>keychain == change_keychain =&gt; {
                         change_index = <span class="prelude-val">Some</span>(index)
@@ -4295,7 +4298,7 @@
 
         <span class="kw">let </span>params = TxParams {
             <span class="comment">// TODO: figure out what rbf option should be?
-            </span>version: <span class="prelude-val">Some</span>(tx_builder::Version(tx.version.<span class="number">0</span>)),
+            </span>version: <span class="prelude-val">Some</span>(tx.version),
             recipients: tx
                 .output
                 .into_iter()
@@ -4310,7 +4313,7 @@
         };
 
         <span class="prelude-val">Ok</span>(TxBuilder {
-            wallet: alloc::rc::Rc::new(core::cell::RefCell::new(<span class="self">self</span>)),
+            wallet: <span class="self">self</span>,
             params,
             coin_selection: DefaultCoinSelectionAlgorithm::default(),
         })
@@ -4432,9 +4435,31 @@
         psbt: <span class="kw-2">&amp;mut </span>Psbt,
         sign_options: SignOptions,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, SignerError&gt; {
-        <span class="kw">let </span>chain_tip = <span class="self">self</span>.chain.tip().block_id();
-
         <span class="kw">let </span>tx = <span class="kw-2">&amp;</span>psbt.unsigned_tx;
+        <span class="kw">let </span>chain_tip = <span class="self">self</span>.chain.tip().block_id();
+        <span class="kw">let </span>prev_txids = tx
+            .input
+            .iter()
+            .map(|txin| txin.previous_output.txid)
+            .collect::&lt;HashSet&lt;Txid&gt;&gt;();
+        <span class="kw">let </span>confirmation_heights = <span class="self">self
+            </span>.indexed_graph
+            .graph()
+            .list_canonical_txs(<span class="kw-2">&amp;</span><span class="self">self</span>.chain, chain_tip)
+            .filter(|canon_tx| prev_txids.contains(<span class="kw-2">&amp;</span>canon_tx.tx_node.txid))
+            <span class="comment">// This is for a small performance gain. Although `.filter` filters out excess txs, it
+            // will still consume the internal `CanonicalIter` entirely. Having a `.take` here
+            // allows us to stop further unnecessary canonicalization.
+            </span>.take(prev_txids.len())
+            .map(|canon_tx| {
+                <span class="kw">let </span>txid = canon_tx.tx_node.txid;
+                <span class="kw">match </span>canon_tx.chain_position {
+                    ChainPosition::Confirmed { anchor, .. } =&gt; (txid, anchor.block_id.height),
+                    ChainPosition::Unconfirmed { .. } =&gt; (txid, u32::MAX),
+                }
+            })
+            .collect::&lt;HashMap&lt;Txid, u32&gt;&gt;();
+
         <span class="kw">let </span><span class="kw-2">mut </span>finished = <span class="bool-val">true</span>;
 
         <span class="kw">for </span>(n, input) <span class="kw">in </span>tx.input.iter().enumerate() {
@@ -4445,15 +4470,9 @@
             <span class="kw">if </span>psbt_input.final_script_sig.is_some() || psbt_input.final_script_witness.is_some() {
                 <span class="kw">continue</span>;
             }
-            <span class="kw">let </span>confirmation_height = <span class="self">self
-                </span>.indexed_graph
-                .graph()
-                .get_chain_position(<span class="kw-2">&amp;</span><span class="self">self</span>.chain, chain_tip, input.previous_output.txid)
-                .map(|chain_position| {
-                    chain_position
-                        .confirmation_height_upper_bound()
-                        .unwrap_or(u32::MAX)
-                });
+            <span class="kw">let </span>confirmation_height = confirmation_heights
+                .get(<span class="kw-2">&amp;</span>input.previous_output.txid)
+                .copied();
             <span class="kw">let </span>current_height = sign_options
                 .assume_height
                 .unwrap_or_else(|| <span class="self">self</span>.chain.tip().height());
@@ -4487,8 +4506,11 @@
                         <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
                             <span class="comment">// Set the UTXO fields, final script_sig and witness
                             // and clear everything else.
-                            </span><span class="kw">let </span>original = mem::take(<span class="kw-2">&amp;mut </span>psbt.inputs[n]);
-                            <span class="kw">let </span>psbt_input = <span class="kw-2">&amp;mut </span>psbt.inputs[n];
+                            </span><span class="kw">let </span>psbt_input = psbt
+                                .inputs
+                                .get_mut(n)
+                                .ok_or(SignerError::InputIndexOutOfRange)<span class="question-mark">?</span>;
+                            <span class="kw">let </span>original = mem::take(psbt_input);
                             psbt_input.non_witness_utxo = original.non_witness_utxo;
                             psbt_input.witness_utxo = original.witness_utxo;
                             <span class="kw">if </span>!tmp_input.script_sig.is_empty() {
@@ -4595,7 +4617,6 @@
         </span><span class="kw">let </span>must_only_use_confirmed_tx = bumping_fee.is_some();
         <span class="kw">let </span>must_use_all_available = <span class="kw-2">*</span>drain_wallet;
 
-        <span class="kw">let </span>chain_tip = <span class="self">self</span>.chain.tip().block_id();
         <span class="comment">//    must_spend &lt;- manually selected utxos
         //    may_spend  &lt;- all other available utxos
         </span><span class="kw">let </span><span class="kw-2">mut </span>may_spend = <span class="self">self</span>.get_available_utxos();
@@ -4621,17 +4642,10 @@
                     <span class="prelude-val">Some</span>(tx) =&gt; tx,
                     <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="bool-val">false</span>,
                 };
-                <span class="kw">let </span>chain_position = <span class="kw">match </span><span class="self">self</span>.indexed_graph.graph().get_chain_position(
-                    <span class="kw-2">&amp;</span><span class="self">self</span>.chain,
-                    chain_tip,
-                    txid,
-                ) {
-                    <span class="prelude-val">Some</span>(chain_position) =&gt; chain_position.cloned(),
-                    <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="bool-val">false</span>,
-                };
 
                 <span class="comment">// Whether the UTXO is mature and, if needed, confirmed
                 </span><span class="kw">let </span><span class="kw-2">mut </span>spendable = <span class="bool-val">true</span>;
+                <span class="kw">let </span>chain_position = u.<span class="number">0</span>.chain_position;
                 <span class="kw">if </span>must_only_use_confirmed_tx &amp;&amp; !chain_position.is_confirmed() {
                     <span class="kw">return </span><span class="bool-val">false</span>;
                 }
@@ -5175,7 +5189,7 @@
             .unwrap();
         <span class="kw">let </span>address = wallet.peek_address(KeychainKind::External, <span class="number">0</span>).address;
         <span class="kw">let </span>tx = Transaction {
-            version: transaction::Version::ONE,
+            version: transaction::Version::TWO,
             lock_time: absolute::LockTime::ZERO,
             input: <span class="macro">vec!</span>[],
             output: <span class="macro">vec!</span>[TxOut {
