@@ -1,97 +1,2455 @@
-<!DOCTYPE html>
-<html lang="en-US">
+
+<!doctype html>
+<html lang="en" class="no-js">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Mobile | Bitcoin Dev Kit Documentation</title>
-    <meta name="generator" content="VuePress 1.9.10">
-    <link rel="preload" href="/fonts/ibm-plex-mono-400.woff2" as="font" crossorigin="true">
-    <link rel="apple-touch-icon" sizes="180x180" href="/img/favicon/apple-touch-icon.png">
-    <link rel="manifest" href="/site.webmanifest">
-    <link rel="stylesheet" href="/css/variables.css">
-    <link name="msapplication-config" content="/browserconfig.xml">
-    <link name="msapplication-TileColor" content="#ffffff">
-    <link name="theme-color" content="#ffffff">
-    <meta name="description" content="A list of bitcoin applications and services building with BDK">
-    <meta property="og:site_name" content="Bitcoin Dev Kit Documentation">
-    <meta property="og:title" content="Bitcoin applications building with BDK">
-    <meta property="og:description" content="A list of bitcoin applications and services building with BDK">
-    <meta property="og:type" content="article">
-    <meta property="og:url" content="https://bitcoindevkit.org/adoption/mobile/">
-    <meta property="og:image" content="https://bitcoindevkit.org/card.png">
-    <meta name="twitter:title" content="Bitcoin applications building with BDK">
-    <meta name="twitter:description" content="A list of bitcoin applications and services building with BDK">
-    <meta name="twitter:url" content="https://bitcoindevkit.org/adoption/mobile/">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:image" content="https://bitcoindevkit.org/card.png">
-    <meta name="twitter:label2" content="Filed under">
-    <meta name="twitter:data2" content="Bitcoin, Bitcoin Dev Kit, BDK">
-    <meta property="article:tag" content="Bitcoin">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
     
-    <link rel="preload" href="/assets/css/0.styles.512b91ab.css" as="style"><link rel="preload" href="/assets/js/app.679f2995.js" as="script"><link rel="preload" href="/assets/js/3.80705bfd.js" as="script"><link rel="preload" href="/assets/js/1.5c570f52.js" as="script"><link rel="preload" href="/assets/js/43.d2c937ba.js" as="script"><link rel="prefetch" href="/assets/js/10.f21ee655.js"><link rel="prefetch" href="/assets/js/11.a68d1fca.js"><link rel="prefetch" href="/assets/js/12.4ddd9d16.js"><link rel="prefetch" href="/assets/js/13.b4040600.js"><link rel="prefetch" href="/assets/js/17.24c35731.js"><link rel="prefetch" href="/assets/js/18.1812466a.js"><link rel="prefetch" href="/assets/js/19.0a54e72b.js"><link rel="prefetch" href="/assets/js/2.fd388b48.js"><link rel="prefetch" href="/assets/js/20.8a8e3643.js"><link rel="prefetch" href="/assets/js/21.b0bf609d.js"><link rel="prefetch" href="/assets/js/22.5be4e335.js"><link rel="prefetch" href="/assets/js/23.cb3e8ba5.js"><link rel="prefetch" href="/assets/js/24.c16d5c47.js"><link rel="prefetch" href="/assets/js/25.14c0156e.js"><link rel="prefetch" href="/assets/js/26.ead2ae9d.js"><link rel="prefetch" href="/assets/js/27.74a4b5e4.js"><link rel="prefetch" href="/assets/js/28.4585b6a3.js"><link rel="prefetch" href="/assets/js/29.f190b725.js"><link rel="prefetch" href="/assets/js/30.0f8d4edd.js"><link rel="prefetch" href="/assets/js/31.48e3e671.js"><link rel="prefetch" href="/assets/js/32.ce6fb162.js"><link rel="prefetch" href="/assets/js/33.7c798f47.js"><link rel="prefetch" href="/assets/js/34.16dd5e6f.js"><link rel="prefetch" href="/assets/js/35.2e4cb7e2.js"><link rel="prefetch" href="/assets/js/36.e0e670e2.js"><link rel="prefetch" href="/assets/js/37.38a18543.js"><link rel="prefetch" href="/assets/js/38.3abaf859.js"><link rel="prefetch" href="/assets/js/39.fd6ed4b9.js"><link rel="prefetch" href="/assets/js/4.28545876.js"><link rel="prefetch" href="/assets/js/40.4772de41.js"><link rel="prefetch" href="/assets/js/41.1eb8f603.js"><link rel="prefetch" href="/assets/js/42.338b44ab.js"><link rel="prefetch" href="/assets/js/44.c7918099.js"><link rel="prefetch" href="/assets/js/45.26ceba04.js"><link rel="prefetch" href="/assets/js/46.01cab1bc.js"><link rel="prefetch" href="/assets/js/47.8edc3801.js"><link rel="prefetch" href="/assets/js/48.aa3449a4.js"><link rel="prefetch" href="/assets/js/49.de6c70d1.js"><link rel="prefetch" href="/assets/js/5.c00dde2b.js"><link rel="prefetch" href="/assets/js/50.23f7f067.js"><link rel="prefetch" href="/assets/js/51.d204911a.js"><link rel="prefetch" href="/assets/js/52.b605f104.js"><link rel="prefetch" href="/assets/js/53.b1e044c2.js"><link rel="prefetch" href="/assets/js/54.70a6ee6f.js"><link rel="prefetch" href="/assets/js/55.5f20a230.js"><link rel="prefetch" href="/assets/js/56.8b92e4bd.js"><link rel="prefetch" href="/assets/js/57.f07cf7c2.js"><link rel="prefetch" href="/assets/js/58.5c8406ac.js"><link rel="prefetch" href="/assets/js/59.80149749.js"><link rel="prefetch" href="/assets/js/6.d24b2ecc.js"><link rel="prefetch" href="/assets/js/60.a6eaa1e3.js"><link rel="prefetch" href="/assets/js/61.f4e753fd.js"><link rel="prefetch" href="/assets/js/62.bb5639e3.js"><link rel="prefetch" href="/assets/js/63.4b2c6b3f.js"><link rel="prefetch" href="/assets/js/64.6fc95c82.js"><link rel="prefetch" href="/assets/js/65.d6f092bf.js"><link rel="prefetch" href="/assets/js/66.42bcd484.js"><link rel="prefetch" href="/assets/js/67.1eda6e2f.js"><link rel="prefetch" href="/assets/js/68.0006518d.js"><link rel="prefetch" href="/assets/js/69.39b611e6.js"><link rel="prefetch" href="/assets/js/7.ad7bf61d.js"><link rel="prefetch" href="/assets/js/70.df91474b.js"><link rel="prefetch" href="/assets/js/71.ad3fe7a3.js"><link rel="prefetch" href="/assets/js/72.bc182e57.js"><link rel="prefetch" href="/assets/js/73.93e90b06.js"><link rel="prefetch" href="/assets/js/74.ce370c5b.js"><link rel="prefetch" href="/assets/js/75.375fc372.js"><link rel="prefetch" href="/assets/js/76.c4a2c935.js"><link rel="prefetch" href="/assets/js/77.af30fd15.js"><link rel="prefetch" href="/assets/js/78.d21ed6ff.js"><link rel="prefetch" href="/assets/js/79.09bf0fa6.js"><link rel="prefetch" href="/assets/js/8.90b8eff0.js"><link rel="prefetch" href="/assets/js/80.c91e5881.js"><link rel="prefetch" href="/assets/js/81.f9be6593.js"><link rel="prefetch" href="/assets/js/82.de625121.js"><link rel="prefetch" href="/assets/js/83.d1d7c924.js"><link rel="prefetch" href="/assets/js/84.3e7fea50.js"><link rel="prefetch" href="/assets/js/85.4ea9f18f.js"><link rel="prefetch" href="/assets/js/86.4245ede7.js"><link rel="prefetch" href="/assets/js/87.41f93dea.js"><link rel="prefetch" href="/assets/js/88.c34b54a1.js"><link rel="prefetch" href="/assets/js/89.4ea62d1d.js"><link rel="prefetch" href="/assets/js/9.adf4d38f.js"><link rel="prefetch" href="/assets/js/90.e1d78f71.js"><link rel="prefetch" href="/assets/js/91.a389b27f.js"><link rel="prefetch" href="/assets/js/92.aa47c225.js"><link rel="prefetch" href="/assets/js/93.a2d78bf0.js"><link rel="prefetch" href="/assets/js/94.e2ede8c2.js"><link rel="prefetch" href="/assets/js/95.e41229a2.js"><link rel="prefetch" href="/assets/js/96.d7efaead.js"><link rel="prefetch" href="/assets/js/97.ab3bc44c.js"><link rel="prefetch" href="/assets/js/98.70e4b7d4.js"><link rel="prefetch" href="/assets/js/vendors~docsearch.b6c99b38.js"><link rel="prefetch" href="/assets/js/vuejs-paginate.e9610d83.js">
-    <link rel="stylesheet" href="/assets/css/0.styles.512b91ab.css">
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="BDK Foundation Website">
+      
+      
+        <meta name="author" content="Bitcoin Dev Kit Foundation">
+      
+      
+        <link rel="canonical" href="https://bitcoindevkit.org/adoption/mobile/">
+      
+      
+        <link rel="prev" href="../all/">
+      
+      
+        <link rel="next" href="../desktop/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.33">
+    
+    
+      
+        <title>Mobile - Bitcoin Dev Kit</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.53a7feaf.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.dfe2e883.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,a=__md_scope)=>JSON.parse(t.getItem(a.pathname+"."+e)),__md_set=(e,t,a=localStorage,_=__md_scope)=>{try{a.setItem(_.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
   </head>
-  <body>
-    <div id="app" data-server-rendered="true"><div class="theme-container" data-v-b812d5fc><header class="navbar" data-v-b812d5fc><div class="wrap"><div class="wrap-border"><a href="/" class="home-link router-link-active"><svg role="img" alt="Bitcoin Dev Kit Documentation" class="logo"><use href="/img/logo.svg#small" class="small"></use> <use href="/img/logo.svg#large" class="large"></use></svg></a> <div class="links"><nav class="nav-links can-hide"><div class="nav-item"><a href="https://github.com/bitcoindevkit" target="_blank" rel="noopener noreferrer" class="nav-link external">
-  Github
-  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div><div class="nav-item"><a href="/docs/" class="nav-link">
-  Docs
-</a></div><div class="nav-item"><a href="/adoption/all.html" class="nav-link">
-  Adoption
-</a></div><div class="nav-item"><a href="/foundation/about.html" class="nav-link">
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mobile" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Bitcoin Dev Kit" class="md-header__button md-logo" aria-label="Bitcoin Dev Kit" data-md-component="logo">
+      
+  <img src="../../assets/bdk-logo-text.svg" alt="Bitcoin Dev Kit">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Bitcoin Dev Kit
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Mobile
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/bitcoindevkit/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub Organization
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../foundation/about/" class="md-tabs__link">
+          
+  
   Foundation
-</a></div><div class="nav-item"><a href="/blog/" class="nav-link">
-  Blog
-</a></div> <a href="https://github.com/bitcoindevkit/bitcoindevkit.org" target="_blank" rel="noopener noreferrer" class="repo-link">
-    GitHub
-    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav> <div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <button type="button" class="theme-switch"><svg viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg"><g class="theme-switch-dark"><path d="M15 20.4219C12.5187 20.4219 10.5 18.4032 10.5 15.9219C10.5 13.4406 12.5187 11.4219 15 11.4219C17.4813 11.4219 19.5 13.4406 19.5 15.9219C19.5 18.4032 17.4813 20.4219 15 20.4219Z" fill="currentColor"></path> <path d="M19.4541 20.3769L21.3644 22.2862M15 24.9219V22.2219V24.9219ZM15 9.62187V6.92188V9.62187ZM6 15.9219H8.7H6ZM21.3 15.9219H24H21.3ZM8.6361 22.2862L10.5454 20.3769L8.6361 22.2862ZM19.4541 11.4678L21.3644 9.55797L19.4541 11.4678ZM8.6361 9.55797L10.5454 11.4678L8.6361 9.55797Z" stroke="currentColor" stroke-width="1" stroke-linecap="round"></path></g> <g fill="currentColor" class="theme-switch-light"><path d="M10.1539 8.75585C10.018 8.75585 9.88774 8.70189 9.79168 8.60583C9.69563 8.50977 9.64166 8.37949 9.64166 8.24365V6.19482C9.64166 6.05898 9.69563 5.9287 9.79168 5.83264C9.88774 5.73658 10.018 5.68262 10.1539 5.68262C10.2897 5.68262 10.42 5.73658 10.5161 5.83264C10.6121 5.9287 10.6661 6.05898 10.6661 6.19482V8.24365C10.6661 8.37949 10.6121 8.50977 10.5161 8.60583C10.42 8.70189 10.2897 8.75585 10.1539 8.75585Z"></path> <path d="M11.1783 7.73144H9.12945C8.9936 7.73144 8.86332 7.67748 8.76726 7.58142C8.6712 7.48536 8.61724 7.35508 8.61724 7.21924C8.61724 7.08339 8.6712 6.95311 8.76726 6.85705C8.86332 6.761 8.9936 6.70703 9.12945 6.70703H11.1783C11.3141 6.70703 11.4444 6.761 11.5405 6.85705C11.6365 6.95311 11.6905 7.08339 11.6905 7.21924C11.6905 7.35508 11.6365 7.48536 11.5405 7.58142C11.4444 7.67748 11.3141 7.73144 11.1783 7.73144ZM6.05621 13.8779C5.92037 13.8779 5.79009 13.8239 5.69403 13.7279C5.59797 13.6318 5.54401 13.5015 5.54401 13.3657V12.3413C5.54401 12.2054 5.59797 12.0752 5.69403 11.9791C5.79009 11.8831 5.92037 11.8291 6.05621 11.8291C6.19206 11.8291 6.32234 11.8831 6.4184 11.9791C6.51445 12.0752 6.56842 12.2054 6.56842 12.3413V13.3657C6.56842 13.5015 6.51445 13.6318 6.4184 13.7279C6.32234 13.8239 6.19206 13.8779 6.05621 13.8779Z"></path> <path d="M6.56842 13.366H5.544C5.40816 13.366 5.27788 13.312 5.18182 13.216C5.08576 13.1199 5.0318 12.9896 5.0318 12.8538C5.0318 12.7179 5.08576 12.5877 5.18182 12.4916C5.27788 12.3955 5.40816 12.3416 5.544 12.3416H6.56842C6.70426 12.3416 6.83454 12.3955 6.9306 12.4916C7.02666 12.5877 7.08062 12.7179 7.08062 12.8538C7.08062 12.9896 7.02666 13.1199 6.9306 13.216C6.83454 13.312 6.70426 13.366 6.56842 13.366ZM16.8125 23.6101C12.8583 23.6101 9.64165 20.3934 9.64165 16.4392C9.64165 12.8983 12.2851 9.85021 15.7907 9.34876L16.4658 9.25195L16.37 9.92755C16.326 10.218 16.3027 10.5112 16.3003 10.805C16.3003 14.1942 19.0575 16.9514 22.4468 16.9514C22.708 16.9514 22.9872 16.9294 23.3247 16.8813L23.9998 16.7855L23.9035 17.4606C23.401 20.9666 20.3524 23.6101 16.8125 23.6101Z"></path></g></svg></button></div> <div class="sidebar-button"><svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" class="icon"><g fill="currentColor" class="hamburger"><path d="M33.75 11.6699H6.25C5.55964 11.6699 5 12.2296 5 12.9199C5 13.6103 5.55964 14.1699 6.25 14.1699H33.75C34.4404 14.1699 35 13.6103 35 12.9199C35 12.2296 34.4404 11.6699 33.75 11.6699Z"></path> <path d="M28.75 18.752H6.25C5.55964 18.752 5 19.3116 5 20.002C5 20.6923 5.55964 21.252 6.25 21.252H28.75C29.4404 21.252 30 20.6923 30 20.002C30 19.3116 29.4404 18.752 28.75 18.752Z"></path> <path d="M33.75 25.8301H6.25C5.55964 25.8301 5 26.3897 5 27.0801C5 27.7704 5.55964 28.3301 6.25 28.3301H33.75C34.4404 28.3301 35 27.7704 35 27.0801C35 26.3897 34.4404 25.8301 33.75 25.8301Z"></path></g> <g stroke="currentColor" class="close"><path d="M10 10L30 30" stroke-width="2" stroke-linecap="round"></path> <path d="M30 10L10 30" stroke-width="2" stroke-linecap="round"></path></g></svg></div></div></div></header> <div class="wrap" data-v-b812d5fc><div class="wrap-border" data-v-b812d5fc><div class="sidebar-mask" data-v-b812d5fc></div> <aside class="sidebar" data-v-b812d5fc><nav class="nav-links"><div class="nav-item"><a href="https://github.com/bitcoindevkit" target="_blank" rel="noopener noreferrer" class="nav-link external">
-  Github
-  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div><div class="nav-item"><a href="/docs/" class="nav-link">
-  Docs
-</a></div><div class="nav-item"><a href="/adoption/all.html" class="nav-link">
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../all/" class="md-tabs__link">
+          
+  
   Adoption
-</a></div><div class="nav-item"><a href="/foundation/about.html" class="nav-link">
-  Foundation
-</a></div><div class="nav-item"><a href="/blog/" class="nav-link">
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../blog/2025_q4_update/" class="md-tabs__link">
+          
+  
   Blog
-</a></div> <a href="https://github.com/bitcoindevkit/bitcoindevkit.org" target="_blank" rel="noopener noreferrer" class="repo-link">
-    GitHub
-    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>Built With BDK</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/adoption/all/" class="sidebar-link">All</a></li><li><a href="/adoption/mobile/" aria-current="page" class="active sidebar-link">Mobile</a></li><li><a href="/adoption/desktop/" class="sidebar-link">Desktop</a></li><li><a href="/adoption/hardware/" class="sidebar-link">Hardware</a></li><li><a href="/adoption/web/" class="sidebar-link">Web</a></li><li><a href="/adoption/custodial/" class="sidebar-link">Custodial</a></li><li><a href="/adoption/exchange/" class="sidebar-link">Exchange</a></li><li><a href="/adoption/infrastructure/" class="sidebar-link">Infrastructure</a></li></ul></section></li></ul> </aside> <!----> <main class="page"> <div class="theme-default-content content__default"><h1 id="mobile"><a href="#mobile" class="header-anchor">#</a> Mobile</h1> <div class="project"><div class="project-logo"><a href="https://proton.me/wallet" target="_blank"><img src="/img/case-studies-logos/protonwallet-logo-transparent-130.png"></a></div> <div class="tagline"><h3><a href="https://proton.me/wallet" target="_blank">Proton Wallet</a> <a href="/foundation/members" class="foundation-member-badge">Foundation Member</a></h3> <p>A self-custodial Bitcoin wallet from the makers of Proton Mail.</p></div></div> <div class="project"><div class="project-logo"><a href="https://10101.finance/" target="_blank"><img src="/img/case-studies-logos/10101-130.png"></a></div> <div class="tagline"><h3><a href="https://10101.finance/" target="_blank">10101</a></h3> <p>Decentralised finance. For real. BTC trading without counterparty risk in one easy and fast app.</p></div></div> <div class="project"><div class="project-logo"><a href="https://www.arke.cash/" target="_blank"><img src="/img/case-studies-logos/arke.png" width="130" height="130" alt="Arké logo"></a></div> <div class="tagline"><h3><a href="https://www.arke.cash/" target="_blank">Arké</a></h3> <p>An Ark-based Bitcoin app designed for instant everyday spending.</p></div></div> <div class="project"><div class="project-logo"><a href="https://bitkey.build/" target="_blank"><img src="/img/case-studies-logos/block-logo.gif" style="max-height:130px;"></a></div> <div class="tagline"><h2><a href="https://bitkey.build/" target="_blank">Bitkey</a></h2> <p>
-      Bitkey is the safe, easy way to own and manage bitcoin. It's a mobile app, hardware device, and a set of recovery tools, for simple, secure self-custody.
-    </p></div></div> <div class="project"><div class="project-logo"><a href="https://www.bitvault.sv/" target="_blank"><img src="/img/case-studies-logos/bitvault-logo.jpg" style="max-height:130px;"></a></div> <div class="tagline"><h2><a href="https://www.bitvault.sv/" target="_blank">Bitvault</a></h2> <p>
-      BitVault is your fortress against physical attacks and hacks, by employing time-delayed transactions and a multisig convenience service to shield your assets.
-    </p></div></div> <div class="project"><div class="project-logo"><a href="https://www.bullbitcoin.com/" target="_blank"><img src="/img/case-studies-logos/bull-bitcoin-130.png"></a></div> <div class="tagline"><h3><a href="https://www.bullbitcoin.com/" target="_blank">Bull Bitcoin</a></h3> <p>A self-custodial Bitcoin Wallet and Exchange app that lets users buy, sell, spend and get paid with Bitcoin. Bitcoins are automatically sent from the exchange to the user's wallet.</p></div></div> <div class="project"><div class="project-logo"><a href="https://covebitcoinwallet.com/" target="_blank"><img src="/img/case-studies-logos/cove_wallet.png" style="max-height:130px;"></a></div> <div class="tagline"><h2><a href="https://covebitcoinwallet.com/" target="_blank">Cove Wallet</a></h2> <p>
-      Cove is a simple yet powerful bitcoin mobile wallet. It's intuitive and simple for newcomers while being powerful enough for experienced bitcoiners.
-    </p></div></div> <div class="project"><div class="project-logo"><a href="https://foundationdevices.com/" target="_blank"><img src="/img/case-studies-logos/foundation-130.png"></a></div> <div class="tagline"><h3><a href="https://foundationdevices.com/" target="_blank">Envoy By Foundation</a></h3> <p>A Bitcoin wallet with powerful account management and privacy features. Use alongside your Passport hardware wallet to take true ownership of your Bitcoin.</p></div></div> <div class="project"><div class="project-logo"><a href="https://frostsnap.com/" target="_blank"><img src="/img/case-studies-logos/frostsnap.svg"></a></div> <div class="tagline"><h3><a href="https://frostsnap.com/" target="_blank">Frostsnap</a></h3> <p>Next-generation Bitcoin security.</p></div></div> <div class="project"><div class="project-logo"><a href="https://play.google.com/store/apps/details?id=com.iriswallet.testnet" target="_blank"><img src="/img/case-studies-logos/iris-130.png"></a></div> <div class="tagline"><h3><a href="https://play.google.com/store/apps/details?id=com.iriswallet.testnet" target="_blank">Iris Wallet</a></h3> <p>Open-source wallet for Bitcoin and RGB assets.</p></div></div> <div class="project"><div class="project-logo"><a href="https://www.lava.xyz/" target="_blank"><img src="/img/case-studies-logos/lava-130.png"></a></div> <div class="tagline"><h3><a href="https://www.lava.xyz/" target="_blank">Lava</a></h3> <p>The Future of Finance Available Today. Functional, safe and simple.</p></div></div> <div class="project"><div class="project-logo"><a href="https://github.com/lightningdevkit/ldk-node" target="_blank"><img src="/img/case-studies-logos/ldk-node-130.png"></a></div> <div class="tagline"><h3><a href="https://github.com/lightningdevkit/ldk-node" target="_blank">LDK Node</a></h3> <p>A ready-to-go Lightning node library built using LDK and BDK.</p></div></div> <div class="project"><div class="project-logo"><a href="https://lexe.app/" target="_blank"><img src="/img/case-studies-logos/lexe-130.png"></a></div> <div class="tagline"><h3><a href="https://lexe.app/" target="_blank">Lexe Wallet</a></h3> <p>Lexe is a self-custodial Bitcoin and Lightning wallet that can receive payments 24/7.</p></div></div> <div class="project"><div class="project-logo"><a href="https://wizardsardine.com/liana/" target="_blank"><img src="/img/case-studies-logos/liana-130.png"></a></div> <div class="tagline"><h3><a href="https://wizardsardine.com/liana/" target="_blank">Liana</a></h3> <p>Never lose your coins. Liana is a simple Bitcoin wallet with built-in loss protection and inheritance.</p></div></div> <div class="project"><div class="project-logo"><a href="https://lipa.swiss/en" target="_blank"><img src="/img/case-studies-logos/lipa-130.png"></a></div> <div class="tagline"><h3><a href="https://lipa.swiss/en" target="_blank">Lipa</a></h3> <p>The Swiss app for cashless payments with Bitcoin.</p></div></div> <div class="project"><div class="project-logo"><a href="https://metamask.io/news/bitcoin-on-metamask-btc-wallet" target="_blank"><img src="/img/case-studies-logos/metamask-130.png"></a></div> <div class="tagline"><h3><a href="https://metamask.io/news/bitcoin-on-metamask-btc-wallet" target="_blank">MetaMask</a></h3> <p>Full self-custody and native Bitcoin support in MetaMask for Extension and Mobile.</p></div></div> <div class="project"><div class="project-logo"><a href="https://www.mutinywallet.com/" target="_blank"><img src="/img/case-studies-logos/mutiny-130.png"></a></div> <div class="tagline"><h3><a href="https://www.mutinywallet.com/" target="_blank">Mutiny Wallet</a></h3> <p>Mutiny is a self-custodial lightning wallet that runs in the browser.</p></div></div> <div class="project"><div class="project-logo"><a href="https://play.google.com/store/apps/details?id=com.goldenraven.padawanwallet" target="_blank"><img src="/img/case-studies-logos/padawan-130.png"></a></div> <div class="tagline"><h3><a href="https://play.google.com/store/apps/details?id=com.goldenraven.padawanwallet" target="_blank">Padawan Wallet</a></h3> <p>Padawan is a testnet-only bitcoin wallet packed with tutorials to learn how to use bitcoin on mobile.</p></div></div> <div class="project"><div class="project-logo"><a href="" target="_blank"><img src="/img/case-studies-logos/peach-130.png"></a></div> <div class="tagline"><h2><a href="https://peachbitcoin.com/" target="_blank">Peach Bitcoin</a></h2> <p>Connecting Bitcoin buyers and sellers directly together. Buy or sell bitcoin peer-to-peer anywhere, at anytime.</p></div></div> <div class="project"><div class="project-logo"><a href="https://satoshi.money/" target="_blank"><img src="/img/case-studies-logos/satoshi-130.png"></a></div> <div class="tagline"><h3><a href="https://satoshi.money/" target="_blank">Satoshi</a></h3> <p>Buy, pay, earn, learn, spend and borrow—all in one super app.</p></div></div> <div class="project"><div class="project-logo"><a href="https://www.satsails.com/" target="_blank"><img src="/img/case-studies-logos/satsails-130.png"></a></div> <div class="tagline"><h3><a href="https://www.satsails.com/" target="_blank">Satsails</a></h3> <p>Satsails is a self self custodial bitcoin wallet with fiat integration for selected countries.</p></div></div> <div class="project"><div class="project-logo"><a href="https://satsigner.com/" target="_blank"><img src="/img/case-studies-logos/satsigner-130.png"></a></div> <div class="tagline"><h3><a href="https://satsigner.com/" target="_blank">Satsigner</a></h3> <p>A pouch for your sats.</p></div></div> <div class="project"><div class="project-logo"><a href="https://www.smartvaults.io/" target="_blank"><img src="/img/case-studies-logos/smart-vaults-130.png" style="max-height:130px;"></a></div> <div class="tagline"><h3><a href="https://www.smartvaults.io/" target="_blank">Smart Vaults</a></h3> <p>Determine who, how, and when your Bitcoin can be accessed.</p></div></div> <div class="project"><div class="project-logo"><a href="https://github.com/BlockchainCommons/spotbit" target="_blank"><img src="/img/case-studies-logos/spotbit-130.png"></a></div> <div class="tagline"><h3><a href="https://github.com/BlockchainCommons/spotbit" target="_blank">Spotbit</a></h3> <p>Spotbit is a portable API for Bitcoin price data and candles.</p></div></div> <div class="project"><div class="project-logo"><a href="https://twenty-two.xyz/" target="_blank"><img src="/img/case-studies-logos/twentytwo-logo-130.png"></a></div> <div class="tagline"><h3><a href="https://twenty-two.xyz/" target="_blank">TwentyTwo</a></h3> <p>The first 100% open source mobile-native hardware wallet: designed to keep your keys safe and seamlessly integrate into any mobile wallet app.</p></div></div> <div class="project"><div class="project-logo"><a href="https://github.com/utreexo/utreexod" target="_blank"><img src="/img/case-studies-logos/utreexod-130.png"></a></div> <div class="tagline"><h3><a href="https://github.com/utreexo/utreexod" target="_blank">utreexod</a></h3> <p>A fully validating Bitcoin node with Utreexo support.</p></div></div> <div class="project"><div class="project-logo"><a href="https://github.com/Zero-1729/volt" target="_blank"><img src="/img/case-studies-logos/volt-130.png"></a></div> <div class="tagline"><h3><a href="https://github.com/Zero-1729/volt" target="_blank">Volt</a></h3> <p>A modern descriptor-based Financial Freedom Bitcoin Wallet aimed at restoring sovereignty to Global Bitcoiners.</p></div></div></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
-      ←
-      <a href="/adoption/all/" class="prev">
-        All
-      </a></span> <span class="next"><a href="/adoption/desktop/">
-        Desktop
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Bitcoin Dev Kit" class="md-nav__button md-logo" aria-label="Bitcoin Dev Kit" data-md-component="logo">
+      
+  <img src="../../assets/bdk-logo-text.svg" alt="Bitcoin Dev Kit">
+
+    </a>
+    Bitcoin Dev Kit
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/bitcoindevkit/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub Organization
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Foundation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Foundation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../foundation/about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About Us
+  
+
+    
+  </span>
+  
+  
+
       </a>
-      →
-    </span></p></div> </main></div></div> <footer class="footer" data-v-b812d5fc><div class="wrap"><div class="wrap-border"><div class="inner"><div class="footer-content"><div class="footer-block"><h4>Docs</h4> <div><a href="/docs/#book" class="nav-link">
-  Book
-</a></div><div><a href="/docs/#rust-apis" class="nav-link">
-  Rust APIs
-</a></div><div><a href="/docs/#other-apis" class="nav-link">
-  Other APIs
-</a></div></div><div class="footer-block"><h4>Community</h4> <div><a href="https://github.com/bitcoindevkit" target="_blank" rel="noopener noreferrer" class="nav-link external">
-  GitHub
-  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div><div><a href="nostr:npub13dk3dke4zm9vdkucm7f6vv7vhqgkevgg3gju9kr2wzumz7nrykdq0dgnvc" target="_blank" rel="noopener noreferrer" class="nav-link external">
-  Nostr
-  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div><div><a href="https://twitter.com/intent/follow?screen_name=bitcoindevkit" target="_blank" rel="noopener noreferrer" class="nav-link external">
-  Twitter
-  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div><div><a href="https://discord.gg/dstn4dQ" target="_blank" rel="noopener noreferrer" class="nav-link external">
-  Chat on Discord
-  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div></div><div class="footer-block"><h4>More</h4> <div><a href="/blog/" class="nav-link">
-  Blog
-</a></div><div><a href="/foundation/supporters/" class="nav-link">
-  Supporters
-</a></div><div><a href="/foundation/" class="nav-link">
-  BDK Foundation
-</a></div></div></div> <p class="copyright">Copyright © 2026 BDK Developers</p></div></div></div></footer></div><div class="global-ui"></div></div>
-    <script src="/assets/js/app.679f2995.js" defer></script><script src="/assets/js/3.80705bfd.js" defer></script><script src="/assets/js/1.5c570f52.js" defer></script><script src="/assets/js/43.d2c937ba.js" defer></script>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../foundation/members/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Members
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../foundation/grantees/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grantees
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../foundation/grants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../foundation/pgp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PGP Keys
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../foundation/become-a-member/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Become a Member
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adoption
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Adoption
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    All
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mobile
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mobile
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#proton-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Proton Wallet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10101" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10101
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arke" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arké
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bitkey" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bitkey
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bitvault" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bitvault
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bull-bitcoin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bull Bitcoin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cove-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cove Wallet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#envoy-by-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Envoy By Foundation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frostsnap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frostsnap
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#iris-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Iris Wallet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lava" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lava
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ldk-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LDK Node
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lexe-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lexe Wallet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#liana" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Liana
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lipa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lipa
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metamask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MetaMask
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mutiny-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mutiny Wallet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#padawan-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Padawan Wallet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#peach-bitcoin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Peach Bitcoin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#satoshi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Satoshi
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#satsails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Satsails
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#satsigner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Satsigner
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#smart-vaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Smart Vaults
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spotbit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spotbit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#twentytwo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TwentyTwo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#utreexod" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        utreexod
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#volt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Volt
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../desktop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infrastructure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hardware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../exchange/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exchanges
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../web/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blog
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Blog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/2025_q4_update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2025 Q4 Update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/2025_q4_btcnews_interview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    BDK Featured in Bitcoin News Interview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/2025_q3_update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2025 Q3 Update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/2025_q2_update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2025 Q2 Update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/2025_q1_New_Foundation_Members/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    BDK Foundation Welcomes New Corporate Members
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/2025_q1_update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2025 Q1 Update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/2024_q4_update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2024 Q4 Update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/2024_q4_code_audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2024 Code Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/2024_q3_update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2024 Q3 Update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/2024_q2_update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2024 Q2 Update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/why-bindings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why Build Bindings?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/2024_q1_update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2024 Q1 Update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/2023_q4_update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2023 Q4 Update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/bindings-scope/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Our Approach to Rust Bindings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/road_to_bdk_1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Road to BDK 1.0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/bdk_core_pt1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    `bdk_core`: a new architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/first_bdk_taproot_tx_part_2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The first BDK Taproot TX (2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/first_bdk_taproot_tx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The first BDK Taproot TX (1)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/hello-world/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hello World!
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#proton-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Proton Wallet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10101" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10101
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arke" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arké
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bitkey" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bitkey
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bitvault" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bitvault
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bull-bitcoin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bull Bitcoin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cove-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cove Wallet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#envoy-by-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Envoy By Foundation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frostsnap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frostsnap
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#iris-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Iris Wallet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lava" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lava
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ldk-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LDK Node
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lexe-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lexe Wallet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#liana" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Liana
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lipa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lipa
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metamask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MetaMask
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mutiny-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mutiny Wallet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#padawan-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Padawan Wallet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#peach-bitcoin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Peach Bitcoin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#satoshi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Satoshi
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#satsails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Satsails
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#satsigner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Satsigner
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#smart-vaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Smart Vaults
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spotbit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spotbit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#twentytwo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TwentyTwo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#utreexod" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        utreexod
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#volt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Volt
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="mobile">Mobile<a class="headerlink" href="#mobile" title="Permanent link">&para;</a></h1>
+<div class="grid cards">
+<ul>
+<li>
+<h3 id="proton-wallet">Proton Wallet<a class="headerlink" href="#proton-wallet" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/protonwallet-logo-transparent-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Proton Wallet" /></p>
+<p>A self-custodial Bitcoin wallet from the makers of Proton Mail.</p>
+<p><a href="https://proton.me/wallet"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="10101">10101<a class="headerlink" href="#10101" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/10101-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="10101" /></p>
+<p>Decentralised finance. For real. BTC trading without counterparty risk in one easy and fast app.</p>
+<p><a href="https://10101.finance/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="arke">Arké<a class="headerlink" href="#arke" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/arke.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Arké" /></p>
+<p>An Ark-based Bitcoin app designed for instant everyday spending.</p>
+<p><a href="https://www.arke.cash/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="bitkey">Bitkey<a class="headerlink" href="#bitkey" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/block-logo.gif" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Bitkey" /></p>
+<p>Bitkey is the safe, easy way to own and manage bitcoin. It's a mobile app, hardware device, and a set of recovery tools, for simple, secure self-custody.</p>
+<p><a href="https://bitkey.build/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="bitvault">Bitvault<a class="headerlink" href="#bitvault" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/bitvault-logo.jpg" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Bitvault" /></p>
+<p>BitVault is your fortress against physical attacks and hacks, by employing time-delayed transactions and a multisig convenience service to shield your assets.</p>
+<p><a href="https://www.bitvault.sv/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="bull-bitcoin">Bull Bitcoin<a class="headerlink" href="#bull-bitcoin" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/bull-bitcoin-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Bull Bitcoin" /></p>
+<p>A self-custodial Bitcoin Wallet and Exchange app that lets users buy, sell, spend and get paid with Bitcoin. Bitcoins are automatically sent from the exchange to the user's wallet.</p>
+<p><a href="https://www.bullbitcoin.com/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="cove-wallet">Cove Wallet<a class="headerlink" href="#cove-wallet" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/cove_wallet.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Cove Wallet" /></p>
+<p>Cove is a simple yet powerful bitcoin mobile wallet. It's intuitive and simple for newcomers while being powerful enough for experienced bitcoiners.</p>
+<p><a href="https://covebitcoinwallet.com/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="envoy-by-foundation">Envoy By Foundation<a class="headerlink" href="#envoy-by-foundation" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/foundation-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Envoy By Foundation" /></p>
+<p>A Bitcoin wallet with powerful account management and privacy features. Use alongside your Passport hardware wallet to take true ownership of your Bitcoin.</p>
+<p><a href="https://foundationdevices.com/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="frostsnap">Frostsnap<a class="headerlink" href="#frostsnap" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/frostsnap.svg" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Frostsnap" /></p>
+<p>Next-generation Bitcoin security.</p>
+<p><a href="https://frostsnap.com/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="iris-wallet">Iris Wallet<a class="headerlink" href="#iris-wallet" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/iris-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Iris Wallet" /></p>
+<p>Open-source wallet for Bitcoin and RGB assets.</p>
+<p><a href="https://play.google.com/store/apps/details?id=com.iriswallet.testnet"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="lava">Lava<a class="headerlink" href="#lava" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/lava-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Lava" /></p>
+<p>The Future of Finance Available Today. Functional, safe and simple.</p>
+<p><a href="https://www.lava.xyz/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="ldk-node">LDK Node<a class="headerlink" href="#ldk-node" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/ldk-node-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="LDK Node" /></p>
+<p>A ready-to-go Lightning node library built using LDK and BDK.</p>
+<p><a href="https://github.com/lightningdevkit/ldk-node"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="lexe-wallet">Lexe Wallet<a class="headerlink" href="#lexe-wallet" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/lexe-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Lexe Wallet" /></p>
+<p>Lexe is a self-custodial Bitcoin and Lightning wallet that can receive payments 24/7.</p>
+<p><a href="https://lexe.app/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="liana">Liana<a class="headerlink" href="#liana" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/liana-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Liana" /></p>
+<p>Never lose your coins. Liana is a simple Bitcoin wallet with built-in loss protection and inheritance.</p>
+<p><a href="https://wizardsardine.com/liana/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="lipa">Lipa<a class="headerlink" href="#lipa" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/lipa-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Lipa" /></p>
+<p>The Swiss app for cashless payments with Bitcoin.</p>
+<p><a href="https://lipa.swiss/en"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="metamask">MetaMask<a class="headerlink" href="#metamask" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/metamask-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="MetaMask" /></p>
+<p>Full self-custody and native Bitcoin support in MetaMask for Extension and Mobile.</p>
+<p><a href="https://metamask.io/news/bitcoin-on-metamask-btc-wallet"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="mutiny-wallet">Mutiny Wallet<a class="headerlink" href="#mutiny-wallet" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/mutiny-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Mutiny Wallet" /></p>
+<p>Mutiny is a self-custodial lightning wallet that runs in the browser.</p>
+<p><a href="https://www.mutinywallet.com/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="padawan-wallet">Padawan Wallet<a class="headerlink" href="#padawan-wallet" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/padawan-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Padawan Wallet" /></p>
+<p>Padawan is a testnet-only bitcoin wallet packed with tutorials to learn how to use bitcoin on mobile.</p>
+<p><a href="https://play.google.com/store/apps/details?id=com.goldenraven.padawanwallet"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="peach-bitcoin">Peach Bitcoin<a class="headerlink" href="#peach-bitcoin" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/peach-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Peach Bitcoin" /></p>
+<p>Connecting Bitcoin buyers and sellers directly together. Buy or sell bitcoin peer-to-peer anywhere, at anytime.</p>
+<p><a href="https://peachbitcoin.com/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="satoshi">Satoshi<a class="headerlink" href="#satoshi" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/satoshi-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Satoshi" /></p>
+<p>Buy, pay, earn, learn, spend and borrow—all in one super app.</p>
+<p><a href="https://satoshi.money/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="satsails">Satsails<a class="headerlink" href="#satsails" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/satsails-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Satsails" /></p>
+<p>Satsails is a self custodial bitcoin wallet with fiat integration for selected countries.</p>
+<p><a href="https://www.satsails.com/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="satsigner">Satsigner<a class="headerlink" href="#satsigner" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/satsigner-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Satsigner" /></p>
+<p>A pouch for your sats.</p>
+<p><a href="https://satsigner.com/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="smart-vaults">Smart Vaults<a class="headerlink" href="#smart-vaults" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/smart-vaults-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Smart Vaults" /></p>
+<p>Determine who, how, and when your Bitcoin can be accessed.</p>
+<p><a href="https://www.smartvaults.io/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="spotbit">Spotbit<a class="headerlink" href="#spotbit" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/spotbit-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Spotbit" /></p>
+<p>Spotbit is a portable API for Bitcoin price data and candles.</p>
+<p><a href="https://github.com/BlockchainCommons/spotbit"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="twentytwo">TwentyTwo<a class="headerlink" href="#twentytwo" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/twentytwo-logo-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="TwentyTwo" /></p>
+<p>The first 100% open source mobile-native hardware wallet: designed to keep your keys safe and seamlessly integrate into any mobile wallet app.</p>
+<p><a href="https://twenty-two.xyz/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="utreexod">utreexod<a class="headerlink" href="#utreexod" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/utreexod-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="utreexod" /></p>
+<p>A fully validating Bitcoin node with Utreexo support.</p>
+<p><a href="https://github.com/utreexo/utreexod"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+<li>
+<h3 id="volt">Volt<a class="headerlink" href="#volt" title="Permanent link">&para;</a></h3>
+<hr />
+<p><img src="/assets/logos/users/volt-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Volt" /></p>
+<p>A modern descriptor-based Financial Freedom Bitcoin Wallet aimed at restoring sovereignty to Global Bitcoiners.</p>
+<p><a href="https://github.com/Zero-1729/volt"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Website</a></p>
+</li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../all/" class="md-footer__link md-footer__link--prev" aria-label="Previous: All">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                All
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../desktop/" class="md-footer__link md-footer__link--next" aria-label="Next: Desktop">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Desktop
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Bitcoin Dev Kit Foundation
+
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["announce.dismiss","content.code.annotate","content.code.copy","content.code.select","content.footnote.tooltips","content.tabs.link","content.tooltips","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.sections","navigation.tabs","navigation.top","navigation.tracking","search.highlight"],"search":"../../assets/javascripts/workers/search.e2d2d235.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.63456bd9.min.js"></script>
+      
+    
   </body>
 </html>
