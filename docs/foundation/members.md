@@ -86,6 +86,16 @@ The Bitcoin Dev Kit project is proudly supported by the Bitcoin Dev Kit Foundati
 
     [:octicons-arrow-right-24: Website](https://satoshipacioli.com)
 
+-   ### mempool.space
+
+    ---
+
+    <img src="/assets/logos/members/mempool.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="mempool.space" />
+
+    Mempool.space is the leading open-source Bitcoin blockchain explorer and mempool visualizer. It provides real-time transaction tracking, fee estimation, and network statistics used by millions worldwide. 
+
+    [:octicons-arrow-right-24: Website](https://mempool.space)
+
 </div>
 
 <br>

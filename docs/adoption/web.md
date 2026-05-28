@@ -48,7 +48,7 @@
 
     <img src="/assets/logos/users/mempool-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="mempool.space" />
 
-    Explore the full Bitcoin ecosystem.
+    Mempool.space is the leading open-source Bitcoin blockchain explorer and mempool visualizer. It provides real-time transaction tracking, fee estimation, and network statistics used by millions worldwide.
 
     [:octicons-arrow-right-24: Website](https://mempool.space/)
 
