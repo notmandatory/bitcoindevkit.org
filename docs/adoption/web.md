@@ -2,6 +2,16 @@
 
 <div class="grid cards" markdown>
 
+-   ### mempool.space
+
+    ---
+
+    <img src="/assets/logos/users/mempool-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="mempool.space" />
+
+    Mempool.space is the leading open-source Bitcoin blockchain explorer and mempool visualizer. It provides real-time transaction tracking, fee estimation, and network statistics used by millions worldwide.
+
+    [:octicons-arrow-right-24: Website](https://mempool.space/)
+
 -   ### Proton Wallet
 
     ---
@@ -41,16 +51,6 @@
     Caravan is a multi-sig coordinator application, and an Unchained-sponsored open source project.
 
     [:octicons-arrow-right-24: Website](https://www.caravanmultisig.com/)
-
--   ### mempool.space
-
-    ---
-
-    <img src="/assets/logos/users/mempool-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="mempool.space" />
-
-    Mempool.space is the leading open-source Bitcoin blockchain explorer and mempool visualizer. It provides real-time transaction tracking, fee estimation, and network statistics used by millions worldwide.
-
-    [:octicons-arrow-right-24: Website](https://mempool.space/)
 
 -   ### MetaMask
 

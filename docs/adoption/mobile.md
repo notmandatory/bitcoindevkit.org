@@ -2,6 +2,16 @@
 
 <div class="grid cards" markdown>
 
+-   ### Bitkey
+
+    ---
+
+    <img src="/assets/logos/users/block-logo.gif" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Bitkey" />
+
+    Bitkey is the safe, easy way to own and manage bitcoin. It's a mobile app, hardware device, and a set of recovery tools, for simple, secure self-custody.
+
+    [:octicons-arrow-right-24: Website](https://bitkey.build/)
+
 -   ### Proton Wallet
 
     ---
@@ -31,16 +41,6 @@
     An Ark-based Bitcoin app designed for instant everyday spending.
 
     [:octicons-arrow-right-24: Website](https://www.arke.cash/)
-
--   ### Bitkey
-
-    ---
-
-    <img src="/assets/logos/users/block-logo.gif" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Bitkey" />
-
-    Bitkey is the safe, easy way to own and manage bitcoin. It's a mobile app, hardware device, and a set of recovery tools, for simple, secure self-custody.
-
-    [:octicons-arrow-right-24: Website](https://bitkey.build/)
 
 -   ### Bitvault
 

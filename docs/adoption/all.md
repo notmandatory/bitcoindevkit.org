@@ -12,6 +12,26 @@
 
     [:octicons-arrow-right-24: Website](https://www.anchorwatch.com/)
 
+-   ### Bitkey
+
+    ---
+
+    <img src="/assets/logos/users/block-logo.gif" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Bitkey" />
+
+    Bitkey is the safe, easy way to own and manage bitcoin. It's a mobile app, hardware device, and a set of recovery tools, for simple, secure self-custody.
+
+    [:octicons-arrow-right-24: Website](https://bitkey.build/)
+
+-   ### mempool.space
+
+    ---
+
+    <img src="/assets/logos/users/mempool-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="mempool.space" />
+
+    Mempool.space is the leading open-source Bitcoin blockchain explorer and mempool visualizer. It provides real-time transaction tracking, fee estimation, and network statistics used by millions worldwide.
+
+    [:octicons-arrow-right-24: Website](https://mempool.space/)
+
 -   ### Proton Wallet
 
     ---
@@ -81,16 +101,6 @@
     Your Gateway to DeepWeb3 on Bitcoin. A browser extension for decentralized applications on Bitcoin.
 
     [:octicons-arrow-right-24: Website](https://bitmask.app/)
-
--   ### Bitkey
-
-    ---
-
-    <img src="/assets/logos/users/block-logo.gif" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Bitkey" />
-
-    Bitkey is the safe, easy way to own and manage bitcoin. It's a mobile app, hardware device, and a set of recovery tools, for simple, secure self-custody.
-
-    [:octicons-arrow-right-24: Website](https://bitkey.build/)
 
 -   ### Bitvault
 
@@ -241,16 +251,6 @@
     The Swiss app for cashless payments with Bitcoin.
 
     [:octicons-arrow-right-24: Website](https://lipa.swiss/en)
-
--   ### mempool.space
-
-    ---
-
-    <img src="/assets/logos/users/mempool-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="mempool.space" />
-
-    Mempool.space is the leading open-source Bitcoin blockchain explorer and mempool visualizer. It provides real-time transaction tracking, fee estimation, and network statistics used by millions worldwide.
-
-    [:octicons-arrow-right-24: Website](https://mempool.space/)
 
 -   ### MetaMask
 
