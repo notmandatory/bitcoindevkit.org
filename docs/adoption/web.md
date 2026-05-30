@@ -62,4 +62,14 @@
 
     [:octicons-arrow-right-24: Website](https://metamask.io/news/bitcoin-on-metamask-btc-wallet)
 
+-   ### Tetrapolar
+
+    ---
+
+    <img src="/assets/logos/users/tetrapolar.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Tetrapolar" />
+
+    Bitcoin-Native Settlement for Global Trade. Secure · Non-Custodial · Discreet
+
+    [:octicons-arrow-right-24: Website](https://tetrapolar.com)
+
 </div>

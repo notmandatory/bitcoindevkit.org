@@ -382,6 +382,16 @@
 
     [:octicons-arrow-right-24: Website](https://www.stratabtc.org/)
 
+-   ### Tetrapolar
+
+    ---
+
+    <img src="/assets/logos/users/tetrapolar.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Tetrapolar" />
+
+    Bitcoin-Native Settlement for Global Trade. Secure · Non-Custodial · Discreet
+
+    [:octicons-arrow-right-24: Website](https://tetrapolar.com)
+
 -   ### TwentyTwo
 
     ---
