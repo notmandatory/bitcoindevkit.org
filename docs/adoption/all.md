@@ -310,7 +310,7 @@
 
     RGB is a protocol for issuing and transferring digital assets and rights on Bitcoin through customizable off-chain smart contracts.
 
-    [:octicons-arrow-right-24: Website](https://rgb.info/) 
+    [:octicons-arrow-right-24: Website](https://github.com/rgb-protocol) 
 
 - ### Satoshi
 
