@@ -2,6 +2,16 @@
 
 <div class="grid cards" markdown>
 
+-   ### AnchorWatch
+
+    ---
+
+    <img src="/assets/logos/users/anchorwatch-130.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="AnchorWatch" />
+
+    Protect your bitcoin with regulated insurance and enterprise-grade multi-institutional custody.
+
+    [:octicons-arrow-right-24: Website](https://www.anchorwatch.com/)
+
 -   ### mempool.space
 
     ---
