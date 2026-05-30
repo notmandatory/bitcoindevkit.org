@@ -6,7 +6,7 @@
 
     ---
 
-    <img src="/assets/logos/users/block-logo.gif" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Bitkey" />
+    <img src="/assets/logos/users/bitkey.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="Bitkey" />
 
     Bitkey is the safe, easy way to own and manage bitcoin. It's a mobile app, hardware device, and a set of recovery tools, for simple, secure self-custody.
 
