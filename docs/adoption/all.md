@@ -142,6 +142,16 @@
 
     [:octicons-arrow-right-24: Website](https://covebitcoinwallet.com/)
 
+-   ### cyberkrill
+
+    ---
+
+    <img src="/assets/logos/users/cyberkrill.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="cyberkrill" />
+
+    A comprehensive CLI toolkit for Bitcoin and Lightning Network operations, written in Rust.
+
+    [:octicons-arrow-right-24: Website](https://github.com/douglaz/cyberkrill)
+
 -   ### Eigenwallet
 
     ---
