@@ -32,6 +32,16 @@
 
     [:octicons-arrow-right-24: Website](https://galoy.io/)
 
+-   ### RGB
+
+    ---
+
+    <img src="/assets/logos/users/rgb.png" style="max-width: 100px; display: block; margin: auto; margin-bottom: 1em;" alt="RGB" />
+
+    RGB is a protocol for issuing and transferring digital assets and rights on Bitcoin through customizable off-chain smart contracts.
+
+    [:octicons-arrow-right-24: Website](https://rgb.info/)
+
 -   ### Spotbit
 
     ---
